@@ -1,4 +1,2 @@
-D7024E-Lab
+D7024E Lab assignment
 ==========
-
-D7012E-Lab1
