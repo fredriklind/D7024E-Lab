@@ -13,6 +13,9 @@ func (n DHTNode) printRing() {
 	fmt.Println(n.id)
 }
 
+func (n DHTNode) addToRing(addedNode *DHTNode) {
+	n.successor = addedNode
+}
 
 func makeDHTNode(idPointer *string, adress string, port string) *DHTNode {
 	var id string
