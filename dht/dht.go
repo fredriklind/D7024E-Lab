@@ -9,16 +9,16 @@ type DHTNode struct {
 	successor        *DHTNode
 }
 
-func (n DHTNode) printRing() {
+func (n *DHTNode) printRing() {
 	fmt.Println(n.id)
-	id = n.successor.id
-	for id != n.id {
-		fmt.Println(id)
-		id = n.successor.id
+	newn := n.successor
+	for newn.id != n.id {
+		fmt.Println(newn.id)
+		newn = newn.successor
 	}
 }
 
-func (n DHTNode) addToRing(addedNode *DHTNode) {
+func (n *DHTNode) addToRing(addedNode *DHTNode) {
 	n.successor = addedNode
 }
 

@@ -165,8 +165,10 @@ func TestFinger3bits(t *testing.T) {
 	node3.addToRing(node6)
 	node3.addToRing(node7)
 
-	var d big.Int
-	d = distance(node0.id, node1.id, 3)
+	node5.addToRing(node0)
+
+//	var d big.Int
+//	d = distance(node0.id, node1.id, 3)
 
 	fmt.Println("------------------------------------------------------------------------------------------------")
 	fmt.Println("RING STRUCTURE")
