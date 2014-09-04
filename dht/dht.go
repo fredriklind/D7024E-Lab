@@ -11,6 +11,10 @@ type DHTNode struct {
 
 func (n DHTNode) printRing() {
 	fmt.Println(n.id)
+	id = n.successor.id
+	while (id != n.id) {
+		fmt.Println(id)
+	}
 }
 
 
