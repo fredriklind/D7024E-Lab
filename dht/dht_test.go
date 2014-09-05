@@ -183,6 +183,7 @@ func TestFinger3bits(t *testing.T) {
 	node3.testCalcFingers(2, 3)
 	fmt.Println("")
 	node3.testCalcFingers(3, 3)*/
+
 }
 
 /*
@@ -249,7 +250,7 @@ func TestFinger3bits(t *testing.T) {
  * distance     508258282811496687056817668076520806659544776736
  */
 
-/*
+
 func TestFinger160bits(t *testing.T) {
 	// note nil arg means automatically generate ID, e.g. f38f3b2dcc69a2093f258e31902e40ad33148385
 	node1 := makeDHTNode(nil, "localhost", "1111")
@@ -277,6 +278,9 @@ func TestFinger160bits(t *testing.T) {
 	node1.printRing()
 	fmt.Println("------------------------------------------------------------------------------------------------")
 
+	node1.updateFingertable()
+	
+/*
 	node3.testCalcFingers(0, 160)
 	fmt.Println("")
 	node3.testCalcFingers(1, 160)
@@ -286,6 +290,6 @@ func TestFinger160bits(t *testing.T) {
 	node3.testCalcFingers(120, 90)
 	fmt.Println("")
 	node3.testCalcFingers(160, 160)
-	fmt.Println("")
+	fmt.Println("")*/
 }
-*/
+
