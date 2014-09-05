@@ -12,7 +12,7 @@ type DHTNode struct {
 
 type Finger struct {
 	startId string
-	node *DHTNode
+	node    *DHTNode
 }
 
 func (n *DHTNode) printRing() {
@@ -50,18 +50,18 @@ func (n *DHTNode) findSuccessor(id string) *DHTNode {
 }
 
 func (n *DHTNode) findPredecessor(id string) *DHTNode {
-	newn := n
-	for !between([]byte(newn.id), []byte(newn.successor.id), []byte(id)) {
-		newn = newn.closestPreceedingFinger(id)
+	n2 := n
+	for !between([]byte(n2.id), []byte(n2.successor.id), []byte(id)) {
+		n2 = n2.closestPrecedingFinger(id)
 	}
-	return newn
+	return n2
 }
 
-func (n *DHTNode) closestPreceedingFinger(id string) *DHTNode {
+func (n *DHTNode) closestPrecedingFinger(id string) *DHTNode {
 	m := len([]byte(id))
 	for m > 0 {
-		if between([]byte(n.id), []byte(id), []byte(n.fingerTable[m][0].id)) {
-			return n.fingerTable[m][1]
+		if between([]byte(n.id), []byte(id), []byte(n.fingerTable[m].node.id)) {
+			return n.fingerTable[m].node
 		}
 		m -= 1
 	}
@@ -81,8 +81,8 @@ func (n *DHTNode) updateFingertable(k, m int) {
 	calcFinger([]byte(n.id), k, m)
 	//m := len(n.id)
 	//for k:= 1; k < m; k++ {
-		// or in place n.fingertable[i-1]
-		//n.fingertable[k], _ = calcFinger([]byte(n.id), k, m)
+	// or in place n.fingertable[i-1]
+	//n.fingertable[k], _ = calcFinger([]byte(n.id), k, m)
 	//}
 }
 
