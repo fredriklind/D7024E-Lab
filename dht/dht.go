@@ -19,8 +19,18 @@ func (n *DHTNode) printRing() {
 	}
 }
 
-func (n *DHTNode) addToRing(addedNode *DHTNode) {
-	n.successor = addedNode
+func (n *DHTNode) addToRing(nodeToAdd *DHTNode) {
+
+	// If n is alone
+	if n.successor == nil {
+		nodeToAdd.successor = n
+		n.successor = nodeToAdd
+	} else if between([]byte(n.id), []byte(n.successor.id), []byte(nodeToAdd.id)) {
+		nodeToAdd.successor = n.successor
+		n.successor = nodeToAdd
+	} else {
+		n.successor.addToRing(nodeToAdd)
+	}
 }
 
 // returns a pointer to the node which is responsible for the data corresponding to hashKey, traversing the ring linearly
