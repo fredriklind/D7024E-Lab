@@ -79,8 +79,6 @@ func TestLookup(t *testing.T) {
 	node3.addToRing(node8)
 	node7.addToRing(node9)
 
-	node5.addToRing(node1)
-
 	fmt.Println("------------------------------------------------------------------------------------------------")
 	fmt.Println("RING STRUCTURE")
 	fmt.Println("------------------------------------------------------------------------------------------------")
