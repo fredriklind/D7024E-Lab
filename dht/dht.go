@@ -22,6 +22,15 @@ func (n *DHTNode) addToRing(addedNode *DHTNode) {
 	n.successor = addedNode
 }
 
+// returns a pointer to the node which is responsible for the data corresponding to hashKey
+func (n *DHTNode) lookup(hashKey string) *DHTNode {
+	if between([]byte(n.id), []byte(n.successor.id), []byte(hashKey)) {
+		return n
+	} else {
+		return n.successor.lookup(hashKey)
+	}
+}
+
 func makeDHTNode(idPointer *string, adress string, port string) *DHTNode {
 	var id string
 
