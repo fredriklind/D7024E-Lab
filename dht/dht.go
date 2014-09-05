@@ -7,7 +7,7 @@ import (
 type DHTNode struct {
 	id, adress, port string
 	successor        *DHTNode
-	fingerTable      []*DHTNode
+	fingerTable      [][]string
 }
 
 func (n *DHTNode) printRing() {
@@ -31,6 +31,30 @@ func (n *DHTNode) addToRing(nodeToAdd *DHTNode) {
 	} else {
 		n.successor.addToRing(nodeToAdd)
 	}
+}
+
+func (n *DHTNode) findSuccessor(id string) *DHTNode {
+	predecessor := n.findPredecessor(id)
+	return predecessor.successor
+}
+
+func (n *DHTNode) findPredecessor(id string) *DHTNode {
+	newn := n
+	for !between([]byte(newn.id), []byte(newn.successor.id), []byte(id)) {
+		newn = newn.closestPreceedingFinger(id)
+	}
+	return newn
+}
+
+func (n *DHTNode) closestPreceedingFinger(id string) *DHTNode {
+	m := len([]byte(id))
+	for m > 0 {
+		if between([]byte(n.id), []byte(id), []byte(n.fingerTable[m][0].id)) {
+			return n.fingerTable[m][1]
+		}
+		m -= 1
+	}
+	return n
 }
 
 // returns a pointer to the node which is responsible for the data corresponding to hashKey, traversing the ring linearly
