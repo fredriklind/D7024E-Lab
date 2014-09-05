@@ -7,7 +7,12 @@ import (
 type DHTNode struct {
 	id, adress, port string
 	successor        *DHTNode
-	fingerTable      [][]string
+	fingerTable      []Finger
+}
+
+type Finger struct {
+	startId string
+	node *DHTNode
 }
 
 func (n *DHTNode) printRing() {
@@ -25,6 +30,11 @@ func (n *DHTNode) addToRing(nodeToAdd *DHTNode) {
 	if n.successor == nil {
 		nodeToAdd.successor = n
 		n.successor = nodeToAdd
+		m := len(n.id)
+		for k:= 1; k < m; k++ {
+			n.fingerTable[k].startId = n.id
+			n.fingerTable[k].node = n
+		}
 	} else if between([]byte(n.id), []byte(n.successor.id), []byte(nodeToAdd.id)) {
 		nodeToAdd.successor = n.successor
 		n.successor = nodeToAdd
@@ -33,6 +43,7 @@ func (n *DHTNode) addToRing(nodeToAdd *DHTNode) {
 	}
 }
 
+// should be used in lookup and addToRing to find the right node / place in the ring
 func (n *DHTNode) findSuccessor(id string) *DHTNode {
 	predecessor := n.findPredecessor(id)
 	return predecessor.successor
