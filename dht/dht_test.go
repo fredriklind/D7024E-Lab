@@ -58,7 +58,7 @@ func TestRingSetup(t *testing.T) {
  * c588f83243aeb49288d3fcdeb6cc9e68f9134dce is respoinsible for cba8c6e5f208b9c72ebee924d20f04a081a1b0aa
  */
 
-/*
+
 func TestLookup(t *testing.T) {
 	node1 := makeDHTNode(nil, "localhost", "1111")
 	node2 := makeDHTNode(nil, "localhost", "1112")
@@ -79,6 +79,8 @@ func TestLookup(t *testing.T) {
 	node3.addToRing(node8)
 	node7.addToRing(node9)
 
+	node5.addToRing(node1)
+
 	fmt.Println("------------------------------------------------------------------------------------------------")
 	fmt.Println("RING STRUCTURE")
 	fmt.Println("------------------------------------------------------------------------------------------------")
@@ -90,13 +92,13 @@ func TestLookup(t *testing.T) {
 	fmt.Println("str=" + str)
 	fmt.Println("hashKey=" + hashKey)
 
-	fmt.Println("node 1: " + node1.lookup(hashKey).nodeId + " is respoinsible for " + hashKey)
-	fmt.Println("node 5: " + node5.lookup(hashKey).nodeId + " is respoinsible for " + hashKey)
+	fmt.Println("node 1: " + node1.lookup(hashKey).id + " is respoinsible for " + hashKey)
+	fmt.Println("node 5: " + node5.lookup(hashKey).id + " is respoinsible for " + hashKey)
 
 	fmt.Println("------------------------------------------------------------------------------------------------")
 
 }
-*/
+
 
 /*
  * Example of expected output.
