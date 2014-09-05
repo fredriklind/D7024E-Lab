@@ -7,7 +7,7 @@ import (
 type DHTNode struct {
 	id, adress, port string
 	successor        *DHTNode
-	fingertable      []string
+	fingerTable      []*DHTNode
 }
 
 func (n *DHTNode) printRing() {
@@ -42,14 +42,13 @@ func (n *DHTNode) lookup(hashKey string) *DHTNode {
 	}
 }
 
-func (n *DHTNode) updateFingertable() {
-	// (n + 2^(k-1)) mod (2^m)
-	// calcFinger(n []byte, k int, m int) (string, []byte) {
-	m := len(n.id)
-	for i:= 1; i < m; i++ {
+func (n *DHTNode) updateFingertable(k, m int) {
+	calcFinger([]byte(n.id), k, m)
+	//m := len(n.id)
+	//for k:= 1; k < m; k++ {
 		// or in place n.fingertable[i-1]
-		n.fingertable[i], _ = calcFinger([]byte(n.id), i, m)
-	}
+		//n.fingertable[k], _ = calcFinger([]byte(n.id), k, m)
+	//}
 }
 
 func makeDHTNode(idPointer *string, adress string, port string) *DHTNode {
