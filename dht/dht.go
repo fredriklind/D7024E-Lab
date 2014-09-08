@@ -2,9 +2,7 @@ package dht
 
 import (
 	"fmt"
-//	"strconv"
 	"math/big"
-//	"math"
 )
 
 const m = 3
@@ -104,7 +102,7 @@ func (nodeToUpdateTableOn *DHTNode) initFingerTable(n *DHTNode) {
 	}
 }
 
-// traverse the ring counter-clockwise to update all nodes whosw finger table entries should refer to n
+// traverse the ring counter-clockwise to update all nodes whose finger table entries should refer to n
 func (n *DHTNode) updateOthers() {
 	for i := 1; i <= m; i++ {
 
@@ -119,14 +117,23 @@ func (n *DHTNode) updateOthers() {
 		y.Sub(&nId, &y)
 
 		p := n.findPredecessor(y.String())
-		
+
 		p.updateFingerTable(n, i)
 	}
 }
 
-
+// if s should be the i:th finger of n -> update n's finger table entry i with n
 func (n *DHTNode) updateFingerTable(s *DHTNode, i int) {
-	//...
+	if between(
+		[]byte(n.id),
+		[]byte(n.fingerTable[i].node.id),
+		[]byte(s.id),
+		) {
+			n.fingerTable[i].node = s
+			// get first node preceeding n
+			p := n.predecessor
+			p.updateFingerTable(s, i)
+	}
 }
 
 // returns a pointer to the node which is responsible for the data corresponding to hashKey, traversing the ring linearly
