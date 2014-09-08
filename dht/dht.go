@@ -6,6 +6,7 @@ import (
 
 type DHTNode struct {
 	id, adress, port string
+	predecessor      *DHTNode
 	successor        *DHTNode
 	fingerTable      []Finger
 }
@@ -28,18 +29,24 @@ func (n *DHTNode) addToRing(nodeToAdd *DHTNode) {
 
 	// If n is alone
 	if n.successor == nil {
+		nodeToAdd.predecessor = n
 		nodeToAdd.successor = n
+		n.predecessor = nodeToAdd
 		n.successor = nodeToAdd
 		m := len(n.id)
 		for k:= 1; k < m; k++ {
 			n.fingerTable[k].startId = n.id
 			n.fingerTable[k].node = n
 		}
-	} else if between([]byte(n.id), []byte(n.successor.id), []byte(nodeToAdd.id)) {
-		nodeToAdd.successor = n.successor
-		n.successor = nodeToAdd
 	} else {
-		n.successor.addToRing(nodeToAdd)
+		node2 := n.findSuccessor(nodeToAdd.id)
+		node1 := node2.predecessor
+
+		nodeToAdd.predecessor = node1
+		nodeToAdd.successor = node2
+
+		node1.successor = nodeToAdd
+		node2.predecessor = nodeToAdd
 	}
 }
 
@@ -86,6 +93,10 @@ func (n *DHTNode) updateFingertable(k, m int) {
 	//}
 }
 
+func (n *DHTNode) updateOthers() {
+	
+}
+
 func makeDHTNode(idPointer *string, adress string, port string) *DHTNode {
 	var id string
 
@@ -97,3 +108,23 @@ func makeDHTNode(idPointer *string, adress string, port string) *DHTNode {
 
 	return &DHTNode{id: id, adress: adress, port: port}
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
