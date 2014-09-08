@@ -2,9 +2,9 @@ package dht
 
 import (
 	"fmt"
-	"strconv"
+//	"strconv"
 	"math/big"
-	"math"
+//	"math"
 )
 
 const m = 3
@@ -107,7 +107,6 @@ func (nodeToUpdateTableOn *DHTNode) initFingerTable(n *DHTNode) {
 /*
 func (n *DHTNode) updateFingertable(k, m int) {
 	calcFinger([]byte(n.id), k, m)
-	//m := len(n.id)
 	//for k:= 1; k < m; k++ {
 	// or in place n.fingertable[i-1]
 	//n.fingertable[k], _ = calcFinger([]byte(n.id), k, m)
@@ -116,12 +115,22 @@ func (n *DHTNode) updateFingertable(k, m int) {
 */
 func (n *DHTNode) updateOthers() {
 	for i := 1; i <= m; i++ {
-		// find last node p whose i:th finger might point to n
+		// find last node p whose i:th finger might be n
 		nId := big.Int{}
 		nId.SetBytes([]byte(n.id))
-		someId := nId - Exp2(i-1)
-		p := findPredecessor(FormatInt(someId, 10))
+		fmt.Println(nId)
+		/*someId := nId - Exp2(i-1)
+
+		two := big.NewInt(2)
+		addend := big.Int{}
+		addend.Exp(two, big.NewInt(int64(k-1)), nil)
+
+		p := findPredecessor(FormatInt(someId, 10))*/
 	}
+}
+
+func (n *DHTNode) updateFingerTable(s string, i int) {
+	//...
 }
 
 // returns a pointer to the node which is responsible for the data corresponding to hashKey, traversing the ring linearly

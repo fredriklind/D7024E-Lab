@@ -181,11 +181,11 @@ func TestFinger3bits(t *testing.T) {
 	fmt.Println("")
 	node3.testCalcFingers(3, 3)*/
 
-	node3.updateFingertable(1, 3)
+	node3.updateFingerTable(1, 3)
 	fmt.Println("")
-	node3.updateFingertable(2, 3)
+	node3.updateFingerTable(2, 3)
 	fmt.Println("")
-	node3.updateFingertable(3, 3)
+	node3.updateFingerTable(3, 3)
 
 }
 
@@ -294,9 +294,9 @@ func TestFinger160bits(t *testing.T) {
 	node3.testCalcFingers(160, 160)
 	fmt.Println("")*/
 
-	node3.updateFingertable(0, 160)
+	node3.updateFingerTable(0, 160)
 	fmt.Println("")
-	node3.updateFingertable(1, 160)
+	node3.updateFingerTable(1, 160)
 	fmt.Println("")
 	/*node3.testCalcFingers(80, 160)
 	fmt.Println("")
