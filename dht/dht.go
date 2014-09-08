@@ -104,15 +104,6 @@ func (nodeToUpdateTableOn *DHTNode) initFingerTable(n *DHTNode) {
 	}
 }
 
-// returns a pointer to the node which is responsible for the data corresponding to hashKey, traversing the ring linearly
-func (n *DHTNode) lookup(hashKey string) *DHTNode {
-	if between([]byte(n.id), []byte(n.successor().id), []byte(hashKey)) {
-		return n
-	} else {
-
-		return n.successor().lookup(hashKey)
-	}
-}
 /*
 func (n *DHTNode) updateFingertable(k, m int) {
 	calcFinger([]byte(n.id), k, m)
@@ -130,6 +121,16 @@ func (n *DHTNode) updateOthers() {
 		nId.SetBytes([]byte(n.id))
 		someId := nId - Exp2(i-1)
 		p := findPredecessor(FormatInt(someId, 10))
+	}
+}
+
+// returns a pointer to the node which is responsible for the data corresponding to hashKey, traversing the ring linearly
+func (n *DHTNode) lookup(hashKey string) *DHTNode {
+	if between([]byte(n.id), []byte(n.successor().id), []byte(hashKey)) {
+		return n
+	} else {
+
+		return n.successor().lookup(hashKey)
 	}
 }
 
