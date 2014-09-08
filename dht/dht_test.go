@@ -166,8 +166,8 @@ func TestFinger3bits(t *testing.T) {
 	node6.join(node1)
 	node7.join(node2)
 
-	//	var d big.Int
-	//	d = distance(node0.id, node1.id, 3)
+//	var d big.Int
+//	d = distance(node0.id, node1.id, 3)
 
 	fmt.Println("------------------------------------------------------------------------------------------------")
 	fmt.Println("RING STRUCTURE")
@@ -175,18 +175,13 @@ func TestFinger3bits(t *testing.T) {
 	node2.printRing()
 	fmt.Println("------------------------------------------------------------------------------------------------")
 
-	/*node3.testCalcFingers(1, 3)
+/*
+	node3.testCalcFingers(1, 3)
 	fmt.Println("")
 	node3.testCalcFingers(2, 3)
 	fmt.Println("")
-	node3.testCalcFingers(3, 3)*/
-
-	node3.updateFingerTable(1, 3)
-	fmt.Println("")
-	node3.updateFingerTable(2, 3)
-	fmt.Println("")
-	node3.updateFingerTable(3, 3)
-
+	node3.testCalcFingers(3, 3)
+*/
 }
 
 /*
@@ -292,17 +287,7 @@ func TestFinger160bits(t *testing.T) {
 	node3.testCalcFingers(120, 90)
 	fmt.Println("")
 	node3.testCalcFingers(160, 160)
-	fmt.Println("")*/
+	fmt.Println("")
+*/
 
-	node3.updateFingerTable(0, 160)
-	fmt.Println("")
-	node3.updateFingerTable(1, 160)
-	fmt.Println("")
-	/*node3.testCalcFingers(80, 160)
-	fmt.Println("")
-	node3.testCalcFingers(120, 90)
-	fmt.Println("")
-	node3.testCalcFingers(160, 160)
-	fmt.Println("")*/
 }
-

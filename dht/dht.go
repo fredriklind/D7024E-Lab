@@ -129,7 +129,7 @@ func (n *DHTNode) updateOthers() {
 	}
 }
 
-func (n *DHTNode) updateFingerTable(s string, i int) {
+func (n *DHTNode) updateFingerTable(s *DHTNode, i int) {
 	//...
 }
 
