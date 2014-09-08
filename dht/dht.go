@@ -6,6 +6,7 @@ import (
 
 type DHTNode struct {
 	id, adress, port string
+	predecessor      *DHTNode
 	successor        *DHTNode
 	fingerTable      []Finger
 }
@@ -30,8 +31,9 @@ func (n *DHTNode) addToRing(nodeToAdd *DHTNode) {
 	if n.successor == nil {
 		nodeToAdd.successor = n
 		n.successor = nodeToAdd
-		m := len(n.id)
-		for k:= 1; k < m; k++ {
+		m := len([]byte(n.id))
+		fmt.Println(m)
+		for k := 1; k < m; k++ {
 			n.fingerTable[k].startId = n.id
 			n.fingerTable[k].node = n
 		}
@@ -68,11 +70,38 @@ func (n *DHTNode) closestPrecedingFinger(id string) *DHTNode {
 	return n
 }
 
+func (n *DHTNode) initFingerTable(nodeToUpdateTableOn *DHTNode) {
+
+	// Find successor node of nodeToUpdateTableOn using startId,
+	// ---- IS startID SET? ----
+	nodeToUpdateTableOn.fingerTable[1].node = n.findSuccessor(nodeToUpdateTableOn.fingerTable[1].startId)
+
+	// Set nodeToUpdateTableOn as the new predecessor the node it's being inserted after
+	nodeToUpdateTableOn.predecessor = nodeToUpdateTableOn.fingerTable[1].node.predecessor
+
+	// Update the old predecessor of the node that nodeToUpdateTableOn is inserted before
+	nodeToUpdateTableOn.fingerTable[1].node.predecessor = nodeToUpdateTableOn
+
+	m := len([]byte(n.id))
+
+	for i := 1; i <= (m - 1); i++ {
+		if between(
+			[]byte(nodeToUpdateTableOn.id),
+			[]byte(nodeToUpdateTableOn.fingerTable[i].node.id),
+			[]byte(nodeToUpdateTableOn.fingerTable[i+1].startId),
+		) {
+		} else {
+			nodeToUpdateTableOn.fingerTable[i+1].node = n.findSuccessor(nodeToUpdateTableOn.fingerTable[i+1].startId)
+		}
+	}
+}
+
 // returns a pointer to the node which is responsible for the data corresponding to hashKey, traversing the ring linearly
 func (n *DHTNode) lookup(hashKey string) *DHTNode {
 	if between([]byte(n.id), []byte(n.successor.id), []byte(hashKey)) {
 		return n
 	} else {
+
 		return n.successor.lookup(hashKey)
 	}
 }
