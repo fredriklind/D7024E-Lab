@@ -104,21 +104,26 @@ func (nodeToUpdateTableOn *DHTNode) initFingerTable(n *DHTNode) {
 	}
 }
 
+// traverse the ring counter-clockwise to update all nodes whosw finger table entries should refer to n
 func (n *DHTNode) updateOthers() {
 	for i := 1; i <= m; i++ {
+
 		// find last node p whose i:th finger might be n
 		nId := big.Int{}
 		nId.SetBytes([]byte(n.id))
-		fmt.Println(nId)
-		/*someId := nId - Exp2(i-1)
 
+		y := big.Int{}
 		two := big.NewInt(2)
-		addend := big.Int{}
-		addend.Exp(two, big.NewInt(int64(k-1)), nil)
 
-		p := findPredecessor(FormatInt(someId, 10))*/
+		y.Exp(two, big.NewInt(int64(i-1)), nil)
+		y.Sub(&nId, &y)
+
+		p := n.findPredecessor(y.String())
+		
+		p.updateFingerTable(n, i)
 	}
 }
+
 
 func (n *DHTNode) updateFingerTable(s *DHTNode, i int) {
 	//...
