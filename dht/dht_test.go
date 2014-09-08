@@ -41,6 +41,7 @@ func TestRingSetup(t *testing.T) {
 	node6.join(node2)
 	node7.join(node2)
 	node8.join(node3)
+	node9.join(node3)
 
 	fmt.Println("------------------------------------------------------------------------------------------------")
 	fmt.Println("RING STRUCTURE")
@@ -78,6 +79,7 @@ func TestLookup(t *testing.T) {
 	node6.join(node3)
 	node7.join(node3)
 	node8.join(node4)
+	node9.join(node4)
 
 	fmt.Println("------------------------------------------------------------------------------------------------")
 	fmt.Println("RING STRUCTURE")

@@ -104,15 +104,6 @@ func (nodeToUpdateTableOn *DHTNode) initFingerTable(n *DHTNode) {
 	}
 }
 
-/*
-func (n *DHTNode) updateFingertable(k, m int) {
-	calcFinger([]byte(n.id), k, m)
-	//for k:= 1; k < m; k++ {
-	// or in place n.fingertable[i-1]
-	//n.fingertable[k], _ = calcFinger([]byte(n.id), k, m)
-	//}
-}
-*/
 func (n *DHTNode) updateOthers() {
 	for i := 1; i <= m; i++ {
 		// find last node p whose i:th finger might be n
