@@ -34,7 +34,7 @@ func (n *DHTNode) addToRing(nodeToAdd *DHTNode) {
 		n.predecessor = nodeToAdd
 		n.successor = nodeToAdd
 		m := len(n.id)
-		for k:= 1; k < m; k++ {
+		for k:= 1; k <= m; k++ {
 			n.fingerTable[k].startId = n.id
 			n.fingerTable[k].node = n
 		}
