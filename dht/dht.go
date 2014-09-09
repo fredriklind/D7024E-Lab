@@ -35,12 +35,20 @@ func (n *DHTNode) printRing() {
 	}
 }
 
+func (n *DHTNode) printFingers() {
+	fmt.Printf("NodeId = %s\n", n.id)
+	for i := 1; i <= m; i++ {
+		fmt.Printf("FingerStartId = %s Node = %s\n", n.fingerTable[i].startId, n.fingerTable[i].node.id)
+	}
+}
+
 func (nodeToAdd *DHTNode) join(n *DHTNode) {
 
 	// If nodeToAdd is the only node in the network
 	if n == nil {
 		nodeToAdd.predecessor = nodeToAdd
 		for i := 1; i <= m; i++ {
+			nodeToAdd.fingerTable[i].startId, _ = calcFinger([]byte(nodeToAdd.id), i, m)
 			nodeToAdd.fingerTable[i].node = nodeToAdd
 		}
 	} else {
@@ -80,6 +88,7 @@ func (nodeToUpdateTableOn *DHTNode) initFingerTable(n *DHTNode) {
 	nodeToUpdateTableOn.fingerTable[1].startId, _ = calcFinger([]byte(nodeToUpdateTableOn.id), 1, m)
 	// Successor to first finger
 	nodeToUpdateTableOn.fingerTable[1].node = n.findSuccessor(nodeToUpdateTableOn.fingerTable[1].startId)
+	fmt.Printf("Finger 1 for node %s is set to %s\n", nodeToUpdateTableOn.id, nodeToUpdateTableOn.fingerTable[1].node.id)
 
 	// Set nodeToUpdateTableOns predecessor to the the node it's being inserted after
 	nodeToUpdateTableOn.predecessor = nodeToUpdateTableOn.successor().predecessor
@@ -96,8 +105,10 @@ func (nodeToUpdateTableOn *DHTNode) initFingerTable(n *DHTNode) {
 			[]byte(nodeToUpdateTableOn.fingerTable[i+1].startId),
 		) {
 			nodeToUpdateTableOn.fingerTable[i+1].node = nodeToUpdateTableOn.fingerTable[i].node
+			fmt.Printf("Finger %d for node %s is set to %s\n", i+1, nodeToUpdateTableOn.id, nodeToUpdateTableOn.fingerTable[i+1].node.id)
 		} else {
 			nodeToUpdateTableOn.fingerTable[i+1].node = n.findSuccessor(nodeToUpdateTableOn.fingerTable[i+1].startId)
+			fmt.Printf("Finger %d for node %s is set to %s\n", i+1, nodeToUpdateTableOn.id, nodeToUpdateTableOn.fingerTable[i+1].node.id)	
 		}
 	}
 }
@@ -115,7 +126,7 @@ func (n *DHTNode) updateOthers() {
 
 		y.Exp(two, big.NewInt(int64(i-1)), nil)
 		y.Sub(&nId, &y)
-
+		// y = nId - 2^(i-1)
 		p := n.findPredecessor(y.String())
 
 		p.updateFingerTable(n, i)
