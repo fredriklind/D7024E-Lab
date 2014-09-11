@@ -158,17 +158,17 @@ func TestFinger3bits(t *testing.T) {
 	node6 := makeDHTNode(&id6, "localhost", "1117")
 	node7 := makeDHTNode(&id7, "localhost", "1118")*/
 
-	node0.join(nil)
-	node0.printFingers()
-
-	node1.join(node0)
-	node0.printFingers()
-	node1.printFingers()
-
-	node2.join(node0)
-	node0.printFingers()
-	node1.printFingers()
+	node2.join(nil)
 	node2.printFingers()
+
+	node1.join(node2)
+	node2.printFingers()
+	node1.printFingers()
+
+	node0.join(node2)
+	node2.printFingers()
+	node1.printFingers()
+	node0.printFingers()
 
 	/*node3.join(node0)
 	node4.join(node1)
