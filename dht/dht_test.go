@@ -140,6 +140,7 @@ import (
  */
 
 func TestFinger3bits(t *testing.T) {
+	fmt.Println("Testing...")
 	id0 := "00"
 	id1 := "01"
 	id2 := "02"
@@ -201,6 +202,18 @@ func TestFinger3bits(t *testing.T) {
 		fmt.Println("")
 		node3.testCalcFingers(3, 3)
 	*/
+}
+
+func TestDebug(t *testing.T) {
+
+	id0 := "00"
+	id1 := "01"
+
+	node0 := makeDHTNode(&id0, "localhost", "1111")
+	node1 := makeDHTNode(&id1, "localhost", "1112")
+
+	node0.join(nil)
+	node1.join(node0)
 }
 
 /*
