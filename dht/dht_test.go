@@ -212,8 +212,8 @@ func TestDebug(t *testing.T) {
 	node0 := makeDHTNode(&id0, "localhost", "1111")
 	node1 := makeDHTNode(&id1, "localhost", "1112")
 
-	node0.join(nil)
-	node1.join(node0)
+	node1.join(nil)
+	node0.join(node1)
 }
 
 /*

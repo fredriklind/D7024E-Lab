@@ -39,8 +39,8 @@ func nextId(id string) string {
 	// 2^m
 	two.Exp(two, mbig, nil)
 	y.Mod(&y, two)
-	//return y.String()
-	return id
+	return y.String()
+	//return id
 }
 
 func prevId(id string) string {
@@ -52,12 +52,12 @@ func prevId(id string) string {
 	one := big.NewInt(1)
 	mbig := big.NewInt(m)
 
-	y.Add(&nId, one)
+	y.Sub(&nId, one)
 	// 2^m
 	two.Exp(two, mbig, nil)
 	y.Mod(&y, two)
-	//return y.String()
-	return id
+	return y.String()
+	//return id
 }
 
 func (n *DHTNode) printRing() {
@@ -125,15 +125,16 @@ func (n *DHTNode) findSuccessor(id string) *DHTNode {
 
 func (n *DHTNode) findPredecessor(id string) *DHTNode {
 	n2 := n
-	for !between([]byte(nextId(n2.id)), []byte(n2.successor().id), []byte(id)) {
+	for !between([]byte(nextId(n2.id)), []byte(nextId(n2.successor().id)), []byte(id)) {
 		n2 = n2.closestPrecedingFinger(id)
 	}
 	return n2
 }
 
 func (n *DHTNode) closestPrecedingFinger(id string) *DHTNode {
+	fmt.Printf("Finding closest preceding finger to to %s using %s", id, n.id)
 	for i := m; i > 0; i-- {
-		if between([]byte(nextId(n.id)), []byte(prevId(id)), []byte(n.fingerTable[i].node.id)) {
+		if between([]byte(nextId(n.id)), []byte(id), []byte(n.fingerTable[i].node.id)) {
 			return n.fingerTable[i].node
 		}
 	}
@@ -147,7 +148,9 @@ func (nodeToUpdateTableOn *DHTNode) initFingerTable(n *DHTNode) {
 	// Calculating first finger
 	nodeToUpdateTableOn.fingerTable[1].startId, _ = calcFinger([]byte(nodeToUpdateTableOn.id), 1, m)
 	// Successor to first finger
+
 	nodeToUpdateTableOn.fingerTable[1].node = n.findSuccessor(nodeToUpdateTableOn.fingerTable[1].startId)
+	fmt.Printf("Node %s first finger is %s \n", nodeToUpdateTableOn.id, nodeToUpdateTableOn.fingerTable[1].node.id)
 	//fmt.Printf("Due to initFingerTable: Finger 1 for node %s is set to %s\n", nodeToUpdateTableOn.id, nodeToUpdateTableOn.fingerTable[1].node.id)
 
 	// Set nodeToUpdateTableOns predecessor to the the node it's being inserted after
@@ -161,7 +164,7 @@ func (nodeToUpdateTableOn *DHTNode) initFingerTable(n *DHTNode) {
 		nodeToUpdateTableOn.fingerTable[i+1].startId, _ = calcFinger([]byte(nodeToUpdateTableOn.id), i+1, m)
 		if between(
 			[]byte(nodeToUpdateTableOn.id),
-			[]byte(prevId(nodeToUpdateTableOn.fingerTable[i].node.id)),
+			[]byte(nodeToUpdateTableOn.fingerTable[i].node.id),
 			[]byte(nodeToUpdateTableOn.fingerTable[i+1].startId),
 		) {
 			nodeToUpdateTableOn.fingerTable[i+1].node = nodeToUpdateTableOn.fingerTable[i].node
@@ -200,19 +203,19 @@ func (n *DHTNode) updateOthers() {
 
 // if s should be the i:th finger of n -> update n's finger table entry i with n
 func (n *DHTNode) updateFingerTable(s *DHTNode, i int) {
-	//	if (s.id != n.id) {
-	if between(
-		[]byte(n.id),
-		[]byte(prevId(n.fingerTable[i].node.id)),
-		[]byte(s.id),
-	) {
-		n.fingerTable[i].node = s
-		//fmt.Printf("Due to updateOthers: Node %s finger %d is set to %s\n", n.id, i, s.id)
-		// get first node preceeding n
-		p := n.predecessor
-		p.updateFingerTable(s, i)
+	if s.id != n.id {
+		if between(
+			[]byte(n.id),
+			[]byte(n.fingerTable[i].node.id),
+			[]byte(s.id),
+		) {
+			n.fingerTable[i].node = s
+			//fmt.Printf("Due to updateOthers: Node %s finger %d is set to %s\n", n.id, i, s.id)
+			// get first node preceeding n
+			p := n.predecessor
+			p.updateFingerTable(s, i)
+		}
 	}
-	//	}
 }
 
 // returns a pointer to the node which is responsible for the data corresponding to hashKey, traversing the ring linearly
