@@ -140,40 +140,44 @@ import (
  */
 
 func TestFinger3bits(t *testing.T) {
-	fmt.Println("Testing...")
-	id0 := "00"
+//	id0 := "00"
 	id1 := "01"
 	id2 := "02"
-	/*id3 := "03"
-	id4 := "04"
-	id5 := "05"
+	id3 := "03"
+	//id4 := "04"
+	/*id5 := "05"
 	id6 := "06"
 	id7 := "07"*/
 
-	node0 := makeDHTNode(&id0, "localhost", "1111")
+//	node0 := makeDHTNode(&id0, "localhost", "1111")
 	node1 := makeDHTNode(&id1, "localhost", "1112")
 	node2 := makeDHTNode(&id2, "localhost", "1113")
-	/*node3 := makeDHTNode(&id3, "localhost", "1114")
-	node4 := makeDHTNode(&id4, "localhost", "1115")
-	node5 := makeDHTNode(&id5, "localhost", "1116")
+	node3 := makeDHTNode(&id3, "localhost", "1114")
+//	node4 := makeDHTNode(&id4, "localhost", "1115")
+	/*node5 := makeDHTNode(&id5, "localhost", "1116")
 	node6 := makeDHTNode(&id6, "localhost", "1117")
 	node7 := makeDHTNode(&id7, "localhost", "1118")*/
 
-	node2.join(nil)
-	node2.printFingers()
 
-	node1.join(node2)
-	node2.printFingers()
-	node1.printFingers()
+	initTwoNodeRing(node1, node2)
+	node1.printRing()
+//	node2.join(nil)
+//	node2.printFingers()
 
-	node0.join(node2)
-	node2.printFingers()
-	node1.printFingers()
-	node0.printFingers()
+//	node1.join(node2)
+//	node2.printFingers()
+//	node1.printFingers()
 
-	/*node3.join(node0)
-	node4.join(node1)
-	node5.join(node1)
+//	node0.join(node2)
+//	node2.printFingers()
+//	node1.printFingers()
+//	node0.printFingers()
+
+	node3.join(node1)
+	node1.printRing()
+//	node4.join(node1)
+	//node1.printRing()
+	/*node5.join(node1)
 	node6.join(node1)
 	node7.join(node2)
 
