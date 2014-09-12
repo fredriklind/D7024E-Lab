@@ -209,7 +209,7 @@ func TestFinger3bits(t *testing.T) {
 
 func TestDebug(t *testing.T) {
 
-	id0 := "00"
+	//id0 := "00"
 	id1 := "01"
 	id2 := "02"
 	id3 := "03"
@@ -218,14 +218,45 @@ func TestDebug(t *testing.T) {
 	id6 := "06"
 	id7 := "07"
 
-	node0 := makeDHTNode(&id0, "localhost", "1111")
+	//node0 := makeDHTNode(&id0, "localhost", "1111")
 	node1 := makeDHTNode(&id1, "localhost", "1112")
 	node2 := makeDHTNode(&id2, "localhost", "1113")
-	//	node3 := makeDHTNode(&id3, "localhost", "1114")
-	//	node4 := makeDHTNode(&id4, "localhost", "1115")
-	/*node5 := makeDHTNode(&id5, "localhost", "1116")
+	node3 := makeDHTNode(&id3, "localhost", "1114")
+	node4 := makeDHTNode(&id4, "localhost", "1115")
+	node5 := makeDHTNode(&id5, "localhost", "1116")
 	node6 := makeDHTNode(&id6, "localhost", "1117")
-	node7 := makeDHTNode(&id7, "localhost", "1118")*/
+	node7 := makeDHTNode(&id7, "localhost", "1118")
+
+	//node0.setSuccessor(node1)
+	//node0.predecessor = node7
+
+	node1.setSuccessor(node2)
+	node1.predecessor = node7
+
+	node2.setSuccessor(node3)
+	node2.predecessor = node1
+
+	node3.setSuccessor(node4)
+	node3.predecessor = node2
+
+	node4.setSuccessor(node5)
+	node4.predecessor = node3
+
+	node5.setSuccessor(node6)
+	node5.predecessor = node4
+
+	node6.setSuccessor(node7)
+	node6.predecessor = node5
+
+	node7.setSuccessor(node1)
+	node7.predecessor = node6
+
+	testLookup(node6, "00")
+}
+
+func testLookup(n *DHTNode, id string) {
+	var result = n.lookup(id)
+	fmt.Printf("%s.lookup(%s) returns %s\n", n.id, id, result.id)
 }
 
 /*

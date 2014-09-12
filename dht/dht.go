@@ -280,7 +280,7 @@ func (n *DHTNode) updateFingerTable(s *DHTNode, i int) {
 
 // returns a pointer to the node which is responsible for the data corresponding to hashKey, traversing the ring linearly
 func (n *DHTNode) lookup(hashKey string) *DHTNode {
-	fmt.Printf("Looking up %s\n", hashKey)
+	//fmt.Printf("Looking up %s\n", hashKey)
 	if between([]byte(nextId(n.id)), []byte(nextId(n.successor().id)), []byte(hashKey)) {
 		return n.successor()
 	} else {
