@@ -3,7 +3,6 @@ package dht
 import (
 	"fmt"
 	"encoding/hex"
-	"math/big"
 )
 
 func (n *DHTNode) printNode2() {
