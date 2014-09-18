@@ -76,20 +76,6 @@ func prevId(id string) string {
 	//	return id
 }
 
-func initTwoNodeRing(node1, node2 *DHTNode) {
-	node1.predecessor = node2
-	node2.predecessor = node1
-	for i := 1; i <= m; i++ {
-		node1.fingerTable[i].startId, _ = calcFinger([]byte(node1.id), i, m)
-
-		node2.fingerTable[i].startId, _ = calcFinger([]byte(node2.id), i, m)
-		node2.fingerTable[i].node = node1
-	}
-	node1.fingerTable[1].node = node2
-	node1.fingerTable[2].node = node1
-	node1.fingerTable[3].node = node1
-}
-
 func (n *DHTNode) printRing() {
 	n.printNode()
 	var visited []string
