@@ -36,45 +36,7 @@ func (n *DHTNode) printRing2() {
 
 func hexStringToByteArr(hexId string) []byte {
 	var hexbytes []byte
-	hexbytes, _ = hex.DecodeString(hexId) //([]byte, error)
+	hexbytes, _ = hex.DecodeString(hexId)
 	return hexbytes
 }
-
-func byteArrTobigIntToString(nId []byte) {
-
-	nBigInt := big.Int{}
-	nBigInt.SetBytes(nId)
-	fmt.Println(nBigInt.String())
-
-	resultBytes := nBigInt.Bytes()
-	fmt.Printf("%q\n", resultBytes)
-
-	resultHex := fmt.Sprintf("%x", resultBytes)
-	fmt.Printf("%s\n", resultHex)
-	fmt.Println("")
-}
-
-
-	/*var hex string
-	var bytes []byte
-	
-	fmt.Println(hexbytes)
-
-	fmt.Println([]byte(node7.id))
-	hex, bytes = calcFinger([]byte(node7.id), 1, 3)
-
-	fmt.Println(hex)
-	fmt.Println(bytes)*/
-
-
-
-
-
-
-
-
-
-
-
-
 
