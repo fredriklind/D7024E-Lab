@@ -93,12 +93,9 @@ func calcFinger(n []byte, k int, m int) (string, []byte) {
 	// -- extension to calcFinger below --
 
 	if (result.String() == "0") {
-		//fmt.Println("0 -------------------<-------")
 		//resultBytes = ?
 		resultHex = "00"
 	}
-
-	//fmt.Printf("finger (hex) %s\n", resultHex)
 
 	// -------- end of extension --------
 

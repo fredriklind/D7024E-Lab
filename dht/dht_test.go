@@ -65,7 +65,7 @@ func TestDebug2(t *testing.T) {
 	fmt.Printf("PrevId to %s is %s\n", "06", prevId("06"))
 	fmt.Printf("PrevId to %s is %s\n", "07", prevId("07"))*/
 
-//	node0.printRing2()
+	node0.printRing2()
 
 /*	fmt.Println([]byte(node0.id))
 	fmt.Println([]byte(node1.id))
