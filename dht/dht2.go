@@ -39,3 +39,13 @@ func hexStringToByteArr(hexId string) []byte {
 	return hexbytes
 }
 
+// Returns the node whose responsible for the data corresponding to hashKey, traversing the ring linearly
+func (n *DHTNode) linearLookup(hashKey string) *DHTNode {
+//	fmt.Printf("Looking up %s\n", hashKey)
+	if between(hexStringToByteArr(nextId(n.predecessor.id)), hexStringToByteArr(nextId(n.id)), hexStringToByteArr(hashKey)) {
+		return n
+	} else {
+		return n.predecessor.lookup(hashKey)
+	}
+}
+
