@@ -227,6 +227,11 @@ func (n *DHTNode) updateOthers() {
 		//		fmt.Printf("in updateOthers: nId=%s, i=%d y=%s\n", nId.String(), i, y.String())
 
 		p := n.lookup(returnString)
+
+		if p.id == "00" {
+			fmt.Printf("About to update finger %d on 00, p.id = %s, returnString = %s, n.id = %s\n", i, p.id, returnString, n.id)
+		}
+
 		if p.id != returnString {
 			p = p.predecessor
 		}
@@ -236,7 +241,6 @@ func (n *DHTNode) updateOthers() {
 		if p.id != n.id {
 			p.updateFingerTable(n, i)
 		}
-
 		//		fmt.Printf("%s.uptadeFingertable(%s,%d)\n", p.id, n.id, i)
 	}
 }
@@ -251,6 +255,10 @@ func (n *DHTNode) updateFingerTable(s *DHTNode, i int) {
 	) {
 		n.fingerTable[i].node = s
 
+		if n.id == "00" {
+			fmt.Printf("Updating finger table on %s: setting finger %d to %s \n", n.id, i, s.id)
+		}
+
 		// Get last node preceeding n, check that it hasn´t come round to the node just added (s)
 		p := n.predecessor
 		if p.id != s.id {
@@ -259,13 +267,12 @@ func (n *DHTNode) updateFingerTable(s *DHTNode, i int) {
 	}
 }
 
-// Returns the node whose responsible for the data corresponding to hashKey, traversing the ring linearly
-func (n *DHTNode) lookup(hashKey string) *DHTNode {
-	//	fmt.Printf("Looking up %s\n", hashKey)
-	if between(hexStringToByteArr(nextId(n.predecessor.id)), hexStringToByteArr(nextId(n.id)), hexStringToByteArr(hashKey)) {
+// Returns the node whose responsible for the data corresponding to id, traversing the ring using finger tables
+func (n *DHTNode) lookup(id string) *DHTNode {
+	if between(hexStringToByteArr(nextId(n.predecessor.id)), hexStringToByteArr(nextId(n.id)), hexStringToByteArr(id)) {
 		return n
 	} else {
-		return n.predecessor.lookup(hashKey)
+		return n.findSuccessor(id)
 	}
 }
 
