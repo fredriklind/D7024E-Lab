@@ -27,17 +27,16 @@ func TestDebug2(t *testing.T) {
 	node5 := makeDHTNode(&id5, "localhost", "1116")
 	node6 := makeDHTNode(&id6, "localhost", "1117")
 	node7 := makeDHTNode(&id7, "localhost", "1118")
-/*
-	node0.printNode2()
-	node1.printNode2()
-	node2.printNode2()
-	node3.printNode2()
-	node4.printNode2()
-	node5.printNode2()
-	node6.printNode2()
-	node7.printNode2()*/
+	/*
+		node0.printNode2()
+		node1.printNode2()
+		node2.printNode2()
+		node3.printNode2()
+		node4.printNode2()
+		node5.printNode2()
+		node6.printNode2()
+		node7.printNode2()*/
 
-	
 	node0.join(nil)
 	node1.join(node0)
 	node5.join(node0)
@@ -56,43 +55,43 @@ func TestDebug2(t *testing.T) {
 	node6.printNodeWithFingers()
 	node7.printNodeWithFingers()
 
-/*	fmt.Printf("PrevId to %s is %s\n", "00", prevId("00"))	// prevId och nextId testade!
-	fmt.Printf("PrevId to %s is %s\n", "01", prevId("01"))
-	fmt.Printf("PrevId to %s is %s\n", "02", prevId("02"))
-	fmt.Printf("PrevId to %s is %s\n", "03", prevId("03"))
-	fmt.Printf("PrevId to %s is %s\n", "04", prevId("04"))
-	fmt.Printf("PrevId to %s is %s\n", "05", prevId("05"))
-	fmt.Printf("PrevId to %s is %s\n", "06", prevId("06"))
-	fmt.Printf("PrevId to %s is %s\n", "07", prevId("07"))*/
+	/*	fmt.Printf("PrevId to %s is %s\n", "00", prevId("00"))	// prevId och nextId testade!
+		fmt.Printf("PrevId to %s is %s\n", "01", prevId("01"))
+		fmt.Printf("PrevId to %s is %s\n", "02", prevId("02"))
+		fmt.Printf("PrevId to %s is %s\n", "03", prevId("03"))
+		fmt.Printf("PrevId to %s is %s\n", "04", prevId("04"))
+		fmt.Printf("PrevId to %s is %s\n", "05", prevId("05"))
+		fmt.Printf("PrevId to %s is %s\n", "06", prevId("06"))
+		fmt.Printf("PrevId to %s is %s\n", "07", prevId("07"))*/
 
 	node4.printRing2()
 
-/*	fmt.Println([]byte(node0.id))
-	fmt.Println([]byte(node1.id))
-	fmt.Println([]byte(node2.id))
-	fmt.Println([]byte(node3.id))
-	fmt.Println([]byte(node4.id))
-	fmt.Println([]byte(node5.id))
-	fmt.Println([]byte(node6.id))
-	fmt.Println([]byte(node7.id))
+	/*	fmt.Println([]byte(node0.id))
+		fmt.Println([]byte(node1.id))
+		fmt.Println([]byte(node2.id))
+		fmt.Println([]byte(node3.id))
+		fmt.Println([]byte(node4.id))
+		fmt.Println([]byte(node5.id))
+		fmt.Println([]byte(node6.id))
+		fmt.Println([]byte(node7.id))
 
-	fmt.Println(hexStringToByteArr(node0.id))
-	fmt.Println(hexStringToByteArr(node1.id))
-	fmt.Println(hexStringToByteArr(node2.id))
-	fmt.Println(hexStringToByteArr(node3.id))	
-	fmt.Println(hexStringToByteArr(node4.id))
-	fmt.Println(hexStringToByteArr(node5.id))
-	fmt.Println(hexStringToByteArr(node6.id))
-	fmt.Println(hexStringToByteArr(node7.id))
+		fmt.Println(hexStringToByteArr(node0.id))
+		fmt.Println(hexStringToByteArr(node1.id))
+		fmt.Println(hexStringToByteArr(node2.id))
+		fmt.Println(hexStringToByteArr(node3.id))
+		fmt.Println(hexStringToByteArr(node4.id))
+		fmt.Println(hexStringToByteArr(node5.id))
+		fmt.Println(hexStringToByteArr(node6.id))
+		fmt.Println(hexStringToByteArr(node7.id))
 
-	byteArrTobigIntToString(hexStringToByteArr(node0.id))
-	byteArrTobigIntToString(hexStringToByteArr(node1.id))
-	byteArrTobigIntToString(hexStringToByteArr(node2.id))
-	byteArrTobigIntToString(hexStringToByteArr(node3.id))
-	byteArrTobigIntToString(hexStringToByteArr(node4.id))
-	byteArrTobigIntToString(hexStringToByteArr(node5.id))
-	byteArrTobigIntToString(hexStringToByteArr(node6.id))
-	byteArrTobigIntToString(hexStringToByteArr(node7.id))*/
+		byteArrTobigIntToString(hexStringToByteArr(node0.id))
+		byteArrTobigIntToString(hexStringToByteArr(node1.id))
+		byteArrTobigIntToString(hexStringToByteArr(node2.id))
+		byteArrTobigIntToString(hexStringToByteArr(node3.id))
+		byteArrTobigIntToString(hexStringToByteArr(node4.id))
+		byteArrTobigIntToString(hexStringToByteArr(node5.id))
+		byteArrTobigIntToString(hexStringToByteArr(node6.id))
+		byteArrTobigIntToString(hexStringToByteArr(node7.id))*/
 }
 
 /*
@@ -254,8 +253,7 @@ func TestFinger3bits(t *testing.T) {
 	node6.join(node1)
 	node7.join(node2)
 
-	var calc, _ = calcFinger([]byte("07"), 1, 3)
-	fmt.Printf("calcFinger: '%s'\n", calc)
+	node0.printRing()
 }
 
 func TestDebug(t *testing.T) {
