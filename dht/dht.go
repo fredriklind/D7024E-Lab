@@ -255,10 +255,6 @@ func (n *DHTNode) updateFingerTable(s *DHTNode, i int) {
 	) {
 		n.fingerTable[i].node = s
 
-		if n.id == "00" {
-			fmt.Printf("Updating finger table on %s: setting finger %d to %s \n", n.id, i, s.id)
-		}
-
 		// Get last node preceeding n, check that it hasn´t come round to the node just added (s)
 		p := n.predecessor
 		if p.id != s.id {
