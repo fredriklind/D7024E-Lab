@@ -279,16 +279,25 @@ func TestFinger3bits(t *testing.T) {
 	node6.join(node1)
 	node7.join(node2)
 
+<<<<<<< HEAD
 	node2.printNodeWithFingers()
 	node0.printNodeWithFingers()
 	node1.printNodeWithFingers()
+=======
+	node0.printNodeWithFingers()
+	node1.printNodeWithFingers()
+	node2.printNodeWithFingers()
+>>>>>>> a38d6758c8ee8ab9599da0a680ef5b888704c7e0
 	node3.printNodeWithFingers()
 	node4.printNodeWithFingers()
 	node5.printNodeWithFingers()
 	node6.printNodeWithFingers()
 	node7.printNodeWithFingers()
+<<<<<<< HEAD
 
 //	node0.printRing2()
+=======
+>>>>>>> a38d6758c8ee8ab9599da0a680ef5b888704c7e0
 }
 
 func TestDebug(t *testing.T) {
@@ -407,45 +416,45 @@ func testLookup(n *DHTNode, id string) {
  * distance     508258282811496687056817668076520806659544776736
  */
 
-/*func TestFinger160bits(t *testing.T) {
-// note nil arg means automatically generate ID, e.g. f38f3b2dcc69a2093f258e31902e40ad33148385
-node1 := makeDHTNode(nil, "localhost", "1111")
-node2 := makeDHTNode(nil, "localhost", "1112")
-node3 := makeDHTNode(nil, "localhost", "1113")
-node4 := makeDHTNode(nil, "localhost", "1114")
-node5 := makeDHTNode(nil, "localhost", "1115")
-node6 := makeDHTNode(nil, "localhost", "1116")
-node7 := makeDHTNode(nil, "localhost", "1117")
-node8 := makeDHTNode(nil, "localhost", "1118")
-node9 := makeDHTNode(nil, "localhost", "1119")
+func TestFinger160bits(t *testing.T) {
+	// note nil arg means automatically generate ID, e.g. f38f3b2dcc69a2093f258e31902e40ad33148385
+	node1 := makeDHTNode(nil, "localhost", "1111")
+	node2 := makeDHTNode(nil, "localhost", "1112")
+	node3 := makeDHTNode(nil, "localhost", "1113")
+	node4 := makeDHTNode(nil, "localhost", "1114")
+	node5 := makeDHTNode(nil, "localhost", "1115")
+	node6 := makeDHTNode(nil, "localhost", "1116")
+	node7 := makeDHTNode(nil, "localhost", "1117")
+	node8 := makeDHTNode(nil, "localhost", "1118")
+	node9 := makeDHTNode(nil, "localhost", "1119")
 
-node1.join(nil)
-node2.join(node1)
-node3.join(node1)
-node4.join(node2)
-node5.join(node2)
-node6.join(node3)
-node7.join(node3)
-node8.join(node4)
-node9.join(node4)
+	node1.join(nil)
+	node2.join(node1)
+	node3.join(node1)
+	node4.join(node2)
+	node5.join(node2)
+	node6.join(node3)
+	node7.join(node3)
+	node8.join(node4)
+	node9.join(node4)
 
-fmt.Println("------------------------------------------------------------------------------------------------")
-fmt.Println("RING STRUCTURE")
-fmt.Println("------------------------------------------------------------------------------------------------")
-node1.printRing()
-fmt.Println("------------------------------------------------------------------------------------------------")
-*/
-/*
-	node3.testCalcFingers(0, 160)
-	fmt.Println("")
-	node3.testCalcFingers(1, 160)
-	fmt.Println("")
-	node3.testCalcFingers(80, 160)
-	fmt.Println("")
-	node3.testCalcFingers(120, 90)
-	fmt.Println("")
-	node3.testCalcFingers(160, 160)
-	fmt.Println("")
-*/
+	fmt.Println("------------------------------------------------------------------------------------------------")
+	fmt.Println("RING STRUCTURE")
+	fmt.Println("------------------------------------------------------------------------------------------------")
+	node1.printRing()
+	fmt.Println("------------------------------------------------------------------------------------------------")
 
-//}
+	/*
+		node3.testCalcFingers(0, 160)
+		fmt.Println("")
+		node3.testCalcFingers(1, 160)
+		fmt.Println("")
+		node3.testCalcFingers(80, 160)
+		fmt.Println("")
+		node3.testCalcFingers(120, 90)
+		fmt.Println("")
+		node3.testCalcFingers(160, 160)
+		fmt.Println("")
+	*/
+
+}
