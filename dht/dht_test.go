@@ -542,14 +542,20 @@ func TestFinger160bits(t *testing.T) {
 
 }
 
-func TestListen(t *testing.T) {
-	trans := Transport{listenAddress: "localhost:3000"}
-	trans.listen()
+func TestResponder(t *testing.T) {
+
 }
 
-func TestSend(t *testing.T) {
-	trans := Transport{}
-	msg := Msg{key: "Hello", src: "localhost:200", dst: "localhost:3000"}
+func TestSender(t *testing.T) {
+	block := make(chan bool)
+	node := makeDHTNode(nil, "localhost", "2000")
+	node.Requests = make(map[string]chan Msg)
 
-	trans.send(&msg)
+	fmt.Printf("Node %s created\n", node.id)
+	msg := &Msg{Method: "Hello", Src: "localhost:2000", Dst: "localhost:2000", WaitForResponse: true}
+
+	go node.listen()
+	go node.send(msg)
+
+	<-block
 }
