@@ -3,10 +3,101 @@ package dht
 import (
 	"fmt"
 	"testing"
+	"sort"
 )
 
 // test cases can be run by calling e.g. go test -test.run TestRingSetup
 // go run test will run all tests
+
+func TestFinger160bits2(t *testing.T) {
+
+	// note nil arg means automatically generate ID, e.g. f38f3b2dcc69a2093f258e31902e40ad33148385
+	node1 := makeDHTNode(nil, "localhost", "1111")
+	node2 := makeDHTNode(nil, "localhost", "1112")
+	node3 := makeDHTNode(nil, "localhost", "1113")
+	node4 := makeDHTNode(nil, "localhost", "1114")
+	node5 := makeDHTNode(nil, "localhost", "1115")
+	node6 := makeDHTNode(nil, "localhost", "1116")
+	node7 := makeDHTNode(nil, "localhost", "1117")
+	node8 := makeDHTNode(nil, "localhost", "1118")
+	node9 := makeDHTNode(nil, "localhost", "1119")
+
+	for i:=0; i<10; i++ {
+		fmt.Println()
+	}
+
+	ids := []string{node1.id, node2.id, node3.id, node4.id, node5.id, node6.id, node7.id, node8.id, node9.id}
+	sort.Strings(ids)
+	
+	node1.join(nil)
+	node1.printNode2()
+	node1.printRing2()
+
+	node2.join(node1)
+	node2.printNode2()
+	node1.printRing2()
+	
+	node3.join(node1)
+	node3.printNode2()
+	node1.printRing2()
+
+	node4.join(node2)
+	node4.printNode2()
+	node1.printRing2()
+
+/*	node5.join(node2)
+	node6.join(node3)
+	node7.join(node3)
+	node8.join(node4)
+	node9.join(node4)*/
+
+/*
+	fmt.Println("------------------------------------------------------------------------------------------------")
+	fmt.Println("RING STRUCTURE")
+	fmt.Println("------------------------------------------------------------------------------------------------")
+	node1.printRing2()
+	fmt.Println("------------------------------------------------------------------------------------------------")
+*/
+	fmt.Println("")
+	node1.printNode2()
+	node2.printNode2()
+	node3.printNode2()
+	node4.printNode2()
+	node5.printNode2()
+	node6.printNode2()
+	node7.printNode2()
+	node8.printNode2()
+	node9.printNode2()
+
+	/*node1.printNodeWithFingers()
+	node2.printNodeWithFingers()
+	node3.printNodeWithFingers()
+	node4.printNodeWithFingers()
+	node5.printNodeWithFingers()
+	node6.printNodeWithFingers()
+	node7.printNodeWithFingers()
+	node8.printNodeWithFingers()
+	node9.printNodeWithFingers()*/
+
+	/*
+		node3.testCalcFingers(0, 160)
+		fmt.Println("")
+		node3.testCalcFingers(1, 160)
+		fmt.Println("")
+		node3.testCalcFingers(80, 160)
+		fmt.Println("")
+		node3.testCalcFingers(120, 90)
+		fmt.Println("")
+		node3.testCalcFingers(160, 160)
+		fmt.Println("")
+	*/
+
+	fmt.Println("Id:s sorted in increasing order:\n")
+	for i:=0; i<len(ids); i++ {
+		fmt.Println(ids[i])
+	}
+
+}
 
 func TestDebug2(t *testing.T) {
 
@@ -279,25 +370,18 @@ func TestFinger3bits(t *testing.T) {
 	node6.join(node1)
 	node7.join(node2)
 
-<<<<<<< HEAD
 	node2.printNodeWithFingers()
 	node0.printNodeWithFingers()
 	node1.printNodeWithFingers()
-=======
-	node0.printNodeWithFingers()
-	node1.printNodeWithFingers()
-	node2.printNodeWithFingers()
->>>>>>> a38d6758c8ee8ab9599da0a680ef5b888704c7e0
+
 	node3.printNodeWithFingers()
 	node4.printNodeWithFingers()
 	node5.printNodeWithFingers()
 	node6.printNodeWithFingers()
 	node7.printNodeWithFingers()
-<<<<<<< HEAD
+
 
 //	node0.printRing2()
-=======
->>>>>>> a38d6758c8ee8ab9599da0a680ef5b888704c7e0
 }
 
 func TestDebug(t *testing.T) {

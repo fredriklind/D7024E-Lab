@@ -6,10 +6,12 @@ import (
 )
 
 func (n *DHTNode) printNode2() {
-	fmt.Printf("Node %s, address %s, port %s\n", n.id, n.adress, n.port)
+	//fmt.Printf("Node %s, address %s, port %s\n", n.id, n.adress, n.port)
+	fmt.Printf("Node        %s\n", n.id)
 	if (n.predecessor != nil) {
-		fmt.Printf("Predecessor %s\n", n.predecessor.id)
+		fmt.Printf("Predecessor  %s\n", n.predecessor.id)
 	}
+	fmt.Println("")
 }
 
 func (n *DHTNode) printNodeWithFingers() {
@@ -25,12 +27,13 @@ func (n *DHTNode) printNodeWithFingers() {
 }
 
 func (n *DHTNode) printRing2() {
-	fmt.Println(n.id)
+	fmt.Printf(".           %s\n", n.id)
 	newn := n.successor()
 	for newn.id != n.id {
-		fmt.Println(newn.id)
+		fmt.Printf(".           %s\n", newn.id)
 		newn = newn.successor()
 	}
+	fmt.Println()
 }
 
 func hexStringToByteArr(hexId string) []byte {
@@ -64,7 +67,7 @@ func (n *DHTNode) lookup2(id string) *DHTNode {
 
 				// what to do?
 				// go to next finger...
-				fmt.Println("Finger points to node itself<-------------------")
+//				fmt.Println("Finger points to node itself<-------------------")
 
 
 			} else if between(hexStringToByteArr(n.fingerTable[i].node.id), hexStringToByteArr(n.id), hexStringToByteArr(id)) {

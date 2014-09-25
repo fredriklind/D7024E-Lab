@@ -5,7 +5,7 @@ import (
 	"math/big"
 )
 
-const m = 3
+const m = 160
 
 type DHTNode struct {
 	id, adress, port string
@@ -127,12 +127,12 @@ func (nodeToAdd *DHTNode) join(n *DHTNode) {
 	} else {
 		//		fmt.Printf("\nNode %s joins, using node %s\n", nodeToAdd.id, n.id)
 		nodeToAdd.initFingerTable(n)
-		fmt.Println("After initFingerTable")
-		nodeToAdd.printNodeWithFingers()
+//		fmt.Println("After initFingerTable")
+//		nodeToAdd.printNodeWithFingers()
 		//		fmt.Printf("Node %s joined and initiated its finger now time for updating others\n", nodeToAdd.id)
 		nodeToAdd.updateOthers()
-		fmt.Println("After updateOthers")
-		nodeToAdd.printNodeWithFingers()
+//		fmt.Println("After updateOthers")
+//		nodeToAdd.printNodeWithFingers()
 		//		fmt.Println("")
 	}
 	//	fmt.Printf("Ring structure after join, starting at %s: \n", nodeToAdd.id)
@@ -225,9 +225,9 @@ func (n *DHTNode) updateOthers() {
 
 		// Find last preceeding node p whose i:th finger might be n
 		nId := big.Int{}
-		nId.SetString(n.id, 10)
+		nId.SetString(n.id, 16)
 
-		var initialLength = len(n.id)
+//		fmt.Printf("----->  %s <----------------\n", nId.String()) // ok for 160bits
 
 		y := big.Int{}
 		two := big.NewInt(2)
@@ -235,15 +235,20 @@ func (n *DHTNode) updateOthers() {
 
 		y.Exp(two, big.NewInt(int64(i-1)), nil)
 		y.Sub(&nId, &y)
+
 		two.Exp(two, mbig, nil)
 		y.Mod(&y, two)
 		// y = nId - 2^(i-1)
 
 		var returnString = y.String()
 
-		for len(returnString) != initialLength {
+
+// might be needed for 3bits? doesn´t work with 160bits
+/*		var initialLength = len(n.id)
+
+		for len(returnString) != initialLength {			
 			returnString = "0" + returnString
-		}
+		}*/
 
 		//		fmt.Printf("in updateOthers: nId=%s, i=%d y=%s\n", nId.String(), i, y.String())
 
