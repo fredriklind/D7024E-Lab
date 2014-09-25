@@ -2,11 +2,208 @@ package dht
 
 import (
 	"fmt"
+	"sort"
 	"testing"
 )
 
 // test cases can be run by calling e.g. go test -test.run TestRingSetup
 // go run test will run all tests
+
+func TestFinger160bits2(t *testing.T) {
+
+	// note nil arg means automatically generate ID, e.g. f38f3b2dcc69a2093f258e31902e40ad33148385
+	node1 := makeDHTNode(nil, "localhost", "1111")
+	node2 := makeDHTNode(nil, "localhost", "1112")
+	node3 := makeDHTNode(nil, "localhost", "1113")
+	node4 := makeDHTNode(nil, "localhost", "1114")
+	node5 := makeDHTNode(nil, "localhost", "1115")
+	node6 := makeDHTNode(nil, "localhost", "1116")
+	node7 := makeDHTNode(nil, "localhost", "1117")
+	node8 := makeDHTNode(nil, "localhost", "1118")
+	node9 := makeDHTNode(nil, "localhost", "1119")
+
+	for i := 0; i < 10; i++ {
+		fmt.Println()
+	}
+
+	ids := []string{node1.id, node2.id, node3.id, node4.id, node5.id, node6.id, node7.id, node8.id, node9.id}
+	sort.Strings(ids)
+
+	node1.join(nil)
+	node1.printNode2()
+	node1.printRing2()
+
+	node2.join(node1)
+	node2.printNode2()
+	node1.printRing2()
+
+	node3.join(node1)
+	node3.printNode2()
+	node1.printRing2()
+
+	node4.join(node2)
+	node4.printNode2()
+	node1.printRing2()
+
+	/*	node5.join(node2)
+		node6.join(node3)
+		node7.join(node3)
+		node8.join(node4)
+		node9.join(node4)*/
+
+	/*
+		fmt.Println("------------------------------------------------------------------------------------------------")
+		fmt.Println("RING STRUCTURE")
+		fmt.Println("------------------------------------------------------------------------------------------------")
+		node1.printRing2()
+		fmt.Println("------------------------------------------------------------------------------------------------")
+	*/
+	fmt.Println("")
+	node1.printNode2()
+	node2.printNode2()
+	node3.printNode2()
+	node4.printNode2()
+	node5.printNode2()
+	node6.printNode2()
+	node7.printNode2()
+	node8.printNode2()
+	node9.printNode2()
+
+	/*node1.printNodeWithFingers()
+	node2.printNodeWithFingers()
+	node3.printNodeWithFingers()
+	node4.printNodeWithFingers()
+	node5.printNodeWithFingers()
+	node6.printNodeWithFingers()
+	node7.printNodeWithFingers()
+	node8.printNodeWithFingers()
+	node9.printNodeWithFingers()*/
+
+	/*
+		node3.testCalcFingers(0, 160)
+		fmt.Println("")
+		node3.testCalcFingers(1, 160)
+		fmt.Println("")
+		node3.testCalcFingers(80, 160)
+		fmt.Println("")
+		node3.testCalcFingers(120, 90)
+		fmt.Println("")
+		node3.testCalcFingers(160, 160)
+		fmt.Println("")
+	*/
+
+	fmt.Println("Id:s sorted in increasing order:\n")
+	for i := 0; i < len(ids); i++ {
+		fmt.Println(ids[i])
+	}
+
+}
+
+func TestDebug2(t *testing.T) {
+
+	//	id0 := "00"
+	id1 := "01"
+	id2 := "02"
+	//	id3 := "03"
+	id4 := "04"
+	id5 := "05"
+	id6 := "06"
+	//	id7 := "07"
+
+	//	node0 := makeDHTNode(&id0, "localhost", "1111")
+	node1 := makeDHTNode(&id1, "localhost", "1112")
+	node2 := makeDHTNode(&id2, "localhost", "1113")
+	//	node3 := makeDHTNode(&id3, "localhost", "1114")
+	node4 := makeDHTNode(&id4, "localhost", "1115")
+	node5 := makeDHTNode(&id5, "localhost", "1116")
+	node6 := makeDHTNode(&id6, "localhost", "1117")
+	//	node7 := makeDHTNode(&id7, "localhost", "1118")
+	/*
+		node0.printNode2()
+		node1.printNode2()
+		node2.printNode2()
+		node3.printNode2()
+		node4.printNode2()
+		node5.printNode2()
+		node6.printNode2()
+		node7.printNode2()*/
+
+	//	node0.join(nil)
+	node1.join(nil)
+	node5.join(node1)
+	//	node3.join(node0)
+	node4.join(node1)
+	node2.join(node1)
+	node6.join(node1)
+	//	node7.join(node0)
+
+	//	node0.printNodeWithFingers()
+	node1.printNodeWithFingers()
+	node2.printNodeWithFingers()
+	//	node3.printNodeWithFingers()
+	node4.printNodeWithFingers()
+	node5.printNodeWithFingers()
+	node6.printNodeWithFingers()
+	//	node7.printNodeWithFingers()
+
+	/*	fmt.Printf("PrevId to %s is %s\n", "00", prevId("00"))	// prevId och nextId testade!
+		fmt.Printf("PrevId to %s is %s\n", "01", prevId("01"))
+		fmt.Printf("PrevId to %s is %s\n", "02", prevId("02"))
+		fmt.Printf("PrevId to %s is %s\n", "03", prevId("03"))
+		fmt.Printf("PrevId to %s is %s\n", "04", prevId("04"))
+		fmt.Printf("PrevId to %s is %s\n", "05", prevId("05"))
+		fmt.Printf("PrevId to %s is %s\n", "06", prevId("06"))
+		fmt.Printf("PrevId to %s is %s\n", "07", prevId("07"))*/
+
+	node4.printRing2()
+	fmt.Println("")
+	/*
+		idn := [8]string{"00","01","02","03","04","05","06","07"}
+		nodes := [8]*DHTNode{node1,node2,node4,node5,node6,node1,node2,node4}*/
+	/*
+		for i:=0; i<8; i++ {
+			for j:=0; j<8; j++ {
+				if !((nodes[i].lookup2(idn[j])).id == idn[j]) {
+				fmt.Println("ERROR")
+				}
+			}
+		}
+	*/ /*
+		for i:=0; i<8; i++ {
+			for j:=0; j<8; j++ {
+				respNode := nodes[i].lookup2(idn[j])
+				fmt.Printf("%s.lookup2(%s)->%s\n", nodes[i].id, idn[j], respNode.id)
+			}
+			fmt.Println("")
+		}
+	*/
+	/*	fmt.Println([]byte(node0.id))
+		fmt.Println([]byte(node1.id))
+		fmt.Println([]byte(node2.id))
+		fmt.Println([]byte(node3.id))
+		fmt.Println([]byte(node4.id))
+		fmt.Println([]byte(node5.id))
+		fmt.Println([]byte(node6.id))
+		fmt.Println([]byte(node7.id))
+
+		fmt.Println(hexStringToByteArr(node0.id))
+		fmt.Println(hexStringToByteArr(node1.id))
+		fmt.Println(hexStringToByteArr(node2.id))
+		fmt.Println(hexStringToByteArr(node3.id))
+		fmt.Println(hexStringToByteArr(node4.id))
+		fmt.Println(hexStringToByteArr(node5.id))
+		fmt.Println(hexStringToByteArr(node6.id))
+		fmt.Println(hexStringToByteArr(node7.id))
+
+		byteArrTobigIntToString(hexStringToByteArr(node0.id))
+		byteArrTobigIntToString(hexStringToByteArr(node1.id))
+		byteArrTobigIntToString(hexStringToByteArr(node2.id))
+		byteArrTobigIntToString(hexStringToByteArr(node3.id))
+		byteArrTobigIntToString(hexStringToByteArr(node4.id))
+		byteArrTobigIntToString(hexStringToByteArr(node5.id))
+		byteArrTobigIntToString(hexStringToByteArr(node6.id))
+		byteArrTobigIntToString(hexStringToByteArr(node7.id))*/
+}
 
 /*
  * Example of expected output of calling printRing().
@@ -140,84 +337,102 @@ import (
  */
 
 func TestFinger3bits(t *testing.T) {
-//	id0 := "00"
+	id0 := "00"
 	id1 := "01"
 	id2 := "02"
 	id3 := "03"
-	//id4 := "04"
-	/*id5 := "05"
+	id4 := "04"
+	id5 := "05"
 	id6 := "06"
-	id7 := "07"*/
+	id7 := "07"
 
-//	node0 := makeDHTNode(&id0, "localhost", "1111")
+	node0 := makeDHTNode(&id0, "localhost", "1111")
 	node1 := makeDHTNode(&id1, "localhost", "1112")
 	node2 := makeDHTNode(&id2, "localhost", "1113")
 	node3 := makeDHTNode(&id3, "localhost", "1114")
-//	node4 := makeDHTNode(&id4, "localhost", "1115")
-	/*node5 := makeDHTNode(&id5, "localhost", "1116")
+	node4 := makeDHTNode(&id4, "localhost", "1115")
+	node5 := makeDHTNode(&id5, "localhost", "1116")
 	node6 := makeDHTNode(&id6, "localhost", "1117")
-	node7 := makeDHTNode(&id7, "localhost", "1118")*/
+	node7 := makeDHTNode(&id7, "localhost", "1118")
 
+	node2.join(nil)
+	node2.printNodeWithFingers()
 
-	initTwoNodeRing(node1, node2)
-	node1.printRing()
-//	node2.join(nil)
-//	node2.printFingers()
+	node0.join(node2)
+	node0.printNodeWithFingers()
 
-//	node1.join(node2)
-//	node2.printFingers()
-//	node1.printFingers()
+	fmt.Println("2 joined, 0 joined now the rest")
 
-//	node0.join(node2)
-//	node2.printFingers()
-//	node1.printFingers()
-//	node0.printFingers()
-
+	node1.join(node2)
 	node3.join(node1)
-	node1.printRing()
-//	node4.join(node1)
-	//node1.printRing()
-	/*node5.join(node1)
+	node4.join(node1)
+	node5.join(node1)
 	node6.join(node1)
 	node7.join(node2)
 
+	node2.printNodeWithFingers()
+	node0.printNodeWithFingers()
+	node1.printNodeWithFingers()
 
+	node3.printNodeWithFingers()
+	node4.printNodeWithFingers()
+	node5.printNodeWithFingers()
+	node6.printNodeWithFingers()
+	node7.printNodeWithFingers()
 
-
-	node3.printFingers()
-	node4.printFingers()
-	node5.printFingers()
-	node6.printFingers()
-	node7.printFingers()*/
-
-	//	var d big.Int
-	//	d = distance(node0.id, node1.id, 3)
-
-	fmt.Println("------------------------------------------------------------------------------------------------")
-	fmt.Println("RING STRUCTURE")
-	fmt.Println("------------------------------------------------------------------------------------------------")
-	//	node2.printRing()
-	fmt.Println("------------------------------------------------------------------------------------------------")
-
-	/*
-		node3.testCalcFingers(1, 3)
-		fmt.Println("")
-		node3.testCalcFingers(2, 3)
-		fmt.Println("")
-		node3.testCalcFingers(3, 3)
-	*/
+	//	node0.printRing2()
 }
 
 func TestDebug(t *testing.T) {
 
-	id0 := "00"
-	id1 := "01"
+	//id0 := "00"
+	/*	id1 := "01"
+			id2 := "02"
+			id3 := "03"
+			id4 := "04"
+			id5 := "05"
+			id6 := "06"
+			id7 := "07"
 
-	node0 := makeDHTNode(&id0, "localhost", "1111")
-	node1 := makeDHTNode(&id1, "localhost", "1112")
+			//node0 := makeDHTNode(&id0, "localhost", "1111")
+			node1 := makeDHTNode(&id1, "localhost", "1112")
+			node2 := makeDHTNode(&id2, "localhost", "1113")
+			node3 := makeDHTNode(&id3, "localhost", "1114")
+			node4 := makeDHTNode(&id4, "localhost", "1115")
+			node5 := makeDHTNode(&id5, "localhost", "1116")
+			node6 := makeDHTNode(&id6, "localhost", "1117")
+			node7 := makeDHTNode(&id7, "localhost", "1118")
 
-	node1.join(nil)
-	node0.join(node1)
+			//node0.setSuccessor(node1)
+			//node0.predecessor = node7
+
+		/*	node1.setSuccessor(node2)
+			node1.predecessor = node7
+
+			node2.setSuccessor(node3)
+			node2.predecessor = node1
+
+			node3.setSuccessor(node4)
+			node3.predecessor = node2
+
+			node4.setSuccessor(node5)
+			node4.predecessor = node3
+
+			node5.setSuccessor(node6)
+			node5.predecessor = node4
+
+			node6.setSuccessor(node7)
+			node6.predecessor = node5
+
+			node7.setSuccessor(node1)
+			node7.predecessor = node6
+
+			testLookup(node6, "00") */
+}
+
+func testLookup(n *DHTNode, id string) {
+	var result = n.lookup(id)
+	fmt.Printf("%s.lookup(%s) returns %s\n", n.id, id, result.id)
 }
 
 /*
@@ -284,45 +499,63 @@ func TestDebug(t *testing.T) {
  * distance     508258282811496687056817668076520806659544776736
  */
 
-/*func TestFinger160bits(t *testing.T) {
-// note nil arg means automatically generate ID, e.g. f38f3b2dcc69a2093f258e31902e40ad33148385
-node1 := makeDHTNode(nil, "localhost", "1111")
-node2 := makeDHTNode(nil, "localhost", "1112")
-node3 := makeDHTNode(nil, "localhost", "1113")
-node4 := makeDHTNode(nil, "localhost", "1114")
-node5 := makeDHTNode(nil, "localhost", "1115")
-node6 := makeDHTNode(nil, "localhost", "1116")
-node7 := makeDHTNode(nil, "localhost", "1117")
-node8 := makeDHTNode(nil, "localhost", "1118")
-node9 := makeDHTNode(nil, "localhost", "1119")
+func TestFinger160bits(t *testing.T) {
+	// note nil arg means automatically generate ID, e.g. f38f3b2dcc69a2093f258e31902e40ad33148385
+	node1 := makeDHTNode(nil, "localhost", "1111")
+	node2 := makeDHTNode(nil, "localhost", "1112")
+	node3 := makeDHTNode(nil, "localhost", "1113")
+	node4 := makeDHTNode(nil, "localhost", "1114")
+	node5 := makeDHTNode(nil, "localhost", "1115")
+	node6 := makeDHTNode(nil, "localhost", "1116")
+	node7 := makeDHTNode(nil, "localhost", "1117")
+	node8 := makeDHTNode(nil, "localhost", "1118")
+	node9 := makeDHTNode(nil, "localhost", "1119")
 
-node1.join(nil)
-node2.join(node1)
-node3.join(node1)
-node4.join(node2)
-node5.join(node2)
-node6.join(node3)
-node7.join(node3)
-node8.join(node4)
-node9.join(node4)
+	node1.join(nil)
+	node2.join(node1)
+	node3.join(node1)
+	node4.join(node2)
+	node5.join(node2)
+	node6.join(node3)
+	node7.join(node3)
+	node8.join(node4)
+	node9.join(node4)
 
-fmt.Println("------------------------------------------------------------------------------------------------")
-fmt.Println("RING STRUCTURE")
-fmt.Println("------------------------------------------------------------------------------------------------")
-node1.printRing()
-fmt.Println("------------------------------------------------------------------------------------------------")
-*/
-/*
-	node3.testCalcFingers(0, 160)
-	fmt.Println("")
-	node3.testCalcFingers(1, 160)
-	fmt.Println("")
-	node3.testCalcFingers(80, 160)
-	fmt.Println("")
-	node3.testCalcFingers(120, 90)
-	fmt.Println("")
-	node3.testCalcFingers(160, 160)
-	fmt.Println("")
-*/
+	fmt.Println("------------------------------------------------------------------------------------------------")
+	fmt.Println("RING STRUCTURE")
+	fmt.Println("------------------------------------------------------------------------------------------------")
+	node1.printRing()
+	fmt.Println("------------------------------------------------------------------------------------------------")
 
-//}
+	/*
+		node3.testCalcFingers(0, 160)
+		fmt.Println("")
+		node3.testCalcFingers(1, 160)
+		fmt.Println("")
+		node3.testCalcFingers(80, 160)
+		fmt.Println("")
+		node3.testCalcFingers(120, 90)
+		fmt.Println("")
+		node3.testCalcFingers(160, 160)
+		fmt.Println("")
+	*/
+
+}
+
+func TestResponder(t *testing.T) {
+
+}
+
+func TestSender(t *testing.T) {
+	block := make(chan bool)
+	node := makeDHTNode(nil, "localhost", "2000")
+	node.Requests = make(map[string]chan Msg)
+
+	fmt.Printf("Node %s created\n", node.id)
+	msg := &Msg{Method: "Hello", Src: "localhost:2000", Dst: "localhost:2000", WaitForResponse: true}
+
+	go node.listen()
+	go node.send(msg)
+
+	<-block
+}
