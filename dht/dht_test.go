@@ -9,6 +9,129 @@ import (
 // test cases can be run by calling e.g. go test -test.run TestRingSetup
 // go run test will run all tests
 
+func TestFinger16bits(t *testing.T) {
+
+	id1 := "01"
+	id2 := "02"
+	id3 := "03"
+	id4 := "04"
+	id5 := "05"
+	id6 := "06"
+	id7 := "07"
+	id8 := "08"
+	id9 := "09"
+	id10 := "0a"
+	id11 := "0b"
+	id12 := "0c"
+	id13 := "0d"
+	id14 := "0e"
+	id15 := "0f"
+	id16 := "10"
+
+	// note nil arg means automatically generate ID, e.g. f38f3b2dcc69a2093f258e31902e40ad33148385
+	node1 := makeDHTNode(&id1, "localhost", "1101")
+	node2 := makeDHTNode(&id2, "localhost", "1102")
+	node3 := makeDHTNode(&id3, "localhost", "1103")
+	node4 := makeDHTNode(&id4, "localhost", "1104")
+	node5 := makeDHTNode(&id5, "localhost", "1105")
+	node6 := makeDHTNode(&id6, "localhost", "1106")
+	node7 := makeDHTNode(&id7, "localhost", "1107")
+	node8 := makeDHTNode(&id8, "localhost", "1108")
+	node9 := makeDHTNode(&id9, "localhost", "1109")
+	node10 := makeDHTNode(&id10, "localhost", "1110")
+	node11 := makeDHTNode(&id11, "localhost", "1111")
+	node12 := makeDHTNode(&id12, "localhost", "1112")
+	node13 := makeDHTNode(&id13, "localhost", "1113")
+	node14 := makeDHTNode(&id14, "localhost", "1114")
+	node15 := makeDHTNode(&id15, "localhost", "1115")
+	node16 := makeDHTNode(&id16, "localhost", "1116")
+	
+	fmt.Println("------------------------------------------------------------------------------------------------")
+
+	fmt.Println("1 joins")
+	node1.join(nil)
+	node1.printNodeWithFingers()
+
+	fmt.Println("3 joins")
+	node3.join(node1)
+	node1.printRing2()
+
+	fmt.Println("4 joins")
+	node4.join(node1)
+	node1.printRing2()		// ok till hit
+
+	fmt.Println("a joins")
+	node10.join(node1)
+	node1.printRing2()
+
+	fmt.Println("5 joins")
+	fmt.Printf("nextId(%s)=%s\n", node1.id, nextId(node1.id))
+	fmt.Printf("node1.lookup2(%s)=%s\n", node5.id, node1.lookup2(node5.id).id)
+	node5.join(node1)
+//	node1.printRing2()
+
+	node6.join(node1)
+//	node1.printRing2()
+
+	node7.join(node1)
+//	node1.printRing2()
+
+	node2.join(node1)
+//	node1.printRing2()
+
+	node8.join(node1)
+	node9.join(node1)
+	node14.join(node1)	
+	node11.join(node1)
+	node12.join(node1)
+	node13.join(node1)
+	node15.join(node1)
+	node16.join(node1)
+
+/*	fmt.Println("------------------------------------------------------------------------------------------------")
+
+	fmt.Println("------------------------------------------------------------------------------------------------")
+	fmt.Println("RING STRUCTURE")
+	fmt.Println("------------------------------------------------------------------------------------------------")
+	node1.printRing2()
+	fmt.Println("------------------------------------------------------------------------------------------------")*/
+
+	/*node1.printNodeWithFingers()
+	node2.printNodeWithFingers()
+	node3.printNodeWithFingers()
+	node4.printNodeWithFingers()
+	node5.printNodeWithFingers()
+	node6.printNodeWithFingers()
+	node7.printNodeWithFingers()
+	node8.printNodeWithFingers()
+	node9.printNodeWithFingers()
+	node10.printNodeWithFingers()
+	node11.printNodeWithFingers()
+	node12.printNodeWithFingers()
+	node13.printNodeWithFingers()
+	node14.printNodeWithFingers()
+	node15.printNodeWithFingers()
+	node16.printNodeWithFingers()*/
+
+/*	node1.printNode2()
+	node2.printNode2()
+	node3.printNode2()
+	node4.printNode2()
+	node5.printNode2()
+	node6.printNode2()
+	node7.printNode2()
+	node8.printNode2()
+	node9.printNode2()
+	node10.printNode2()
+	node11.printNode2()
+	node12.printNode2()
+	node13.printNode2()
+	node14.printNode2()
+	node15.printNode2()
+	node16.printNode2()*/
+
+}
+
 func TestFinger160bits2(t *testing.T) {
 
 	// note nil arg means automatically generate ID, e.g. f38f3b2dcc69a2093f258e31902e40ad33148385
@@ -29,21 +152,37 @@ func TestFinger160bits2(t *testing.T) {
 	ids := []string{node1.id, node2.id, node3.id, node4.id, node5.id, node6.id, node7.id, node8.id, node9.id}
 	sort.Strings(ids)
 	
+	fmt.Println("Join node 1\n")
 	node1.join(nil)
-	node1.printNode2()
+/*	fmt.Println(".")
+	node1.printNode2()*/
 	node1.printRing2()
 
+	fmt.Println("Join node 2\n")
 	node2.join(node1)
-	node2.printNode2()
+/*	node1.printNode2()
+	fmt.Println(".")
+	node2.printNode2()*/
 	node1.printRing2()
 	
+	fmt.Println("Join node 3\n")
 	node3.join(node1)
-	node3.printNode2()
+/*	node1.printNode2()
+	node2.printNode2()
+	fmt.Println(".")
+	node3.printNode2()*/
 	node1.printRing2()
 
+	fmt.Println("Join node 4\n")
 	node4.join(node2)
+	node1.printNode2()
+	node2.printNode2()
+	node3.printNode2()
+	fmt.Println(".")
 	node4.printNode2()
 	node1.printRing2()
+//	node2.printRing2()
+//	node4.printRing2()
 
 /*	node5.join(node2)
 	node6.join(node3)
@@ -58,7 +197,7 @@ func TestFinger160bits2(t *testing.T) {
 	node1.printRing2()
 	fmt.Println("------------------------------------------------------------------------------------------------")
 */
-	fmt.Println("")
+/*	fmt.Println("")
 	node1.printNode2()
 	node2.printNode2()
 	node3.printNode2()
@@ -67,7 +206,7 @@ func TestFinger160bits2(t *testing.T) {
 	node6.printNode2()
 	node7.printNode2()
 	node8.printNode2()
-	node9.printNode2()
+	node9.printNode2()*/
 
 	/*node1.printNodeWithFingers()
 	node2.printNodeWithFingers()
@@ -95,6 +234,18 @@ func TestFinger160bits2(t *testing.T) {
 	fmt.Println("Id:s sorted in increasing order:\n")
 	for i:=0; i<len(ids); i++ {
 		fmt.Println(ids[i])
+	}
+
+	fmt.Println()
+
+	s := generateNodeId()
+	next := nextId(s)
+
+	fmt.Printf("nextId(%s) = %s\n\n", s, next)
+	fmt.Printf("lookup2(%s)=%s\n", s, node1.lookup2(s).id)
+
+	for i:=0; i<5; i++ {
+		fmt.Println()
 	}
 
 }

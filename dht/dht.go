@@ -5,7 +5,11 @@ import (
 	"math/big"
 )
 
-const m = 160
+// might also want to uncomment some code inte nextId and prevId when changing back to 3bits
+const m = 4
+const base = 16
+
+
 
 type DHTNode struct {
 	id, adress, port string
@@ -28,8 +32,7 @@ func (n *DHTNode) setSuccessor(successor *DHTNode) {
 
 func nextId(id string) string {
 	nId := big.Int{}
-	nId.SetString(id, 10)
-	var initialLength = len(id)
+	nId.SetString(id, base)
 
 	y := big.Int{}
 	two := big.NewInt(2)
@@ -43,9 +46,11 @@ func nextId(id string) string {
 
 	var returnString = y.String()
 
+// might be needed for 3bits?
+/*	var initialLength = len(id)
 	for len(returnString) != initialLength {
 		returnString = "0" + returnString
-	}
+	}*/
 
 	return returnString
 	//	return id
@@ -53,8 +58,7 @@ func nextId(id string) string {
 
 func prevId(id string) string {
 	nId := big.Int{}
-	nId.SetString(id, 10)
-	var initialLength = len(id)
+	nId.SetString(id, base)
 
 	y := big.Int{}
 	two := big.NewInt(2)
@@ -67,10 +71,11 @@ func prevId(id string) string {
 	y.Mod(&y, two)
 
 	var returnString = y.String()
-
+// might be needed for 3bits?
+/*	var initialLength = len(id)
 	for len(returnString) != initialLength {
 		returnString = "0" + returnString
-	}
+	}*/
 
 	return returnString
 	//	return id
@@ -127,13 +132,13 @@ func (nodeToAdd *DHTNode) join(n *DHTNode) {
 	} else {
 		//		fmt.Printf("\nNode %s joins, using node %s\n", nodeToAdd.id, n.id)
 		nodeToAdd.initFingerTable(n)
-//		fmt.Println("After initFingerTable")
-//		nodeToAdd.printNodeWithFingers()
+		fmt.Println("After initFingerTable:")
+//		nodeToAdd.printNode2()
+//		nodeToAdd.printRing2()
+		nodeToAdd.printNodeWithFingers()
 		//		fmt.Printf("Node %s joined and initiated its finger now time for updating others\n", nodeToAdd.id)
 		nodeToAdd.updateOthers()
-//		fmt.Println("After updateOthers")
-//		nodeToAdd.printNodeWithFingers()
-		//		fmt.Println("")
+		fmt.Println("After updateOthers:")
 	}
 	//	fmt.Printf("Ring structure after join, starting at %s: \n", nodeToAdd.id)
 	//	nodeToAdd.printRing()
@@ -221,11 +226,12 @@ func (newNode *DHTNode) initFingerTable(n *DHTNode) {
 func (n *DHTNode) updateOthers() {
 	//	fmt.Printf("%s.updateOthers()\n", n.id)
 	for i := 1; i <= m; i++ {
-		//		fmt.Printf("Loop %d of updateOthers()\n", i)
+
+		fmt.Printf("Loop %d of updateOthers()\n", i)
 
 		// Find last preceeding node p whose i:th finger might be n
 		nId := big.Int{}
-		nId.SetString(n.id, 16)
+		nId.SetString(n.id, base)
 
 //		fmt.Printf("----->  %s <----------------\n", nId.String()) // ok for 160bits
 
@@ -240,58 +246,77 @@ func (n *DHTNode) updateOthers() {
 		y.Mod(&y, two)
 		// y = nId - 2^(i-1)
 
-		var returnString = y.String()
+		yBytes := y.Bytes()
+
+		yHex := fmt.Sprintf("%x", yBytes)
+
+//		var returnString = y.String()
 
 
 // might be needed for 3bits? doesn´t work with 160bits
-/*		var initialLength = len(n.id)
-
-		for len(returnString) != initialLength {			
+		var initialLength = len(n.id)
+		if (initialLength!=len(yHex)) {
+			fmt.Println("DIFFERENT <------------")
+			fmt.Printf("nId=%s\n", n.id)
+		}
+/*		for len(returnString) != initialLength {			
 			returnString = "0" + returnString
 		}*/
 
 		//		fmt.Printf("in updateOthers: nId=%s, i=%d y=%s\n", nId.String(), i, y.String())
 
-		p := n.lookup2(returnString)
+		p := n.lookup2(yHex)
 
 		if p.id == "00" {
 //			fmt.Printf("About to update finger %d on 00, p.id = %s, returnString = %s, n.id = %s\n", i, p.id, returnString, n.id)
 		}
 
-		if p.id != returnString {
+		if p.id != yHex {
 			p = p.predecessor
 		}
 
 		//		fmt.Printf("p = %s\n", p.id)
 
 		if p.id != n.id {
+			fmt.Printf("Going in to updateFingerTable, p is: %s\n", p.id)
 			p.updateFingerTable(n, i)
 		}
 		//		fmt.Printf("%s.uptadeFingertable(%s,%d)\n", p.id, n.id, i)
 	}
 }
 
-// If s should be the i:th finger of n -> update n's finger table entry i with n
+// If s should be the i:th finger of n -> update n's finger table entry nr i with s
 func (n *DHTNode) updateFingerTable(s *DHTNode, i int) {
-
-	if between(
-		hexStringToByteArr(n.id),
+	// n´s finger.node points to n itself
+	if (n.id == n.fingerTable[i].node.id) {
+		if between(
+			hexStringToByteArr(n.fingerTable[i].startId),
+			hexStringToByteArr(n.fingerTable[i].node.id),
+			hexStringToByteArr(s.id),
+			) {
+			n.fingerTable[i].node = s
+			fmt.Printf("%s should be the %d:th finger of %s -> update %s's finger table entry nr %d with %s\n", s.id, i, n.id, n.id, i, s.id)
+		}
+	} else if between(
+		hexStringToByteArr(n.fingerTable[i].startId),
 		hexStringToByteArr(n.fingerTable[i].node.id),
 		hexStringToByteArr(s.id),
-	) {
-		n.fingerTable[i].node = s
-
-		if n.id == "00" {
-//			fmt.Printf("Updating finger table on %s: setting finger %d to %s \n", n.id, i, s.id)
+		) {
+			if !(n.fingerTable[i].startId == n.fingerTable[i].node.id) {
+				n.fingerTable[i].node = s
+				fmt.Printf("%s should be the %d:th finger of %s -> update %s's finger table entry nr %d with %s\n", s.id, i, n.id, n.id, i, s.id)
+			}
 		}
-
 		// Get last node preceeding n, check that it hasn´t come round to the node just added (s)
 		p := n.predecessor
+		fmt.Printf("p is: %s\n", p.id)
 		if p.id != s.id {
 			p.updateFingerTable(s, i)
+		} else {
+			fmt.Println("Not going to that node")
 		}
 	}
-}
+
 
 // Returns the node who is responsible for the data corresponding to id, traversing the ring using finger tables
 func (n *DHTNode) lookup(id string) *DHTNode {
