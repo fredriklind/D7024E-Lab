@@ -1,6 +1,7 @@
 package dht
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/big"
 )
@@ -8,10 +9,26 @@ import (
 const m = 160
 
 type DHTNode struct {
-	id, adress, port string
-	predecessor      *DHTNode
-	fingerTable      [m + 1]Finger
-	Requests         map[string]chan Msg
+	id, address, port string
+	predecessor       *DHTNode
+	fingerTable       [m + 1]Finger
+	Requests          map[string]chan Msg
+	isListening       chan bool
+}
+
+// Turn the node into a JSON string containing id and address
+func (n *DHTNode) MarshalJSON() ([]byte, error) {
+	return json.Marshal(struct {
+		Id      string `json:"id"`
+		Address string `json:"address"`
+	}{
+		Address: n.address + ":" + n.port,
+		Id:      n.id,
+	})
+}
+
+func (n *DHTNode) getAddress() string {
+	return n.address + ":" + n.port
 }
 
 type Finger struct {
@@ -301,7 +318,7 @@ func (n *DHTNode) lookup(id string) *DHTNode {
 	}
 }
 
-func makeDHTNode(idPointer *string, adress string, port string) *DHTNode {
+func makeDHTNode(idPointer *string, address string, port string) *DHTNode {
 	var id string
 
 	if idPointer == nil {
@@ -309,5 +326,8 @@ func makeDHTNode(idPointer *string, adress string, port string) *DHTNode {
 	} else {
 		id = *idPointer
 	}
-	return &DHTNode{id: id, adress: adress, port: port}
+	node := DHTNode{id: id, address: address, port: port}
+	node.Requests = make(map[string]chan Msg)
+	go node.listen()
+	return &node
 }

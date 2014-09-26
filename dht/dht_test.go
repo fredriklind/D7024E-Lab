@@ -2,9 +2,26 @@ package dht
 
 import (
 	"fmt"
+	log "github.com/cihub/seelog"
 	"sort"
 	"testing"
 )
+
+// Initializer for the dht package
+func init() {
+	testConfig := `
+		<seelog>
+			<outputs formatid="default">
+				<file path="logfile.log"/>
+			</outputs>
+			<formats>
+				<format id="default" format="%Date %Time [%LEVEL] %Msg%n"/>
+			</formats>
+		</seelog>
+	`
+	logger, _ := log.LoggerFromConfigAsBytes([]byte(testConfig))
+	log.ReplaceLogger(logger)
+}
 
 // test cases can be run by calling e.g. go test -test.run TestRingSetup
 // go run test will run all tests
@@ -542,20 +559,27 @@ func TestFinger160bits(t *testing.T) {
 
 }
 
-func TestResponder(t *testing.T) {
-
+func TestNode1(t *testing.T) {
+	block := make(chan bool)
+	id1 := "01"
+	node := makeDHTNode(&id1, "127.0.0.1", "2000")
+	node.sendRequest(Msg{Method: "FORWARD", Values: map[string]string{"Method": "HELLO", "FinalDestinationId": "03", "Sender": node.getAddress()}, Dst: "127.0.0.1:3000"})
+	_ = node
+	<-block
 }
 
-func TestSender(t *testing.T) {
+func TestTestNode2(t *testing.T) {
 	block := make(chan bool)
-	node := makeDHTNode(nil, "localhost", "2000")
-	node.Requests = make(map[string]chan Msg)
+	id2 := "02"
+	node := makeDHTNode(&id2, "127.0.0.1", "3000")
+	_ = node
+	<-block
+}
 
-	fmt.Printf("Node %s created\n", node.id)
-	msg := &Msg{Method: "Hello", Src: "localhost:2000", Dst: "localhost:2000", WaitForResponse: true}
-
-	go node.listen()
-	go node.send(msg)
-
+func TestNode3(t *testing.T) {
+	block := make(chan bool)
+	id3 := "03"
+	node := makeDHTNode(&id3, "127.0.0.1", "4000")
+	_ = node
 	<-block
 }

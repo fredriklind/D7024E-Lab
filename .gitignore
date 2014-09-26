@@ -19,5 +19,8 @@ _cgo_export.*
 
 _testmain.go
 
+*.log
 *.exe
 *.test
+
+dht/logfile.log
