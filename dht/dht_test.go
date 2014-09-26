@@ -11,12 +11,11 @@ import (
 func init() {
 	testConfig := `
 		<seelog>
-			<outputs formatid="colored">
+			<outputs formatid="default">
 				<file path="logfile.log"/>
 			</outputs>
 			<formats>
-				<format id="format1" format="%Date %Time [%LEVEL] %Msg%n"/>
-				<format id="colored"  format="%EscM(46)%Level%EscM(49) %Msg%n%EscM(0)"/>
+				<format id="default" format="%Date %Time [%LEVEL] %Msg%n"/>
 			</formats>
 		</seelog>
 	`
@@ -564,14 +563,23 @@ func TestNode1(t *testing.T) {
 	block := make(chan bool)
 	id1 := "01"
 	node := makeDHTNode(&id1, "127.0.0.1", "2000")
-	node.sendRequest(Msg{Method: "HELLO", Dst: "127.0.0.1:5000"})
+	node.sendRequest(Msg{Method: "FORWARD", Values: map[string]string{"Method": "HELLO", "FinalDestinationId": "03", "Sender": node.getAddress()}, Dst: "127.0.0.1:3000"})
+	_ = node
 	<-block
 }
 
 func TestTestNode2(t *testing.T) {
 	block := make(chan bool)
 	id2 := "02"
-	node := makeDHTNode(&id2, "127.0.0.1", "5000")
+	node := makeDHTNode(&id2, "127.0.0.1", "3000")
+	_ = node
+	<-block
+}
+
+func TestNode3(t *testing.T) {
+	block := make(chan bool)
+	id3 := "03"
+	node := makeDHTNode(&id3, "127.0.0.1", "4000")
 	_ = node
 	<-block
 }

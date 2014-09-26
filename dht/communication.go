@@ -12,7 +12,8 @@ const timeoutSeconds = time.Second * 8
 type Msg struct {
 	Id, Type, Method, Src, Dst string
 	Timestamp                  int64
-	Values                     []string
+	Values                     map[string]string
+	DontWaitForResponse        bool
 }
 
 func (m *Msg) isRequest() bool  { return m.Type == "Request" }
@@ -26,10 +27,9 @@ func (n *DHTNode) listen() {
 	dec := json.NewDecoder(conn)
 
 	for {
-		//n.isListening <- true
 		msg := Msg{}
 		err = dec.Decode(&msg)
-		log.Tracef("Node %s received msgId=%s %s %s from %s Timestamp: %d", n.id, msg.Id, msg.Method, msg.Type, msg.Src, msg.Timestamp)
+		log.Tracef("Node %s received msgId=%s %s %s from %s %+v", n.id, msg.Id, msg.Method, msg.Type, msg.Src, msg)
 		time.Sleep(time.Second * 2)
 		switch msg.Type {
 		case "Response":
@@ -56,7 +56,7 @@ func (n *DHTNode) send(msg Msg) {
 	t := time.Now()
 	msg.Timestamp = t.Unix()
 
-	if msg.isRequest() {
+	if msg.Id == "" {
 		msg.Id = generateNodeId()[0:4]
 	}
 	log.Tracef("Node %s sending msgId=%s %s %s to %s Timestamp: %d", n.id, msg.Id, msg.Method, msg.Type, msg.Dst, msg.Timestamp)
@@ -64,7 +64,7 @@ func (n *DHTNode) send(msg Msg) {
 	jsonMsg, err := json.Marshal(msg)
 	_, err = conn.Write([]byte(jsonMsg))
 
-	if msg.isRequest() {
+	if msg.isRequest() && msg.DontWaitForResponse == false {
 		// Blocks until something is received on the channel that is associated with msg.Id
 		n.waitForResponse(msg)
 	}
@@ -86,7 +86,6 @@ func (n *DHTNode) waitForResponse(request Msg) {
 }
 
 func (n *DHTNode) sendRequest(request Msg) {
-	//<-n.isListening
 	msg := Msg{
 		Type:   "Request",
 		Method: request.Method,
@@ -109,6 +108,29 @@ func (n *DHTNode) handleRequest(request Msg) {
 		response.Dst = request.Src
 		n.send(response)
 
+	// Forwards a request to nextNode setting the method and Src depending
+	// on the Values["Method"] and Values["Sender"]
+	case "FORWARD":
+		// If n is the final destination, answer the original sender
+		if n.id == request.Values["FinalDestinationId"] {
+			newRequest := Msg{
+				Method: request.Values["Method"],
+				Src:    request.Values["Sender"],
+			}
+			// Handle the request contained in the FORWARD request
+			n.handleRequest(newRequest)
+		} else {
+			// If n is not the searched for node, forward the request to the next node
+			nextNodeAddress := "127.0.0.1:4000"
+			forwardRequest := Msg{
+				Id:                  request.Id,
+				Method:              "FORWARD",
+				Dst:                 nextNodeAddress,
+				DontWaitForResponse: true,
+			}
+			n.sendRequest(forwardRequest)
+		}
+
 	default:
 		log.Error("No request method specified!")
 	}
@@ -118,7 +140,7 @@ func (n *DHTNode) handleRequest(request Msg) {
 func (n *DHTNode) handleResponse(response Msg) {
 	switch response.Method {
 	case "ACK":
-		n.sendRequest(Msg{Method: "HELLO", Dst: response.Src})
+		// Do nothing
 	default:
 		log.Debugf("No request method specified!")
 	}
