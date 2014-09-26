@@ -1,0 +1,66 @@
+2014/09/25 21:24:11 Hey!
+2014/09/25 21:32:34 Logging set up
+2014/09/25 21:33:46 Logging set up
+2014/09/25 22:05:33 Started logger
+app: [ERR] ERROR
+1411677764387353507 [Error] HEY!
+2014-09-25/22:44:33 [ERR] HEY!
+2014-09-25 22:45:21 [ERROR] HEY!
+2014-09-25 22:45:47 [ERROR] HEY!
+2014-09-25 22:46:47 [ERROR] HEY!
+2014-09-25 22:46:47 [TRACE] Hello from node localhost:3000
+2014-09-25 22:47:07 [ERROR] HEY!
+2014-09-25 22:47:07 [TRACE] Hello from node localhost:3000
+2014-09-25 22:50:55 [TRACE] Hello from node localhost:3000
+2014-09-25 22:50:55 [DEBUG] Node 78e3ace2e60f86253fa82f180fdf6becf84a923b listening on localhost:3000
+
+2014-09-25 22:51:12 [DEBUG] Node d631e44dd9edf131847485fb5bb0c317569c5d2d listening on localhost:2000
+
+2014-09-25 22:51:12 [DEBUG] Sending Request%!(EXTRA string=HELLO, string=localhost:3000)
+2014-09-25 22:56:09 [TRACE] Hello from node localhost:3000
+2014-09-25 22:56:09 [DEBUG] Node 1eaf5a66c92be758e2544b20ea3a623f8201d3f2 listening on localhost:3000
+
+2014-09-25 22:56:18 [DEBUG] Node ae7d730ead8cd6eac56bcc3bdc1a785879537487 listening on localhost:2000
+
+2014-09-25 22:56:18 [DEBUG] Sending Request HELLO to localhost:3000
+2014-09-25 22:56:22 [DEBUG] Request request with id 4735 timed out
+2014-09-25 22:59:19 [DEBUG] Node 7a69adbd79fb9b9d2ff1894dbe1f7dc851281616 listening on localhost:3000
+
+2014-09-25 22:59:42 [DEBUG] Node 5027c3f53bf82bdd8bd25450d5e3d9e6e14bfbdd listening on localhost:2000
+
+2014-09-25 22:59:42 [DEBUG] Sending Request HELLO to localhost:3000
+2014-09-25 22:59:46 [DEBUG] HELLO request with id afa8 timed out
+2014-09-25 23:00:10 [DEBUG] Node 9f4689ef8afb2cacc3eb4010e51d2443104670ed listening on localhost:2000
+
+2014-09-25 23:00:10 [DEBUG] Sending Request HELLO to localhost:3000
+2014-09-25 23:00:14 [DEBUG] HELLO request with id e282 timed out
+2014-09-25 23:01:07 [DEBUG] Node 285c6a910fc011faeda3c3195f4bd8f73e3cdb76 listening on localhost:2000
+
+2014-09-25 23:01:07 [DEBUG] Sending Request HELLO to localhost:3000
+2014-09-25 23:01:11 [DEBUG] HELLO request with id c46ba9f9977b8858a73be12cba8ee8b05e0368dc timed out
+2014-09-25 23:06:31 [DEBUG] Node 6ebfdce6f2d1d6ed614dc35b9a330e0d76bde8b5 listening on localhost:3000
+
+2014-09-25 23:06:51 [DEBUG] Node ee6dabf841d52456b3707bc41020752f60555ade listening on localhost:2000
+
+2014-09-25 23:06:51 [DEBUG] Sending Request HELLO to localhost:3000
+2014-09-25 23:06:55 [DEBUG] HELLO request with id 78647324e722184b2124a4ce8ae3c395b5a394c6 timed out
+2014-09-25 23:07:51 [DEBUG] Node cbe019f248482d2798a2ee81ade2e007fa125e98 listening on localhost:3000
+
+2014-09-25 23:08:00 [DEBUG] Node 0781c3386cc3ca0e3be760719450b6a775663578 listening on localhost:3000
+
+2014-09-25 23:08:58 [DEBUG] Node 228ccfe9ddb31a749de528acaf5f4717e3c3bef2 listening on localhost:3000
+
+2014-09-25 23:09:20 [DEBUG] Node 3854fe9c3f1b5827a3b6c502218bdcf38000da97 listening on localhost:3000
+
+2014-09-25 23:09:34 [DEBUG] Node 915ff02cd36ba400bdafe0308b56096e376b2659 listening on localhost:2000
+
+2014-09-25 23:09:34 [DEBUG] Sending Request HELLO to localhost:3000
+2014-09-25 23:09:38 [DEBUG] HELLO request with id a0bea4897f7284a7d2d0e7a29ea3e3f8b670ea23 timed out
+2014-09-26 09:17:04 [DEBUG] Node 3f883584f609869d03a88d25e957ddca44adb69e listening on localhost:3000
+
+2014-09-26 09:18:40 [DEBUG] Node 57305451a0995d1ea44cf84865df412836378b32 listening on localhost:3000
+
+2014-09-26 09:18:55 [DEBUG] Node b3e77de4bfa81044a45d78ebf3b15ed30327955c listening on localhost:2000
+
+2014-09-26 09:18:55 [DEBUG] Sending Request HELLO to localhost:3000
+2014-09-26 09:18:59 [DEBUG] HELLO request with id b2c144b78079378e531e6b5df245798e848990b3 timed out

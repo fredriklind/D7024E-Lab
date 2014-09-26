@@ -2,9 +2,26 @@ package dht
 
 import (
 	"fmt"
+	log "github.com/cihub/seelog"
 	"sort"
 	"testing"
 )
+
+// Initializer for the dht package
+func init() {
+	testConfig := `
+		<seelog>
+			<outputs formatid="format1">
+				<file path="logfile.log"/>
+			</outputs>
+			<formats>
+				<format id="format1" format="%Date %Time [%LEVEL] %Msg%n"/>
+			</formats>
+		</seelog>
+	`
+	logger, _ := log.LoggerFromConfigAsBytes([]byte(testConfig))
+	log.ReplaceLogger(logger)
+}
 
 // test cases can be run by calling e.g. go test -test.run TestRingSetup
 // go run test will run all tests
@@ -542,20 +559,17 @@ func TestFinger160bits(t *testing.T) {
 
 }
 
-func TestResponder(t *testing.T) {
-
-}
-
-func TestSender(t *testing.T) {
+func TestNode1(t *testing.T) {
 	block := make(chan bool)
 	node := makeDHTNode(nil, "localhost", "2000")
-	node.Requests = make(map[string]chan Msg)
+	go node.sendRequest(Msg{Method: "HELLO", Dst: "localhost:3000"})
 
-	fmt.Printf("Node %s created\n", node.id)
-	msg := &Msg{Method: "Hello", Src: "localhost:2000", Dst: "localhost:2000", WaitForResponse: true}
+	<-block
+}
 
-	go node.listen()
-	go node.send(msg)
-
+func TestTestNode2(t *testing.T) {
+	block := make(chan bool)
+	node := makeDHTNode(nil, "localhost", "3000")
+	_ = node
 	<-block
 }
