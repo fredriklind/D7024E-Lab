@@ -22,5 +22,6 @@ _testmain.go
 *.log
 *.exe
 *.test
+*.DS_Store
 
 dht/logfile.log
