@@ -13,6 +13,7 @@ type DHTNode struct {
 	id, adress, port string
 	predecessor      *DHTNode
 	fingerTable      [m + 1]Finger
+	Requests         map[string]chan Msg
 }
 
 type Finger struct {
@@ -177,7 +178,7 @@ func (newNode *DHTNode) initFingerTable(n *DHTNode) {
 	//	fmt.Printf("INIT: %s successor set to %s\n", newNode.id, newNode.fingerTable[1].node.id)
 	//	fmt.Printf("INIT: %s predecessor set to %s\n", newNode.id, newNode.successor().predecessor.id)
 
-	if (n.predecessor.id == n.id) {
+	if n.predecessor.id == n.id {
 		oneNodeRing = true
 	} else {
 		oneNodeRing = false
@@ -186,11 +187,9 @@ func (newNode *DHTNode) initFingerTable(n *DHTNode) {
 	// Update the predecessor of the node that newNode is inserted before
 	newNode.successor().predecessor = newNode
 
-
-
 	//	fmt.Printf("INIT: %s, successor of %s set to %s\n", newNode.id, newNode.predecessor.id, newNode.id)
 	//	fmt.Printf("INIT: %s, predecessor of %s set to %s\n", newNode.id, newNode.successor().id, newNode.id)
-//	fmt.Println("Hejpa")
+	//	fmt.Println("Hejpa")
 	for i := 1; i <= (m - 1); i++ {
 		// Calculating finger
 		newNode.fingerTable[i+1].startId, _ = calcFinger(hexStringToByteArr(newNode.id), i+1, m)
@@ -199,13 +198,15 @@ func (newNode *DHTNode) initFingerTable(n *DHTNode) {
 			hexStringToByteArr(nextId(newNode.fingerTable[i].node.id)),
 			hexStringToByteArr(newNode.fingerTable[i+1].startId),
 		) {
+
 //			fmt.Printf("%s between %s and %s\n", newNode.fingerTable[i+1].startId, newNode.id, nextId(newNode.fingerTable[i].node.id))
 			newNode.fingerTable[i+1].node = newNode.fingerTable[i].node
 		} else {
-//			fmt.Printf("Lookup instead, finger %d lookup2(%s)\n", i+1, newNode.fingerTable[i+1].startId)
-			if (oneNodeRing) {
+			//			fmt.Printf("Lookup instead, finger %d lookup2(%s)\n", i+1, newNode.fingerTable[i+1].startId)
+			if oneNodeRing {
 				newNode.fingerTable[i+1].node = n.specLookup(newNode, newNode.fingerTable[i+1].startId)
 			} else {
+
 			newNode.fingerTable[i+1].node = n.lookup2(newNode.fingerTable[i+1].startId)
 //			fmt.Printf("%s.lookup2(%s) = %s \n", n.id, newNode.fingerTable[i+1].startId, (n.lookup2(newNode.fingerTable[i+1].startId)).id)
 //			fmt.Println(oneNodeRing)
@@ -214,6 +215,7 @@ func (newNode *DHTNode) initFingerTable(n *DHTNode) {
 		}
 //		fmt.Println("Hejpa2")
 //		fmt.Printf("Node %s finger nr %d startId %s Node %s\n", newNode.id, i+1, newNode.fingerTable[i+1].startId, newNode.fingerTable[i+1].node.id)
+
 	}
 }
 
@@ -299,7 +301,7 @@ func (n *DHTNode) updateFingerTable(s *DHTNode, i int) {
 
 // Returns the node who is responsible for the data corresponding to id, traversing the ring using finger tables
 func (n *DHTNode) lookup(id string) *DHTNode {
-//	return n.linearLookup(id)
+	//	return n.linearLookup(id)
 	if between(hexStringToByteArr(nextId(n.predecessor.id)), hexStringToByteArr(nextId(n.id)), hexStringToByteArr(id)) {
 		return n
 	} else {
