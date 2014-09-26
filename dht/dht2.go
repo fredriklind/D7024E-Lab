@@ -57,15 +57,16 @@ func (n *DHTNode) linearLookup(hashKey string) *DHTNode {
 
 // Returns the node who is responsible for the data corresponding to id, traversing the ring using finger tables
 func (n *DHTNode) lookup2(id string) *DHTNode {
-	fmt.Printf("Performing lookup from node %s\n", n.id)
+//	fmt.Printf("Performing lookup from node %s\n", n.id)
 	// n responsible for id
 	if between(hexStringToByteArr(nextId(n.predecessor.id)), hexStringToByteArr(nextId(n.id)), hexStringToByteArr(id)) {
+//		fmt.Printf("%s E (%s, %s], eg. [%s, %s) \n", id, n.predecessor.id, n.id, nextId(n.predecessor.id), nextId(n.id))
 		return n
 	// otherwise use fingers of n, starting with the one that is furthest away, to find responsible node
 	} else {
 		for i:=m; i>=1; i-- {
 
-			fmt.Printf("i=%d\n", i)
+//			fmt.Printf("i=%d\n", i)
 			// special case - when n´s finger points to itself
 			if (n.fingerTable[i].node.id == n.id) {
 
@@ -75,8 +76,8 @@ func (n *DHTNode) lookup2(id string) *DHTNode {
 
 
 			} else if between(hexStringToByteArr(n.fingerTable[i].node.id), hexStringToByteArr(n.id), hexStringToByteArr(id)) {
-				fmt.Printf("%s E [%s,%s)\n", id, n.fingerTable[i].node.id, n.id)
-				fmt.Printf("Go to node %s and perform lookup on %s\n", n.fingerTable[i].node.id, id)
+//				fmt.Printf("%s E [%s,%s)\n", id, n.fingerTable[i].node.id, n.id)
+//				fmt.Printf("Go to node %s and perform lookup on %s\n", n.fingerTable[i].node.id, id)
 				return ((n.fingerTable[i].node).lookup2(id))
 			}
 		}
@@ -95,12 +96,4 @@ func (n *DHTNode) specLookup(newNode *DHTNode, startId string) * DHTNode {
 	}
 	return newNode
 }
-
-
-
-
-
-
-
-
 
