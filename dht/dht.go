@@ -13,6 +13,7 @@ type DHTNode struct {
 	predecessor       *DHTNode
 	fingerTable       [m + 1]Finger
 	Requests          map[string]chan Msg
+	isListening       chan bool
 }
 
 // Turn the node into a JSON string containing id and address

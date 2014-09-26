@@ -7,29 +7,30 @@ import (
 	"time"
 )
 
-const timeoutSeconds = time.Second * 4
+const timeoutSeconds = time.Second * 8
 
 type Msg struct {
 	Id, Type, Method, Src, Dst string
+	Timestamp                  int64
 	Values                     []string
-	Channel                    chan Msg
-	WaitForResponse            bool
 }
 
 func (m *Msg) isRequest() bool  { return m.Type == "Request" }
 func (m *Msg) isResponse() bool { return m.Type == "Response" }
 
 func (n *DHTNode) listen() {
-	log.Debugf("Node %s listening on %s\n", n.id, n.getAddress())
 	udpAddr, err := net.ResolveUDPAddr("udp", n.getAddress())
 	conn, err := net.ListenUDP("udp", udpAddr)
 	defer conn.Close()
+	defer n.listen()
 	dec := json.NewDecoder(conn)
+
 	for {
+		//n.isListening <- true
 		msg := Msg{}
 		err = dec.Decode(&msg)
-		// Got a message!
-		log.Debug("Got message!")
+		log.Tracef("Node %s received msgId=%s %s %s from %s Timestamp: %d", n.id, msg.Id, msg.Method, msg.Type, msg.Src, msg.Timestamp)
+		time.Sleep(time.Second * 2)
 		switch msg.Type {
 		case "Response":
 			// Pass message to sender
@@ -48,14 +49,18 @@ func (n *DHTNode) listen() {
 }
 
 func (n *DHTNode) send(msg Msg) {
-	log.Debugf("Sending %s %s to %s", msg.Type, msg.Method, msg.Dst)
 	udpAddr, err := net.ResolveUDPAddr("udp", msg.Dst)
-
 	conn, err := net.DialUDP("udp", nil, udpAddr)
 	defer conn.Close()
 
-	msg.Id = generateNodeId() //[0:4]
+	t := time.Now()
+	msg.Timestamp = t.Unix()
 
+	if msg.isRequest() {
+		msg.Id = generateNodeId()[0:4]
+	}
+	log.Tracef("Node %s sending msgId=%s %s %s to %s Timestamp: %d", n.id, msg.Id, msg.Method, msg.Type, msg.Dst, msg.Timestamp)
+	time.Sleep(time.Second * 2)
 	jsonMsg, err := json.Marshal(msg)
 	_, err = conn.Write([]byte(jsonMsg))
 
@@ -81,13 +86,14 @@ func (n *DHTNode) waitForResponse(request Msg) {
 }
 
 func (n *DHTNode) sendRequest(request Msg) {
-	msg := &Msg{
+	//<-n.isListening
+	msg := Msg{
 		Type:   "Request",
 		Method: request.Method,
 		Src:    n.getAddress(),
 		Dst:    request.Dst,
 	}
-	n.send(*msg)
+	n.send(msg)
 }
 
 // When you get a request you need to handle (you = n)
@@ -98,6 +104,7 @@ func (n *DHTNode) handleRequest(request Msg) {
 
 	switch request.Method {
 	case "HELLO":
+		response.Id = request.Id
 		response.Method = "ACK"
 		response.Dst = request.Src
 		n.send(response)
@@ -111,7 +118,7 @@ func (n *DHTNode) handleRequest(request Msg) {
 func (n *DHTNode) handleResponse(response Msg) {
 	switch response.Method {
 	case "ACK":
-		log.Debugf("Received ACK from %s", response.Src)
+		n.sendRequest(Msg{Method: "HELLO", Dst: response.Src})
 	default:
 		log.Debugf("No request method specified!")
 	}

@@ -11,11 +11,12 @@ import (
 func init() {
 	testConfig := `
 		<seelog>
-			<outputs formatid="format1">
+			<outputs formatid="colored">
 				<file path="logfile.log"/>
 			</outputs>
 			<formats>
 				<format id="format1" format="%Date %Time [%LEVEL] %Msg%n"/>
+				<format id="colored"  format="%EscM(46)%Level%EscM(49) %Msg%n%EscM(0)"/>
 			</formats>
 		</seelog>
 	`
@@ -561,15 +562,16 @@ func TestFinger160bits(t *testing.T) {
 
 func TestNode1(t *testing.T) {
 	block := make(chan bool)
-	node := makeDHTNode(nil, "localhost", "2000")
-	go node.sendRequest(Msg{Method: "HELLO", Dst: "localhost:3000"})
-
+	id1 := "01"
+	node := makeDHTNode(&id1, "127.0.0.1", "2000")
+	node.sendRequest(Msg{Method: "HELLO", Dst: "127.0.0.1:5000"})
 	<-block
 }
 
 func TestTestNode2(t *testing.T) {
 	block := make(chan bool)
-	node := makeDHTNode(nil, "localhost", "3000")
+	id2 := "02"
+	node := makeDHTNode(&id2, "127.0.0.1", "5000")
 	_ = node
 	<-block
 }
