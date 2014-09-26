@@ -22,3 +22,5 @@ _testmain.go
 *.log
 *.exe
 *.test
+
+dht/logfile.log
