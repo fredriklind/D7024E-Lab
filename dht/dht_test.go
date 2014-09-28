@@ -7,11 +7,8 @@ import (
 	"testing"
 )
 
-var testChannel chan bool
-
 // Initializer for the dht package
 func init() {
-	testChannel = make(chan bool)
 	testConfig := `
 		<seelog type="sync">
 			<outputs>
@@ -676,17 +673,17 @@ func TestFinger160bits(t *testing.T) {
 }
 
 func TestHELLO(t *testing.T) {
-	block := make(chan bool)
-	id1 := "01"
-	id2 := "02"
 
-	configTestValidator([]string{
+	setupTest(t, []string{
 		"Node 01 sent HELLO Request",
 		"Node 02 got HELLO Request",
 		"Node 02 sent ACK Response",
 		"Node 01 got ACK Response",
-	})
+	},
+	)
 
+	id1 := "01"
+	id2 := "02"
 	node1 := makeDHTNode(&id1, "127.0.0.1", "2000")
 	node2 := makeDHTNode(&id2, "127.0.0.1", "3000")
 
@@ -696,7 +693,6 @@ func TestHELLO(t *testing.T) {
 	})
 
 	_ = node2
-	<-block
 }
 
 func Test3NodeForwarding(t *testing.T) {

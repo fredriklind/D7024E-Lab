@@ -1,78 +1,68 @@
 package dht
 
 import (
-	"fmt"
 	log "github.com/cihub/seelog"
-	"strings"
 	"testing"
-	"time"
 )
 
-func validateTestResults(test *testing.T, validResults []string) {
-	waitForValidTest := make(chan bool)
-	logReceiver := &CustomReceiver{channel: waitForValidTest}
-	log.RegisterReceiver("tester", logReceiver)
-	select {
-	case <-waitForValidTest:
-	case <-time.After(timeoutSeconds * 5):
-		test.Error("Test timed out")
-	}
-}
+// Sets up a custom log receiver that compares log messages
+// to the supplied valid logs and fails the test if it finds a
+// mismatch.
 
-// Receiver that receives log messages and puts them in an array
-// This can be used to test expected behavior of network requests
-type CustomReceiver struct { // implements seelog.CustomReceiver
+type TestContext struct {
 	validLogs []string
-	channel   chan bool
-	prefix    string
 	test      *testing.T
 }
 
-func (ar *CustomReceiver) ReceiveMessage(message string, level log.LogLevel, context log.LogContextInterface) error {
+type CustomReceiver struct {
+	context TestContext
+}
+
+func (cr *CustomReceiver) ReceiveMessage(message string, level log.LogLevel, context log.LogContextInterface) error {
 	message = message[:len(message)-1]
-	if message == ar.validLogs[0] {
-		ar.validLogs = append(ar.validLogs[:0], ar.validLogs[0+1:]...)
+	if message == cr.context.validLogs[0] {
+		cr.context.validLogs = append(cr.context.validLogs[:0], cr.context.validLogs[0+1:]...)
 	} else {
-		fmt.Printf("Error, expecting '%s', got '%s'\n", ar.validLogs[0], message)
+		cr.context.test.Fatalf("Expecting '%s', got '%s'\n", cr.context.validLogs[0], message)
 	}
 	return nil
 }
+func (cr *CustomReceiver) AfterParse(initArgs log.CustomReceiverInitArgs) error {
+	return nil
+}
+func (cr *CustomReceiver) Flush() {
 
-func (ar *CustomReceiver) AfterParse(initArgs log.CustomReceiverInitArgs) error {
-	var ok bool
-	var validString string
-	validString, ok = initArgs.XmlCustomAttrs["prefix"]
-	ar.validLogs = strings.Split(validString, ",")
-	if !ok {
-		ar.prefix = "No prefix"
-	}
+}
+func (cr *CustomReceiver) Close() error {
 	return nil
 }
 
-func (ar *CustomReceiver) Flush() {
-
-}
-
-func (ar *CustomReceiver) Close() error {
-	return nil
-}
-
-func configTestValidator(valid []string) {
-	testValidator := &CustomReceiver{}
-	log.RegisterReceiver("tester", testValidator)
+func setupTest(t *testing.T, valids []string) {
+	c := TestContext{test: t, validLogs: valids}
 	testConfig := `
-		<seelog type="sync">
-			<outputs>
-				<file formatid="onlytime" path="logfile.log"/>
-				<custom name="tester" formatid="onlymsg" data-prefix="` + strings.Join(valid, ",") + `"/>
-			</outputs>
-			<formats>
-				<format id="default" format="%Date %Time [%LEVEL] %Msg%n"/>
-				<format id="onlytime" format="%Time [%LEVEL] %Msg%n"/>
-				<format id="onlymsg" format="%Msg%n"/>
-			</formats>
-		</seelog>
-	`
-	logger, _ := log.LoggerFromConfigAsBytes([]byte(testConfig))
-	log.ReplaceLogger(logger)
+<seelog>
+    <outputs>
+        <custom name="myreceiver" formatid="test"/>
+    </outputs>
+    <formats>
+        <format id="test" format="%Msg%n"/>
+    </formats>
+</seelog>
+`
+	parserParams := &log.CfgParseParams{
+		CustomReceiverProducers: map[string]log.CustomReceiverProducer{
+			"myreceiver": func(log.CustomReceiverInitArgs) (log.CustomReceiver, error) {
+				return &CustomReceiver{c}, nil
+			},
+		},
+	}
+	logger, err := log.LoggerFromParamConfigAsString(testConfig, parserParams)
+	if err != nil {
+		panic(err)
+	}
+	defer logger.Flush()
+	err = log.ReplaceLogger(logger)
+	if err != nil {
+		panic(err)
+	}
 }
