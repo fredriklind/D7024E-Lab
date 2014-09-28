@@ -5,11 +5,13 @@ import (
 	log "github.com/cihub/seelog"
 	//"sort"
 	"testing"
-	"time"
 )
+
+var testChannel chan bool
 
 // Initializer for the dht package
 func init() {
+	testChannel = make(chan bool)
 	testConfig := `
 		<seelog type="sync">
 			<outputs>
@@ -678,7 +680,12 @@ func TestHELLO(t *testing.T) {
 	id1 := "01"
 	id2 := "02"
 
-	testValidator.prefix = "GAGAGAGAGAGAGA"
+	configTestValidator([]string{
+		"Node 01 sent HELLO Request",
+		"Node 02 got HELLO Request",
+		"Node 02 sent ACK Response",
+		"Node 01 got ACK Response",
+	})
 
 	node1 := makeDHTNode(&id1, "127.0.0.1", "2000")
 	node2 := makeDHTNode(&id2, "127.0.0.1", "3000")
@@ -688,12 +695,6 @@ func TestHELLO(t *testing.T) {
 		Dst:    node2.getAddress(),
 	})
 
-	validateTestResults(t, []string{
-		"Node 01 sent HELLO Request",
-		"Node 02 got HELLO Request",
-		"Node 02 sent ACK Response",
-		"Node 01 got ACK Response2",
-	})
 	_ = node2
 	<-block
 }
@@ -724,60 +725,4 @@ func Test3NodeForwarding(t *testing.T) {
 	_ = node2
 	_ = node3
 	<-block
-}
-
-func validateTestResults(test *testing.T, validResults []string) {
-	waitForValidTest := make(chan bool)
-	logReceiver := &CustomReceiver{channel: waitForValidTest}
-	log.RegisterReceiver("tester", logReceiver)
-	select {
-	case <-waitForValidTest:
-	case <-time.After(timeoutSeconds * 5):
-		test.Error("Test timed out")
-	}
-}
-
-// Receiver that receives log messages and puts them in an array
-// This can be used to test expected behavior of network requests
-type CustomReceiver struct { // implements seelog.CustomReceiver
-	validLogs []string
-	channel   chan bool
-	prefix    string
-}
-
-func (ar *CustomReceiver) ReceiveMessage(message string, level log.LogLevel, context log.LogContextInterface) error {
-	fmt.Printf("%s %s", ar.prefix, message)
-	return nil
-}
-
-func (ar *CustomReceiver) AfterParse(initArgs log.CustomReceiverInitArgs) error {
-	return nil
-}
-
-func (ar *CustomReceiver) Flush() {
-
-}
-
-func (ar *CustomReceiver) Close() error {
-	return nil
-}
-
-func configTestValidator(pref string) {
-	testValidator = &CustomReceiver{prefix: pref}
-	log.RegisterReceiver("tester", testValidator)
-	testConfig := `
-		<seelog type="sync">
-			<outputs>
-				<file formatid="onlytime" path="logfile.log"/>
-				<custom name="tester" formatid="onlymsg"/>
-			</outputs>
-			<formats>
-				<format id="default" format="%Date %Time [%LEVEL] %Msg%n"/>
-				<format id="onlytime" format="%Time [%LEVEL] %Msg%n"/>
-				<format id="onlymsg" format="%Msg%n"/>
-			</formats>
-		</seelog>
-	`
-	logger, _ := log.LoggerFromConfigAsBytes([]byte(testConfig))
-	log.ReplaceLogger(logger)
 }
