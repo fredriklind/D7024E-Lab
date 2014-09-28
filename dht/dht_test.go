@@ -3,19 +3,21 @@ package dht
 import (
 	"fmt"
 	log "github.com/cihub/seelog"
-	"sort"
+	//"sort"
 	"testing"
+	"time"
 )
 
 // Initializer for the dht package
 func init() {
 	testConfig := `
-		<seelog>
-			<outputs formatid="default">
-				<file path="logfile.log"/>
+		<seelog type="sync">
+			<outputs>
+				<file formatid="onlytime" path="logfile.log"/>
 			</outputs>
 			<formats>
 				<format id="default" format="%Date %Time [%LEVEL] %Msg%n"/>
+				<format id="onlytime" format="%Time [%LEVEL] %Msg%n"/>
 			</formats>
 		</seelog>
 	`
@@ -671,27 +673,111 @@ func TestFinger160bits(t *testing.T) {
 	*/
 }
 
-func TestNode1(t *testing.T) {
+func TestHELLO(t *testing.T) {
 	block := make(chan bool)
 	id1 := "01"
-	node := makeDHTNode(&id1, "127.0.0.1", "2000")
-	node.sendRequest(Msg{Method: "FORWARD", Values: map[string]string{"Method": "HELLO", "FinalDestinationId": "03", "Sender": node.getAddress()}, Dst: "127.0.0.1:3000"})
-	_ = node
-	<-block
-}
-
-func TestTestNode2(t *testing.T) {
-	block := make(chan bool)
 	id2 := "02"
-	node := makeDHTNode(&id2, "127.0.0.1", "3000")
-	_ = node
+
+	testValidator.prefix = "GAGAGAGAGAGAGA"
+
+	node1 := makeDHTNode(&id1, "127.0.0.1", "2000")
+	node2 := makeDHTNode(&id2, "127.0.0.1", "3000")
+
+	node1.sendRequest(Msg{
+		Method: "HELLO",
+		Dst:    node2.getAddress(),
+	})
+
+	validateTestResults(t, []string{
+		"Node 01 sent HELLO Request",
+		"Node 02 got HELLO Request",
+		"Node 02 sent ACK Response",
+		"Node 01 got ACK Response2",
+	})
+	_ = node2
 	<-block
 }
 
-func TestNode3(t *testing.T) {
+func Test3NodeForwarding(t *testing.T) {
 	block := make(chan bool)
+
+	id1 := "01"
+	id2 := "02"
 	id3 := "03"
-	node := makeDHTNode(&id3, "127.0.0.1", "4000")
-	_ = node
+
+	node1 := makeDHTNode(&id1, "127.0.0.1", "2000")
+	node2 := makeDHTNode(&id2, "127.0.0.1", "3000")
+	node3 := makeDHTNode(&id3, "127.0.0.1", "4000")
+
+	node1.sendRequest(
+		Msg{
+			Method: "FORWARD",
+			Values: map[string]string{
+				"Method":             "HELLO",
+				"FinalDestinationId": "03",
+				"Sender":             node1.getAddress(),
+			},
+			Dst: "127.0.0.1:3000"},
+	)
+
+	// To prevent stupid warnings
+	_ = node2
+	_ = node3
 	<-block
+}
+
+func validateTestResults(test *testing.T, validResults []string) {
+	waitForValidTest := make(chan bool)
+	logReceiver := &CustomReceiver{channel: waitForValidTest}
+	log.RegisterReceiver("tester", logReceiver)
+	select {
+	case <-waitForValidTest:
+	case <-time.After(timeoutSeconds * 5):
+		test.Error("Test timed out")
+	}
+}
+
+// Receiver that receives log messages and puts them in an array
+// This can be used to test expected behavior of network requests
+type CustomReceiver struct { // implements seelog.CustomReceiver
+	validLogs []string
+	channel   chan bool
+	prefix    string
+}
+
+func (ar *CustomReceiver) ReceiveMessage(message string, level log.LogLevel, context log.LogContextInterface) error {
+	fmt.Printf("%s %s", ar.prefix, message)
+	return nil
+}
+
+func (ar *CustomReceiver) AfterParse(initArgs log.CustomReceiverInitArgs) error {
+	return nil
+}
+
+func (ar *CustomReceiver) Flush() {
+
+}
+
+func (ar *CustomReceiver) Close() error {
+	return nil
+}
+
+func configTestValidator(pref string) {
+	testValidator = &CustomReceiver{prefix: pref}
+	log.RegisterReceiver("tester", testValidator)
+	testConfig := `
+		<seelog type="sync">
+			<outputs>
+				<file formatid="onlytime" path="logfile.log"/>
+				<custom name="tester" formatid="onlymsg"/>
+			</outputs>
+			<formats>
+				<format id="default" format="%Date %Time [%LEVEL] %Msg%n"/>
+				<format id="onlytime" format="%Time [%LEVEL] %Msg%n"/>
+				<format id="onlymsg" format="%Msg%n"/>
+			</formats>
+		</seelog>
+	`
+	logger, _ := log.LoggerFromConfigAsBytes([]byte(testConfig))
+	log.ReplaceLogger(logger)
 }

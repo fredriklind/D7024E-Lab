@@ -9,6 +9,8 @@ import (
 
 const timeoutSeconds = time.Second * 8
 
+var fakeDelay time.Duration
+
 type Msg struct {
 	Id, Type, Method, Src, Dst string
 	Timestamp                  int64
@@ -29,8 +31,8 @@ func (n *DHTNode) listen() {
 	for {
 		msg := Msg{}
 		err = dec.Decode(&msg)
-		log.Tracef("Node %s received msgId=%s %s %s from %s %+v", n.id, msg.Id, msg.Method, msg.Type, msg.Src, msg)
-		time.Sleep(time.Second * 2)
+		log.Tracef("Node %s got %s %s", n.id, msg.Method, msg.Type)
+		time.Sleep(fakeDelay)
 		switch msg.Type {
 		case "Response":
 			// Pass message to sender
@@ -57,10 +59,14 @@ func (n *DHTNode) send(msg Msg) {
 	msg.Timestamp = t.Unix()
 
 	if msg.Id == "" {
+		//log.Tracef("Node %s assigning new id to %s %s", n.id, msg.Method, msg.Type)
 		msg.Id = generateNodeId()[0:4]
+	} else {
+		//log.Tracef("Node %s keeping message id %s", n.id, msg.Id)
 	}
-	log.Tracef("Node %s sending msgId=%s %s %s to %s Timestamp: %d", n.id, msg.Id, msg.Method, msg.Type, msg.Dst, msg.Timestamp)
-	time.Sleep(time.Second * 2)
+
+	log.Tracef("Node %s sent %s %s", n.id, msg.Method, msg.Type)
+	time.Sleep(fakeDelay)
 	jsonMsg, err := json.Marshal(msg)
 	_, err = conn.Write([]byte(jsonMsg))
 
@@ -70,7 +76,7 @@ func (n *DHTNode) send(msg Msg) {
 	}
 
 	if err != nil {
-		log.Errorf("Error in send on node %s, %s", n.id, err.Error())
+		log.Errorf("Node %s Error in send: %s", n.id, err.Error())
 	}
 }
 
@@ -81,16 +87,38 @@ func (n *DHTNode) waitForResponse(request Msg) {
 	case response := <-n.Requests[request.Id]:
 		n.handleResponse(response)
 	case <-time.After(timeoutSeconds):
-		log.Debugf("%s request with id %s timed out", request.Method, request.Id)
+		log.Errorf("Node %s %s request with id %s timed out", n.id, request.Method, request.Id)
 	}
 }
 
 func (n *DHTNode) sendRequest(request Msg) {
+	// Construct the message
 	msg := Msg{
 		Type:   "Request",
 		Method: request.Method,
 		Src:    n.getAddress(),
 		Dst:    request.Dst,
+	}
+
+	// This is to prevent send from generating a new msg.Id
+	if request.Id != "" {
+		msg.Id = request.Id
+	}
+	n.send(msg)
+}
+
+func (n *DHTNode) sendResponse(response Msg) {
+	//Construct the message
+	msg := Msg{
+		Type:   "Response",
+		Method: response.Method,
+		Src:    n.getAddress(),
+		Dst:    response.Dst,
+	}
+
+	// This is to prevent send from generating a new msg.Id
+	if response.Id != "" {
+		msg.Id = response.Id
 	}
 	n.send(msg)
 }
@@ -98,21 +126,20 @@ func (n *DHTNode) sendRequest(request Msg) {
 // When you get a request you need to handle (you = n)
 func (n *DHTNode) handleRequest(request Msg) {
 
-	// Construct the response to be sent
-	response := Msg{Type: "Response", Src: n.getAddress()}
-
 	switch request.Method {
 	case "HELLO":
-		response.Id = request.Id
-		response.Method = "ACK"
-		response.Dst = request.Src
-		n.send(response)
+		n.sendResponse(Msg{
+			Id:     request.Id,
+			Method: "ACK",
+			Dst:    request.Src,
+		})
 
 	// Forwards a request to nextNode setting the method and Src depending
 	// on the Values["Method"] and Values["Sender"]
 	case "FORWARD":
 		// If n is the final destination, answer the original sender
 		if n.id == request.Values["FinalDestinationId"] {
+			log.Tracef("Node %s is FinalDestination", n.id)
 			newRequest := Msg{
 				Method: request.Values["Method"],
 				Src:    request.Values["Sender"],
@@ -140,7 +167,7 @@ func (n *DHTNode) handleRequest(request Msg) {
 func (n *DHTNode) handleResponse(response Msg) {
 	switch response.Method {
 	case "ACK":
-		// Do nothing
+		//log.Tracef("Node %s request satisfied", n.id)
 	default:
 		log.Debugf("No request method specified!")
 	}
