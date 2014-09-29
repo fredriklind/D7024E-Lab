@@ -562,7 +562,7 @@ func TestDebug(t *testing.T) {
 }
 
 func testLookup(n *DHTNode, id string) {
-	var result = n.lookup(id)
+	var result = n.lookup2(id)
 	fmt.Printf("%s.lookup(%s) returns %s\n", n.id, id, result.id)
 }
 

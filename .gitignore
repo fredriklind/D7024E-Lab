@@ -20,6 +20,8 @@ _cgo_export.*
 _testmain.go
 
 *.log
+*.DS_Store
+
 *.exe
 *.test
 *.DS_Store
