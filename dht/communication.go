@@ -9,8 +9,6 @@ import (
 
 const timeoutSeconds = time.Second * 8
 
-var fakeDelay time.Duration
-
 type Msg struct {
 	Id, Type, Method, Src, Dst string
 	Timestamp                  int64
@@ -32,7 +30,7 @@ func (n *DHTNode) listen() {
 		msg := Msg{}
 		err = dec.Decode(&msg)
 		log.Tracef("Node %s got %s %s", n.id, msg.Method, msg.Type)
-		time.Sleep(fakeDelay)
+		time.Sleep(time.Millisecond * 400)
 		switch msg.Type {
 		case "Response":
 			// Pass message to sender
@@ -66,7 +64,7 @@ func (n *DHTNode) send(msg Msg) {
 	}
 
 	log.Tracef("Node %s sent %s %s", n.id, msg.Method, msg.Type)
-	time.Sleep(fakeDelay)
+	time.Sleep(time.Millisecond * 400)
 	jsonMsg, err := json.Marshal(msg)
 	_, err = conn.Write([]byte(jsonMsg))
 
@@ -125,7 +123,7 @@ func (n *DHTNode) sendResponse(response Msg) {
 
 // When you get a request you need to handle (you = n)
 func (n *DHTNode) handleRequest(request Msg) {
-
+	log.Tracef("Got request: %+v", request)
 	switch request.Method {
 	case "HELLO":
 		n.sendResponse(Msg{
