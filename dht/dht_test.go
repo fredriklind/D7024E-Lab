@@ -674,6 +674,7 @@ func TestFinger160bits(t *testing.T) {
 
 func TestHELLO(t *testing.T) {
 
+	// Define a sequence of requests that are expected
 	setupTest(t, []string{
 		"Node 01 sent HELLO Request",
 		"Node 02 got HELLO Request",
@@ -692,6 +693,7 @@ func TestHELLO(t *testing.T) {
 		Dst:    node2.getAddress(),
 	})
 
+	// To aboid stupid warning
 	_ = node2
 }
 
@@ -714,7 +716,7 @@ func Test3NodeForwarding(t *testing.T) {
 				"FinalDestinationId": "03",
 				"Sender":             node1.getAddress(),
 			},
-			Dst: "127.0.0.1:3000"},
+			Dst: node2.getAddress()},
 	)
 
 	// To prevent stupid warnings
