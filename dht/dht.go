@@ -26,35 +26,35 @@ func (n *DHTNode) getAddress() string {
 
 // Returns the node who is responsible for the data corresponding to id, traversing the ring using finger tables
 func (n *DHTNode) lookup2(id string) *DHTNode {
-//	fmt.Printf("Performing lookup from node %s\n", n.id)
+	//	fmt.Printf("Performing lookup from node %s\n", n.id)
 	// n responsible for id
 	if between(hexStringToByteArr(nextId(n.predecessor.id)), hexStringToByteArr(nextId(n.id)), hexStringToByteArr(id)) {
-//		fmt.Printf("%s E (%s, %s], eg. [%s, %s) \n", id, n.predecessor.id, n.id, nextId(n.predecessor.id), nextId(n.id))
+		//		fmt.Printf("%s E (%s, %s], eg. [%s, %s) \n", id, n.predecessor.id, n.id, nextId(n.predecessor.id), nextId(n.id))
 		return n
-	// otherwise use fingers of n, starting with the one that is furthest away, to find responsible node
+		// otherwise use fingers of n, starting with the one that is furthest away, to find responsible node
 	} else {
-		for i:=m; i>=1; i-- {
+		for i := m; i >= 1; i-- {
 
-//			fmt.Printf("i=%d\n", i)
+			//			fmt.Printf("i=%d\n", i)
 			// special case - when n´s finger points to itself
-			if (n.fingerTable[i].node.id == n.id) {
+			if n.fingerTable[i].node.id == n.id {
 
 				// what to do? go to next finger...
-//				fmt.Println("Finger points to node itself<-------------------")
-			// id between finger and node - got to that finger
+				//				fmt.Println("Finger points to node itself<-------------------")
+				// id between finger and node - got to that finger
 			} else if between(hexStringToByteArr(n.fingerTable[i].node.id), hexStringToByteArr(n.id), hexStringToByteArr(id)) {
-//				fmt.Printf("%s E [%s,%s)\n", id, n.fingerTable[i].node.id, n.id)
-//				fmt.Printf("Go to node %s and perform lookup on %s\n", n.fingerTable[i].node.id, id)
+				//				fmt.Printf("%s E [%s,%s)\n", id, n.fingerTable[i].node.id, n.id)
+				//				fmt.Printf("Go to node %s and perform lookup on %s\n", n.fingerTable[i].node.id, id)
 				return ((n.fingerTable[i].node).lookup2(id))
 			}
 		}
 		// if id is not between any finger and n - then id must be between n and its successor
 		return n.successor()
 	}
-}	
+}
 
 // lookup of finger.node for the case when a second node is added to a ring with only one node
-func (n *DHTNode) specLookup(newNode *DHTNode, startId string) * DHTNode {
+func (n *DHTNode) specLookup(newNode *DHTNode, startId string) *DHTNode {
 	if between(hexStringToByteArr(nextId(newNode.id)), hexStringToByteArr(nextId(n.id)), hexStringToByteArr(startId)) {
 		return n
 	}
@@ -101,7 +101,7 @@ func (newNode *DHTNode) initFingerTable(n *DHTNode) {
 			hexStringToByteArr(newNode.fingerTable[i+1].startId),
 		) {
 
-//			fmt.Printf("%s between %s and %s\n", newNode.fingerTable[i+1].startId, newNode.id, nextId(newNode.fingerTable[i].node.id))
+			//			fmt.Printf("%s between %s and %s\n", newNode.fingerTable[i+1].startId, newNode.id, nextId(newNode.fingerTable[i].node.id))
 			// startId between node and previous finger.node
 			newNode.fingerTable[i+1].node = newNode.fingerTable[i].node
 		} else {
@@ -109,12 +109,12 @@ func (newNode *DHTNode) initFingerTable(n *DHTNode) {
 			if oneNodeRing {
 				newNode.fingerTable[i+1].node = n.specLookup(newNode, newNode.fingerTable[i+1].startId)
 			} else {
-			newNode.fingerTable[i+1].node = n.lookup2(newNode.fingerTable[i+1].startId)
-//			fmt.Printf("%s.lookup2(%s) = %s \n", n.id, newNode.fingerTable[i+1].startId, (n.lookup2(newNode.fingerTable[i+1].startId)).id)
-//			fmt.Printf("FingerNode %s \n", newNode.fingerTable[i+1].node.id)
+				newNode.fingerTable[i+1].node = n.lookup2(newNode.fingerTable[i+1].startId)
+				//			fmt.Printf("%s.lookup2(%s) = %s \n", n.id, newNode.fingerTable[i+1].startId, (n.lookup2(newNode.fingerTable[i+1].startId)).id)
+				//			fmt.Printf("FingerNode %s \n", newNode.fingerTable[i+1].node.id)
 			}
 		}
-//		fmt.Printf("Node %s finger nr %d startId %s Node %s\n", newNode.id, i+1, newNode.fingerTable[i+1].startId, newNode.fingerTable[i+1].node.id)
+		//		fmt.Printf("Node %s finger nr %d startId %s Node %s\n", newNode.id, i+1, newNode.fingerTable[i+1].startId, newNode.fingerTable[i+1].node.id)
 
 	}
 }
@@ -123,7 +123,7 @@ func (newNode *DHTNode) initFingerTable(n *DHTNode) {
 func (n *DHTNode) updateOthers() {
 	//	fmt.Printf("%s.updateOthers()\n", n.id)
 	for i := 1; i <= m; i++ {
-//		fmt.Printf("Loop %d of updateOthers()\n", i)
+		//		fmt.Printf("Loop %d of updateOthers()\n", i)
 
 		// Find last preceeding node p whose i:th finger might be n
 		nId := big.Int{}
@@ -152,7 +152,7 @@ func (n *DHTNode) updateOthers() {
 		}
 		//		fmt.Printf("p = %s\n", p.id)
 		if p.id != n.id {
-//			fmt.Printf("Going in to updateFingerTable, p is: %s\n", p.id)
+			//			fmt.Printf("Going in to updateFingerTable, p is: %s\n", p.id)
 			p.updateFingerTable(n, i)
 		}
 		//		fmt.Printf("%s.uptadeFingertable(%s,%d)\n", p.id, n.id, i)
@@ -162,34 +162,34 @@ func (n *DHTNode) updateOthers() {
 // If s should be the i:th finger of n -> update n's finger table entry nr i with s
 func (n *DHTNode) updateFingerTable(s *DHTNode, i int) {
 	// n´s finger.node points to n itself
-	if (n.id == n.fingerTable[i].node.id) {
+	if n.id == n.fingerTable[i].node.id {
 		if between(
 			hexStringToByteArr(n.fingerTable[i].startId),
 			hexStringToByteArr(n.fingerTable[i].node.id),
 			hexStringToByteArr(s.id),
-			) {
+		) {
 			n.fingerTable[i].node = s
-//			fmt.Printf("%s should be the %d:th finger of %s -> update %s's finger table entry nr %d with %s\n", s.id, i, n.id, n.id, i, s.id)
+			//			fmt.Printf("%s should be the %d:th finger of %s -> update %s's finger table entry nr %d with %s\n", s.id, i, n.id, n.id, i, s.id)
 		}
 	} else if between(
 		hexStringToByteArr(n.fingerTable[i].startId),
 		hexStringToByteArr(n.fingerTable[i].node.id),
 		hexStringToByteArr(s.id),
-		) {
-			if !(n.fingerTable[i].startId == n.fingerTable[i].node.id) {
-				n.fingerTable[i].node = s
-//				fmt.Printf("%s should be the %d:th finger of %s -> update %s's finger table entry nr %d with %s\n", s.id, i, n.id, n.id, i, s.id)
-			}
-		}
-		// Get last node preceeding n and mayby update its finger i as well, check that it hasn´t come round to the node just added (s)
-		p := n.predecessor
-//		fmt.Printf("p is: %s\n", p.id)
-		if p.id != s.id {
-			p.updateFingerTable(s, i)
-		} else {
-//			fmt.Println("Not going to that node")
+	) {
+		if !(n.fingerTable[i].startId == n.fingerTable[i].node.id) {
+			n.fingerTable[i].node = s
+			//				fmt.Printf("%s should be the %d:th finger of %s -> update %s's finger table entry nr %d with %s\n", s.id, i, n.id, n.id, i, s.id)
 		}
 	}
+	// Get last node preceeding n and mayby update its finger i as well, check that it hasn´t come round to the node just added (s)
+	p := n.predecessor
+	//		fmt.Printf("p is: %s\n", p.id)
+	if p.id != s.id {
+		p.updateFingerTable(s, i)
+	} else {
+		//			fmt.Println("Not going to that node")
+	}
+}
 
 func (nodeToAdd *DHTNode) join(n *DHTNode) {
 
@@ -207,8 +207,8 @@ func (nodeToAdd *DHTNode) join(n *DHTNode) {
 		//		fmt.Printf("\nNode %s joins, using node %s\n", nodeToAdd.id, n.id)
 		nodeToAdd.initFingerTable(n)
 		fmt.Println("After initFingerTable:\n")
-//		nodeToAdd.printNode2()
-//		nodeToAdd.printRing2()
+		//		nodeToAdd.printNode2()
+		//		nodeToAdd.printRing2()
 		nodeToAdd.printNodeWithFingers()
 		//		fmt.Printf("Node %s joined and initiated its finger now time for updating others\n", nodeToAdd.id)
 		nodeToAdd.updateOthers()
@@ -252,4 +252,4 @@ func (n *DHTNode) successor() *DHTNode {
 
 func (n *DHTNode) setSuccessor(successor *DHTNode) {
 	n.fingerTable[1].node = successor
-}	
+}
