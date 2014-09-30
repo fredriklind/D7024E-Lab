@@ -1,9 +1,9 @@
 package dht
 
 import (
-	"math/big"
-	"fmt"
 	"encoding/hex"
+	"fmt"
+	"math/big"
 )
 
 func nextId(id string) string {

@@ -7,19 +7,19 @@ import (
 func (n *DHTNode) printNode2() {
 	//fmt.Printf("Node %s, address %s, port %s\n", n.id, n.adress, n.port)
 	fmt.Printf("Node        %s\n", n.id)
-	if (n.predecessor != nil) {
+	if n.predecessor != nil {
 		fmt.Printf("Predecessor  %s\n", n.predecessor.id)
 	}
-//	fmt.Println("")
+	//	fmt.Println("")
 }
 
 func (n *DHTNode) printNodeWithFingers() {
 	//fmt.Printf("Node %s, address %s, port %s\n", n.id, n.adress, n.port)
 	fmt.Printf("Node %s\n", n.id)
-	if (n.predecessor != nil) {
+	if n.predecessor != nil {
 		fmt.Printf("Predecessor %s\n", n.predecessor.id)
 	}
-	for i:=1; i<=m; i++ {
+	for i := 1; i <= m; i++ {
 		fmt.Printf("Finger %s -> Node %s\n", n.fingerTable[i].startId, n.fingerTable[i].node.id)
 	}
 	fmt.Println("")
@@ -27,16 +27,16 @@ func (n *DHTNode) printNodeWithFingers() {
 
 func (n *DHTNode) printRing2() {
 	//fmt.Printf(".           %s\n", n.id)
-//	fmt.Printf("%s\n", n.id)
+	//	fmt.Printf("%s\n", n.id)
 	n.printNodeWithFingers()
 	newn := n.successor()
 	for newn.id != n.id {
 		//fmt.Printf(".           %s\n", newn.id)
-//		fmt.Printf("%s\n", newn.id)
+		//		fmt.Printf("%s\n", newn.id)
 		newn.printNodeWithFingers()
 		newn = newn.successor()
 	}
-//	fmt.Println()
+	//	fmt.Println()
 }
 
 // Returns the node who is responsible for the data corresponding to hashKey, traversing the ring linearly
@@ -47,7 +47,6 @@ func (n *DHTNode) linearLookup(hashKey string) *DHTNode {
 		return n.predecessor.linearLookup(hashKey)
 	}
 }
-
 
 func (n *DHTNode) printRing() {
 	n.printNode()
