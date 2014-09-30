@@ -2,6 +2,7 @@ package dht
 
 import (
 	"fmt"
+
 	log "github.com/cihub/seelog"
 	//"sort"
 	"testing"
@@ -673,15 +674,14 @@ func TestFinger160bits(t *testing.T) {
 }
 
 func TestHELLO(t *testing.T) {
-
 	// Define a sequence of requests that are expected
-	setupTest(t, []string{
+	/*setupTest(t, []string{
 		"Node 01 sent HELLO Request",
 		"Node 02 got HELLO Request",
 		"Node 02 sent ACK Response",
 		"Node 01 got ACK Response",
 	},
-	)
+	)*/
 
 	id1 := "01"
 	id2 := "02"
@@ -692,9 +692,6 @@ func TestHELLO(t *testing.T) {
 		Method: "HELLO",
 		Dst:    node2.getAddress(),
 	})
-
-	// To aboid stupid warning
-	_ = node2
 }
 
 func Test3NodeForwarding(t *testing.T) {
@@ -720,7 +717,6 @@ func Test3NodeForwarding(t *testing.T) {
 	)
 
 	// To prevent stupid warnings
-	_ = node2
 	_ = node3
 	<-block
 }

@@ -1,8 +1,9 @@
 package dht
 
 import (
-	log "github.com/cihub/seelog"
 	"testing"
+
+	log "github.com/cihub/seelog"
 )
 
 // Sets up a custom log receiver that compares log messages

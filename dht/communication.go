@@ -2,9 +2,10 @@ package dht
 
 import (
 	"encoding/json"
-	log "github.com/cihub/seelog"
 	"net"
 	"time"
+
+	log "github.com/cihub/seelog"
 )
 
 const timeoutSeconds = time.Second * 8
@@ -20,16 +21,27 @@ func (m *Msg) isRequest() bool  { return m.Type == "Request" }
 func (m *Msg) isResponse() bool { return m.Type == "Response" }
 
 func (n *DHTNode) listen() {
+
+	// Start listening
 	udpAddr, err := net.ResolveUDPAddr("udp", n.getAddress())
 	conn, err := net.ListenUDP("udp", udpAddr)
+
+	if err != nil {
+		log.Errorf("Error in send on node %s, %s", n.id, err.Error())
+		return
+	}
+
 	defer conn.Close()
+
+	// Listen again after this method finishes. TODO might be
+	// that there is a better way to do this
 	defer n.listen()
 	dec := json.NewDecoder(conn)
 
 	for {
 		msg := Msg{}
 		err = dec.Decode(&msg)
-		log.Tracef("Node %s got %s %s", n.id, msg.Method, msg.Type)
+		//log.Tracef("Node %s got %s %s", n.id, msg.Method, msg.Type)
 		time.Sleep(time.Millisecond * 400)
 		switch msg.Type {
 		case "Response":
@@ -42,34 +54,34 @@ func (n *DHTNode) listen() {
 			log.Error("Message type not specified!")
 		}
 	}
-
-	if err != nil {
-		log.Errorf("Error in send on node %s, %s", n.id, err.Error())
-	}
 }
 
 func (n *DHTNode) send(msg Msg) {
+
+	// Start up network stuff
 	udpAddr, err := net.ResolveUDPAddr("udp", msg.Dst)
 	conn, err := net.DialUDP("udp", nil, udpAddr)
 	defer conn.Close()
 
+	// Apply unix timestamp to the Msg
 	t := time.Now()
 	msg.Timestamp = t.Unix()
 
+	// Assign a new Id to the Msg if it is not set
 	if msg.Id == "" {
-		//log.Tracef("Node %s assigning new id to %s %s", n.id, msg.Method, msg.Type)
 		msg.Id = generateNodeId()[0:4]
-	} else {
-		//log.Tracef("Node %s keeping message id %s", n.id, msg.Id)
 	}
 
 	log.Tracef("Node %s sent %s %s", n.id, msg.Method, msg.Type)
+	//log.Tracef("SENDING!: %+v", msg)
+
+	// Serialize and send the message (also wait to simulate network delay)
 	time.Sleep(time.Millisecond * 400)
 	jsonMsg, err := json.Marshal(msg)
 	_, err = conn.Write([]byte(jsonMsg))
 
+	// Blocks until something is received on the channel that is associated with msg.Id
 	if msg.isRequest() && msg.DontWaitForResponse == false {
-		// Blocks until something is received on the channel that is associated with msg.Id
 		n.waitForResponse(msg)
 	}
 
@@ -79,8 +91,12 @@ func (n *DHTNode) send(msg Msg) {
 }
 
 func (n *DHTNode) waitForResponse(request Msg) {
+
+	// Save the channel so that the listen() method can un-block
+	// this method when it receives a response with a matching id
 	n.Requests[request.Id] = make(chan Msg)
 
+	// Wait for the Msg-specific channel to get data, or time out
 	select {
 	case response := <-n.Requests[request.Id]:
 		n.handleResponse(response)
@@ -123,7 +139,7 @@ func (n *DHTNode) sendResponse(response Msg) {
 
 // When you get a request you need to handle (you = n)
 func (n *DHTNode) handleRequest(request Msg) {
-	log.Tracef("Got request: %+v", request)
+	//log.Tracef("Got request: %+v", request)
 	switch request.Method {
 	case "HELLO":
 		n.sendResponse(Msg{
