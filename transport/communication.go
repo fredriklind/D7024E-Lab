@@ -10,8 +10,6 @@ import (
 
 const timeoutSeconds = time.Second * 8
 
-type Transporter
-
 type Msg struct {
 	Id, Type, Method, Src, Dst string
 	Timestamp                  int64
@@ -27,10 +25,10 @@ func (n *localNode) getAddress() string {
 }
 
 // ----------------------------------------------------------------------------------------
-//										highest layer
+//										public layer
 // ----------------------------------------------------------------------------------------
 
-func (t *transport) SendLookupRequest(destNode *remoteNode, id string) {
+func (t *transport) sendLookupRequest(destNode *remoteNode, id string) {
 	// check queue
 	// if lookup in queue - forward request
 	// else send new lookupRequest
