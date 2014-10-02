@@ -31,15 +31,15 @@ func init() {
 func TestFinger160bits2(t *testing.T) {
 
 	// note nil arg means automatically generate ID, e.g. f38f3b2dcc69a2093f258e31902e40ad33148385
-	node1 := makeDHTNode(nil, "localhost", "1111")
-	node2 := makeDHTNode(nil, "localhost", "1112")
-	node3 := makeDHTNode(nil, "localhost", "1113")
-	/*	node4 := makeDHTNode(nil, "localhost", "1114")
-		node5 := makeDHTNode(nil, "localhost", "1115")
-		node6 := makeDHTNode(nil, "localhost", "1116")
-		node7 := makeDHTNode(nil, "localhost", "1117")
-		node8 := makeDHTNode(nil, "localhost", "1118")
-		node9 := makeDHTNode(nil, "localhost", "1119")*/
+	node1 := makelocalNode(nil, "localhost", "1111")
+	node2 := makelocalNode(nil, "localhost", "1112")
+	node3 := makelocalNode(nil, "localhost", "1113")
+	/*	node4 := makelocalNode(nil, "localhost", "1114")
+		node5 := makelocalNode(nil, "localhost", "1115")
+		node6 := makelocalNode(nil, "localhost", "1116")
+		node7 := makelocalNode(nil, "localhost", "1117")
+		node8 := makelocalNode(nil, "localhost", "1118")
+		node9 := makelocalNode(nil, "localhost", "1119")*/
 
 	for i := 0; i < 10; i++ {
 		fmt.Println()
@@ -108,21 +108,21 @@ func TestFinger16bits(t *testing.T) {
 	idF := "0f"
 
 	// note nil arg means automatically generate ID, e.g. f38f3b2dcc69a2093f258e31902e40ad33148385
-	node1 := makeDHTNode(&id1, "localhost", "1101")
-	node2 := makeDHTNode(&id2, "localhost", "1102")
-	node3 := makeDHTNode(&id3, "localhost", "1103")
-	node4 := makeDHTNode(&id4, "localhost", "1104")
-	node5 := makeDHTNode(&id5, "localhost", "1105")
-	node6 := makeDHTNode(&id6, "localhost", "1106")
-	node7 := makeDHTNode(&id7, "localhost", "1107")
-	node8 := makeDHTNode(&id8, "localhost", "1108")
-	node9 := makeDHTNode(&id9, "localhost", "1109")
-	nodeA := makeDHTNode(&idA, "localhost", "1110")
-	nodeB := makeDHTNode(&idB, "localhost", "1111")
-	nodeC := makeDHTNode(&idC, "localhost", "1112")
-	nodeD := makeDHTNode(&idD, "localhost", "1113")
-	nodeE := makeDHTNode(&idE, "localhost", "1114")
-	nodeF := makeDHTNode(&idF, "localhost", "1115")
+	node1 := makelocalNode(&id1, "localhost", "1101")
+	node2 := makelocalNode(&id2, "localhost", "1102")
+	node3 := makelocalNode(&id3, "localhost", "1103")
+	node4 := makelocalNode(&id4, "localhost", "1104")
+	node5 := makelocalNode(&id5, "localhost", "1105")
+	node6 := makelocalNode(&id6, "localhost", "1106")
+	node7 := makelocalNode(&id7, "localhost", "1107")
+	node8 := makelocalNode(&id8, "localhost", "1108")
+	node9 := makelocalNode(&id9, "localhost", "1109")
+	nodeA := makelocalNode(&idA, "localhost", "1110")
+	nodeB := makelocalNode(&idB, "localhost", "1111")
+	nodeC := makelocalNode(&idC, "localhost", "1112")
+	nodeD := makelocalNode(&idD, "localhost", "1113")
+	nodeE := makelocalNode(&idE, "localhost", "1114")
+	nodeF := makelocalNode(&idF, "localhost", "1115")
 
 	fmt.Println("------------------------------------------------------------------------------------------------")
 
@@ -242,14 +242,14 @@ func TestDebug2(t *testing.T) {
 	id6 := "06"
 	//	id7 := "07"
 
-	//	node0 := makeDHTNode(&id0, "localhost", "1111")
-	node1 := makeDHTNode(&id1, "localhost", "1112")
-	node2 := makeDHTNode(&id2, "localhost", "1113")
-	//	node3 := makeDHTNode(&id3, "localhost", "1114")
-	node4 := makeDHTNode(&id4, "localhost", "1115")
-	node5 := makeDHTNode(&id5, "localhost", "1116")
-	node6 := makeDHTNode(&id6, "localhost", "1117")
-	//	node7 := makeDHTNode(&id7, "localhost", "1118")
+	//	node0 := makelocalNode(&id0, "localhost", "1111")
+	node1 := makelocalNode(&id1, "localhost", "1112")
+	node2 := makelocalNode(&id2, "localhost", "1113")
+	//	node3 := makelocalNode(&id3, "localhost", "1114")
+	node4 := makelocalNode(&id4, "localhost", "1115")
+	node5 := makelocalNode(&id5, "localhost", "1116")
+	node6 := makelocalNode(&id6, "localhost", "1117")
+	//	node7 := makelocalNode(&id7, "localhost", "1118")
 	/*
 		node0.printNode2()
 		node1.printNode2()
@@ -291,7 +291,7 @@ func TestDebug2(t *testing.T) {
 	fmt.Println("")
 	/*
 		idn := [8]string{"00","01","02","03","04","05","06","07"}
-		nodes := [8]*DHTNode{node1,node2,node4,node5,node6,node1,node2,node4}*/
+		nodes := [8]*localNode{node1,node2,node4,node5,node6,node1,node2,node4}*/
 	/*
 		for i:=0; i<8; i++ {
 			for j:=0; j<8; j++ {
@@ -352,15 +352,15 @@ func TestDebug2(t *testing.T) {
  */
 /*func TestRingSetup(t *testing.T) {
 	// note nil arg means automatically generate ID, e.g. f38f3b2dcc69a2093f258e31902e40ad33148385
-	node1 := makeDHTNode(nil, "localhost", "1111")
-	node2 := makeDHTNode(nil, "localhost", "1112")
-	node3 := makeDHTNode(nil, "localhost", "1113")
-	node4 := makeDHTNode(nil, "localhost", "1114")
-	node5 := makeDHTNode(nil, "localhost", "1115")
-	node6 := makeDHTNode(nil, "localhost", "1116")
-	node7 := makeDHTNode(nil, "localhost", "1117")
-	node8 := makeDHTNode(nil, "localhost", "1118")
-	node9 := makeDHTNode(nil, "localhost", "1119")
+	node1 := makelocalNode(nil, "localhost", "1111")
+	node2 := makelocalNode(nil, "localhost", "1112")
+	node3 := makelocalNode(nil, "localhost", "1113")
+	node4 := makelocalNode(nil, "localhost", "1114")
+	node5 := makelocalNode(nil, "localhost", "1115")
+	node6 := makelocalNode(nil, "localhost", "1116")
+	node7 := makelocalNode(nil, "localhost", "1117")
+	node8 := makelocalNode(nil, "localhost", "1118")
+	node9 := makelocalNode(nil, "localhost", "1119")
 
 	node1.join(nil)
 	node2.join(node1)
@@ -390,15 +390,15 @@ func TestDebug2(t *testing.T) {
  */
 
 /*func TestLookup(t *testing.T) {
-	node1 := makeDHTNode(nil, "localhost", "1111")
-	node2 := makeDHTNode(nil, "localhost", "1112")
-	node3 := makeDHTNode(nil, "localhost", "1113")
-	node4 := makeDHTNode(nil, "localhost", "1114")
-	node5 := makeDHTNode(nil, "localhost", "1115")
-	node6 := makeDHTNode(nil, "localhost", "1116")
-	node7 := makeDHTNode(nil, "localhost", "1117")
-	node8 := makeDHTNode(nil, "localhost", "1118")
-	node9 := makeDHTNode(nil, "localhost", "1119")
+	node1 := makelocalNode(nil, "localhost", "1111")
+	node2 := makelocalNode(nil, "localhost", "1112")
+	node3 := makelocalNode(nil, "localhost", "1113")
+	node4 := makelocalNode(nil, "localhost", "1114")
+	node5 := makelocalNode(nil, "localhost", "1115")
+	node6 := makelocalNode(nil, "localhost", "1116")
+	node7 := makelocalNode(nil, "localhost", "1117")
+	node8 := makelocalNode(nil, "localhost", "1118")
+	node9 := makelocalNode(nil, "localhost", "1119")
 
 	node1.join(nil)
 	node2.join(node1)
@@ -478,14 +478,14 @@ func TestFinger3bits(t *testing.T) {
 	id6 := "06"
 	id7 := "07"
 
-	node0 := makeDHTNode(&id0, "localhost", "1111")
-	node1 := makeDHTNode(&id1, "localhost", "1112")
-	node2 := makeDHTNode(&id2, "localhost", "1113")
-	node3 := makeDHTNode(&id3, "localhost", "1114")
-	node4 := makeDHTNode(&id4, "localhost", "1115")
-	node5 := makeDHTNode(&id5, "localhost", "1116")
-	node6 := makeDHTNode(&id6, "localhost", "1117")
-	node7 := makeDHTNode(&id7, "localhost", "1118")
+	node0 := makelocalNode(&id0, "localhost", "1111")
+	node1 := makelocalNode(&id1, "localhost", "1112")
+	node2 := makelocalNode(&id2, "localhost", "1113")
+	node3 := makelocalNode(&id3, "localhost", "1114")
+	node4 := makelocalNode(&id4, "localhost", "1115")
+	node5 := makelocalNode(&id5, "localhost", "1116")
+	node6 := makelocalNode(&id6, "localhost", "1117")
+	node7 := makelocalNode(&id7, "localhost", "1118")
 
 	node2.join(nil)
 	node2.printNodeWithFingers()
@@ -526,14 +526,14 @@ func TestDebug(t *testing.T) {
 			id6 := "06"
 			id7 := "07"
 
-			//node0 := makeDHTNode(&id0, "localhost", "1111")
-			node1 := makeDHTNode(&id1, "localhost", "1112")
-			node2 := makeDHTNode(&id2, "localhost", "1113")
-			node3 := makeDHTNode(&id3, "localhost", "1114")
-			node4 := makeDHTNode(&id4, "localhost", "1115")
-			node5 := makeDHTNode(&id5, "localhost", "1116")
-			node6 := makeDHTNode(&id6, "localhost", "1117")
-			node7 := makeDHTNode(&id7, "localhost", "1118")
+			//node0 := makelocalNode(&id0, "localhost", "1111")
+			node1 := makelocalNode(&id1, "localhost", "1112")
+			node2 := makelocalNode(&id2, "localhost", "1113")
+			node3 := makelocalNode(&id3, "localhost", "1114")
+			node4 := makelocalNode(&id4, "localhost", "1115")
+			node5 := makelocalNode(&id5, "localhost", "1116")
+			node6 := makelocalNode(&id6, "localhost", "1117")
+			node7 := makelocalNode(&id7, "localhost", "1118")
 
 			//node0.setSuccessor(node1)
 			//node0.predecessor = node7
@@ -562,7 +562,7 @@ func TestDebug(t *testing.T) {
 			testLookup(node6, "00") */
 }
 
-func testLookup(n *DHTNode, id string) {
+func testLookup(n *localNode, id string) {
 	var result = n.lookup2(id)
 	fmt.Printf("%s.lookup(%s) returns %s\n", n.id, id, result.id)
 }
@@ -633,15 +633,15 @@ func testLookup(n *DHTNode, id string) {
 
 func TestFinger160bits(t *testing.T) {
 	// note nil arg means automatically generate ID, e.g. f38f3b2dcc69a2093f258e31902e40ad33148385
-	node1 := makeDHTNode(nil, "localhost", "1111")
-	node2 := makeDHTNode(nil, "localhost", "1112")
-	node3 := makeDHTNode(nil, "localhost", "1113")
-	node4 := makeDHTNode(nil, "localhost", "1114")
-	node5 := makeDHTNode(nil, "localhost", "1115")
-	node6 := makeDHTNode(nil, "localhost", "1116")
-	node7 := makeDHTNode(nil, "localhost", "1117")
-	node8 := makeDHTNode(nil, "localhost", "1118")
-	node9 := makeDHTNode(nil, "localhost", "1119")
+	node1 := makelocalNode(nil, "localhost", "1111")
+	node2 := makelocalNode(nil, "localhost", "1112")
+	node3 := makelocalNode(nil, "localhost", "1113")
+	node4 := makelocalNode(nil, "localhost", "1114")
+	node5 := makelocalNode(nil, "localhost", "1115")
+	node6 := makelocalNode(nil, "localhost", "1116")
+	node7 := makelocalNode(nil, "localhost", "1117")
+	node8 := makelocalNode(nil, "localhost", "1118")
+	node9 := makelocalNode(nil, "localhost", "1119")
 
 	node1.join(nil)
 	node2.join(node1)
@@ -685,8 +685,8 @@ func TestHELLO(t *testing.T) {
 
 	id1 := "01"
 	id2 := "02"
-	node1 := makeDHTNode(&id1, "127.0.0.1", "2000")
-	node2 := makeDHTNode(&id2, "127.0.0.1", "3000")
+	node1 := makelocalNode(&id1, "127.0.0.1", "2000")
+	node2 := makelocalNode(&id2, "127.0.0.1", "3000")
 
 	node1.sendRequest(Msg{
 		Method: "HELLO",
@@ -701,9 +701,9 @@ func Test3NodeForwarding(t *testing.T) {
 	id2 := "02"
 	id3 := "03"
 
-	node1 := makeDHTNode(&id1, "127.0.0.1", "2000")
-	node2 := makeDHTNode(&id2, "127.0.0.1", "3000")
-	node3 := makeDHTNode(&id3, "127.0.0.1", "4000")
+	node1 := makelocalNode(&id1, "127.0.0.1", "2000")
+	node2 := makelocalNode(&id2, "127.0.0.1", "3000")
+	node3 := makelocalNode(&id3, "127.0.0.1", "4000")
 
 	node1.sendRequest(
 		Msg{

@@ -1,29 +1,5 @@
 package dht
 
-import (
-	"encoding/json"
-	"fmt"
-	"math/big"
-)
-
-const m = 160
-const base = 16
-
-// Turn the node into a JSON string containing id and address
-func (n *localNode) MarshalJSON() ([]byte, error) {
-	return json.Marshal(struct {
-		Id      string `json:"id"`
-		Address string `json:"address"`
-	}{
-		Address: n.address + ":" + n.port,
-		Id:      n.id,
-	})
-}
-
-func (n *localNode) getAddress() string {
-	return n.address + ":" + n.port
-}
-
 // Returns the node who is responsible for the data corresponding to id, traversing the ring using finger tables
 func (n *localNode) lookup2(id string) *localNode {
 	//	fmt.Printf("Performing lookup from node %s\n", n.id)
@@ -217,39 +193,4 @@ func (nodeToAdd *localNode) join(n *localNode) {
 	//	fmt.Printf("Ring structure after join, starting at %s: \n", nodeToAdd.id)
 	//	nodeToAdd.printRing()
 	//	fmt.Println("--- End ring\n")
-}
-
-type localNode struct {
-	id, address, port string
-	predecessor       *localNode
-	fingerTable       [m + 1]Finger
-	Requests          map[string]chan Msg
-	isListening       chan bool
-}
-
-type finger struct {
-	startId string
-	node    *localNode
-}
-
-func makelocalNode(idPointer *string, address string, port string) *localNode {
-	var id string
-
-	if idPointer == nil {
-		id = generateNodeId()
-	} else {
-		id = *idPointer
-	}
-	node := localNode{id: id, address: address, port: port}
-	node.Requests = make(map[string]chan Msg)
-	go node.listen()
-	return &node
-}
-
-func (n *localNode) successor() *localNode {
-	return n.fingerTable[1].node
-}
-
-func (n *localNode) setSuccessor(successor *localNode) {
-	n.fingerTable[1].node = successor
 }

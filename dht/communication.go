@@ -20,7 +20,11 @@ type Msg struct {
 func (m *Msg) isRequest() bool  { return m.Type == "Request" }
 func (m *Msg) isResponse() bool { return m.Type == "Response" }
 
-func (n *DHTNode) listen() {
+func (n *localNode) getAddress() string {
+	return n.address + ":" + n.port
+}
+
+func (n *localNode) listen() {
 
 	// Start listening
 	udpAddr, err := net.ResolveUDPAddr("udp", n.getAddress())
@@ -56,7 +60,7 @@ func (n *DHTNode) listen() {
 	}
 }
 
-func (n *DHTNode) send(msg Msg) {
+func (n *localNode) send(msg Msg) {
 
 	// Start up network stuff
 	udpAddr, err := net.ResolveUDPAddr("udp", msg.Dst)
@@ -90,7 +94,7 @@ func (n *DHTNode) send(msg Msg) {
 	}
 }
 
-func (n *DHTNode) waitForResponse(request Msg) {
+func (n *localNode) waitForResponse(request Msg) {
 
 	// Save the channel so that the listen() method can un-block
 	// this method when it receives a response with a matching id
@@ -105,7 +109,7 @@ func (n *DHTNode) waitForResponse(request Msg) {
 	}
 }
 
-func (n *DHTNode) sendRequest(request Msg) {
+func (n *localNode) sendRequest(request Msg) {
 	// Construct the message
 	msg := Msg{
 		Type:   "Request",
@@ -121,7 +125,7 @@ func (n *DHTNode) sendRequest(request Msg) {
 	n.send(msg)
 }
 
-func (n *DHTNode) sendResponse(response Msg) {
+func (n *localNode) sendResponse(response Msg) {
 	//Construct the message
 	msg := Msg{
 		Type:   "Response",
@@ -138,7 +142,7 @@ func (n *DHTNode) sendResponse(response Msg) {
 }
 
 // When you get a request you need to handle (you = n)
-func (n *DHTNode) handleRequest(request Msg) {
+func (n *localNode) handleRequest(request Msg) {
 	//log.Tracef("Got request: %+v", request)
 	switch request.Method {
 	case "HELLO":
@@ -178,7 +182,7 @@ func (n *DHTNode) handleRequest(request Msg) {
 }
 
 // When you get something back from a request you sent (you = n)
-func (n *DHTNode) handleResponse(response Msg) {
+func (n *localNode) handleResponse(response Msg) {
 	switch response.Method {
 	case "ACK":
 		//log.Tracef("Node %s request satisfied", n.id)
