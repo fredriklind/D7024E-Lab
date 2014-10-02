@@ -3,6 +3,7 @@ package dht
 import (
 	"bytes"
 	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
 	"github.com/nu7hatch/gouuid"
 	"math/big"
@@ -105,4 +106,50 @@ func sha1hash(str string) string {
 	hasher.Write([]byte(str))
 
 	return fmt.Sprintf("%x", hasher.Sum(nil))
+}
+
+func nextId(id string) string {
+
+	nId := big.Int{}
+	nId.SetString(id, base)
+
+	y := big.Int{}
+	two := big.NewInt(2)
+	one := big.NewInt(1)
+	mbig := big.NewInt(m)
+
+	y.Add(&nId, one)
+	// 2^m
+	two.Exp(two, mbig, nil)
+	y.Mod(&y, two)
+
+	yBytes := y.Bytes()
+	yHex := fmt.Sprintf("%x", yBytes)
+	return yHex
+}
+
+func prevId(id string) string {
+
+	nId := big.Int{}
+	nId.SetString(id, base)
+
+	y := big.Int{}
+	two := big.NewInt(2)
+	one := big.NewInt(1)
+	mbig := big.NewInt(m)
+
+	y.Sub(&nId, one)
+	// 2^m
+	two.Exp(two, mbig, nil)
+	y.Mod(&y, two)
+
+	yBytes := y.Bytes()
+	yHex := fmt.Sprintf("%x", yBytes)
+	return yHex
+}
+
+func hexStringToByteArr(hexId string) []byte {
+	var hexbytes []byte
+	hexbytes, _ = hex.DecodeString(hexId)
+	return hexbytes
 }
