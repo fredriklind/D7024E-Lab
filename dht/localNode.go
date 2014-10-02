@@ -1,5 +1,19 @@
 package dht
 
+import (
+	"fmt"
+	"math/big"
+)
+
+func (n *localNode) predecessor() *node {
+	return n.predecessor
+}
+
+// Caleld periodically to update fingers
+func (n *localNode) fixFingers() {
+
+}
+
 // Returns the node who is responsible for the data corresponding to id, traversing the ring using finger tables
 func (n *localNode) lookup2(id string) *localNode {
 	//	fmt.Printf("Performing lookup from node %s\n", n.id)

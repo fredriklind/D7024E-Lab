@@ -1,15 +1,14 @@
 package dht
 
-import (
-	"encoding/json"
-	"fmt"
-	"math/big"
-)
-
 const m = 160
 const base = 16
 
 type node interface {
+	lookup(id string) *node
+	predecessor() *node
+	// Tell *node to check if node is its successor/predecessor
+	updateSuccessor(*node)
+	updatePredecessor(*node)
 }
 
 type localNode struct {
@@ -20,9 +19,14 @@ type localNode struct {
 	isListening       chan bool
 }
 
+type remoteNode struct {
+	id, address, port string
+	owner             *node
+}
+
 type finger struct {
 	startId string
-	node    *localNode
+	node    *node
 }
 
 func makelocalNode(idPointer *string, address string, port string) *localNode {
