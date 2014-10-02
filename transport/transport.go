@@ -10,6 +10,8 @@ import (
 
 const timeoutSeconds = time.Second * 8
 
+type Transporter
+
 type Msg struct {
 	Id, Type, Method, Src, Dst string
 	Timestamp                  int64
