@@ -1,20 +1,36 @@
 package dht
 
-func (n *remoteNode) predecessor() *node {
-	return transport.predecessorRequest(n)
+// ----------------------------------------------------------------------------------------
+//										Getters + setters
+// ----------------------------------------------------------------------------------------
+func (n *remoteNode) id() string {
+	return n._id
 }
 
-func (n *remoteNode) lookup(id string) *node {
-	return transport.SendLookupRequest(n.getAddress(), id)
+// TODO maybe return (node, error) here, to be able to handle errors better.
+func (n *remoteNode) predecessor() node {
+	// TODO add conversion from what transport returns and what
+	// this method should return
+	//transport.PredecessorRequest(n.getAddress())
+	return n
+}
+
+func (n *remoteNode) updateSuccessor(node) {
 
 }
 
-func (n *remoteNode) updateSuccessor(*node) {
+func (n *remoteNode) updatePredecessor(node) {
 
 }
 
-func (n *remoteNode) updatePredecessor(*node) {
-
+// ----------------------------------------------------------------------------------------
+//										remoteNode Methods
+// ----------------------------------------------------------------------------------------
+func (n *remoteNode) lookup(id string) node {
+	// TODO add conversion from what transport returns and what
+	// this method should return
+	//transport.SendLookupRequest(n.getAddress(), id)
+	return n
 }
 
 func (n *remoteNode) getAddress() string {

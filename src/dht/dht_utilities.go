@@ -5,8 +5,10 @@ import (
 	"crypto/sha1"
 	"encoding/hex"
 	"fmt"
-	"github.com/nu7hatch/gouuid"
 	"math/big"
+
+	log "github.com/cihub/seelog"
+	"github.com/nu7hatch/gouuid"
 )
 
 const base = 16
@@ -154,4 +156,20 @@ func hexStringToByteArr(hexId string) []byte {
 	var hexbytes []byte
 	hexbytes, _ = hex.DecodeString(hexId)
 	return hexbytes
+}
+
+// Initializer for the dht package, sets up the logger
+func init() {
+	testConfig := `
+		<seelog type="sync">
+			<outputs>
+				<file formatid="onlytime" path="logfile.log"/>
+			</outputs>
+			<formats>
+				<format id="onlytime" format="%Time [%LEVEL] %Msg%n"/>
+			</formats>
+		</seelog>
+	`
+	logger, _ := log.LoggerFromConfigAsBytes([]byte(testConfig))
+	log.ReplaceLogger(logger)
 }

@@ -1,12 +1,17 @@
 package transport
 
 import (
-	"code.google.com/p/go-uuid/uuid"
 	"encoding/json"
-	log "github.com/cihub/seelog"
 	"net"
 	"time"
+
+	"code.google.com/p/go-uuid/uuid"
+	log "github.com/cihub/seelog"
 )
+
+// ----------------------------------------------------------------------------------------
+//										Init, types and variables
+// ----------------------------------------------------------------------------------------
 
 var t *transport
 
@@ -17,13 +22,6 @@ type transport struct {
 	requests map[string]chan msg
 }
 
-func NewTransporter(ip, port string) {
-	t = &transport{}
-	t.address = ip + ":" + port
-	t.requests = make(map[string]chan msg)
-	go receive()
-}
-
 type msg struct {
 	Id, Type, Method, Src, Dst string
 	Timestamp                  int64
@@ -31,13 +29,36 @@ type msg struct {
 	Sync                       bool
 }
 
-func (m *msg) isRequest() bool  { return m.Type == "Request" }
-func (m *msg) isResponse() bool { return m.Type == "Response" }
+// Initializer for the package, sets up the logger
+func init() {
+	testConfig := `
+		<seelog type="sync">
+			<outputs>
+				<file formatid="onlytime" path="logfile.log"/>
+			</outputs>
+			<formats>
+				<format id="onlytime" format="%Time [%LEVEL] %Msg%n"/>
+			</formats>
+		</seelog>
+	`
+	logger, _ := log.LoggerFromConfigAsBytes([]byte(testConfig))
+	log.ReplaceLogger(logger)
+}
 
 // ----------------------------------------------------------------------------------------
 //										public layer
 // ----------------------------------------------------------------------------------------
 
+// Instantiates a new transporter that listens on the provided ip and port.
+// This step is required to be able to use the transport package.
+func NewTransporter(ip, port string) {
+	t = &transport{}
+	t.address = ip + ":" + port
+	t.requests = make(map[string]chan msg)
+	go receive()
+}
+
+// TODO define a return type for all methods like this one, maybe map[string]string?
 func SendLookupRequest(address, id string) {
 	// check queue
 	// if lookup in queue - forward request
@@ -47,6 +68,10 @@ func SendLookupRequest(address, id string) {
 		Dst:    t.address,
 	}
 	sendRequest(lookupRequest)
+}
+
+func PredecessorRequest(address string) {
+	// TODO
 }
 
 // ----------------------------------------------------------------------------------------
@@ -150,6 +175,9 @@ func handleResponse(response msg) {
 	}
 }
 
+func (m *msg) isRequest() bool  { return m.Type == "Request" }
+func (m *msg) isResponse() bool { return m.Type == "Response" }
+
 // ----------------------------------------------------------------------------------------
 //										lowest layer
 // ----------------------------------------------------------------------------------------
@@ -190,6 +218,7 @@ func send(msg msg) {
 
 func receive() {
 
+	log.Infof("Listening on %s", t.address)
 	// Start receiveing
 	udpAddr, err := net.ResolveUDPAddr("udp", t.address)
 	conn, err := net.ListenUDP("udp", udpAddr)
