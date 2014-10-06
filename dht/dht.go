@@ -1,7 +1,10 @@
 package dht
 
+import (
+	"transport"
+)
+
 const m = 160
-const base = 16
 
 type node interface {
 	lookup(id string) *node
@@ -12,11 +15,10 @@ type node interface {
 }
 
 type localNode struct {
-	id, address, port string
-	predecessor       *localNode
-	fingerTable       [m + 1]Finger
-	Requests          map[string]chan Msg
-	isListening       chan bool
+	id          string
+	predecessor *localNode
+	fingerTable [m + 1]Finger
+	isListening chan bool
 }
 
 type remoteNode struct {
@@ -37,9 +39,8 @@ func makelocalNode(idPointer *string, address string, port string) *localNode {
 	} else {
 		id = *idPointer
 	}
-	node := localNode{id: id, address: address, port: port}
-	node.Requests = make(map[string]chan Msg)
-	go node.listen()
+	node := localNode{id: id}
+	transport.NewTransporter(address, port)
 	return &node
 }
 

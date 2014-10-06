@@ -9,6 +9,8 @@ import (
 	"math/big"
 )
 
+const base = 16
+
 func distance(a, b []byte, bits int) *big.Int {
 	var ring big.Int
 	ring.Exp(big.NewInt(2), big.NewInt(int64(bits)), nil)
