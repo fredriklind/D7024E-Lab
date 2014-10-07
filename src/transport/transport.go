@@ -207,9 +207,10 @@ func send(msg msg) {
 	}
 
 	//	log.Tracef("%s: Sent %s %s", n.id, msg.Method, msg.Type)
+	fmt.Printf("%s: Sent %s %s\n", t.address, msg.Method, msg.Type)
+	log.Tracef("%s: Sent %s %s", t.address, msg.Method, msg.Type)
 
 	// Serialize and send the message (also wait to simulate network delay)
-	time.Sleep(time.Millisecond * 400)
 	jsonmsg, err := json.Marshal(msg)
 	_, err = conn.Write([]byte(jsonmsg))
 
@@ -243,9 +244,8 @@ func receive() {
 	for {
 		msg := msg{}
 		err = dec.Decode(&msg)
-		fmt.Printf("%s: Got %s %s", t.address, msg.Method, msg.Type)
+		fmt.Printf("%s: Got %s %s\n", t.address, msg.Method, msg.Type)
 		log.Tracef("%s: Got %s %s", t.address, msg.Method, msg.Type)
-		time.Sleep(time.Millisecond * 400)
 		switch msg.Type {
 		case "Response":
 			// Pass message to sender
