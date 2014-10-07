@@ -230,3 +230,7 @@ func (nodeToAdd *localNode) join(n *localNode) {
 func (n *localNode) fixFingers() {
 
 }
+
+func (n *localNode) ping(remote *remoteNode) {
+	transport.SendHelloRequest(remote.getAddress())
+}

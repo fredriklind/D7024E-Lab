@@ -2,45 +2,18 @@ package dht
 
 import "testing"
 
-func TestReceive2000(t *testing.T) {
-	id := "01"
-	node := makeLocalNode(&id, "localhost", "2000")
-	_ = node
-	block := make(chan bool)
-	<-block
-}
-
-func TestReceive3000(t *testing.T) {
-	id := "02"
-	node := makeLocalNode(&id, "localhost", "3000")
+func TestReceive(t *testing.T) {
+	node := makeLocalNode(nil, "localhost", "2000")
 	_ = node
 	block := make(chan bool)
 	<-block
 }
 
 func TestHELLO(t *testing.T) {
-	// Define a sequence of requests that are expected
-	/*setupTest(t, []string{
-		"Node 01 sent HELLO Request",
-		"Node 02 got HELLO Request",
-		"Node 02 sent ACK Response",
-		"Node 01 got ACK Response",
-	},
-	)*/
+	node1 := makeLocalNode(nil, "localhost", "3000")
+	node2 := &remoteNode{address: "localhost", port: "2000"}
 
-	id1 := "01"
-	id2 := "02"
-	node1 := makeLocalNode(&id1, "127.0.0.1", "2000")
-	node2 := makeLocalNode(&id2, "127.0.0.1", "3000")
-
-	_ = node1
-	_ = node2
-
-	/*	sendRequest(msg{
-		Method: "HELLO",
-		Dst:    node2.getAddress(),
-	})*/
-
+	node1.ping(node2)
 	block := make(chan bool)
 	<-block
 }

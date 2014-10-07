@@ -2,6 +2,7 @@ package transport
 
 import (
 	"encoding/json"
+	"fmt"
 	"net"
 	"time"
 
@@ -30,7 +31,7 @@ type msg struct {
 }
 
 // Initializer for the package, sets up the logger
-func init() {
+/*func init() {
 	testConfig := `
 		<seelog type="sync">
 			<outputs>
@@ -44,6 +45,7 @@ func init() {
 	logger, _ := log.LoggerFromConfigAsBytes([]byte(testConfig))
 	log.ReplaceLogger(logger)
 }
+*/
 
 // ----------------------------------------------------------------------------------------
 //										public layer
@@ -68,6 +70,13 @@ func SendLookupRequest(address, id string) {
 		Dst:    t.address,
 	}
 	sendRequest(lookupRequest)
+}
+
+func SendHelloRequest(ip string) {
+	request := msg{}
+	request.Dst = ip
+	request.Method = "HELLO"
+	sendRequest(request)
 }
 
 func PredecessorRequest(address string) {
@@ -121,13 +130,12 @@ func waitForResponse(request msg) {
 	case response := <-t.requests[request.Id]:
 		handleResponse(response)
 	case <-time.After(timeoutSeconds):
-		//		log.Errorf("Node %s %s request with id %s timed out", n.id, request.Method, request.Id)
+		log.Errorf("%s: %s request with id %s timed out", t.address, request.Method, request.Id)
 	}
 }
 
-// When you get a request you need to handle (you = n)
+// When you get a request you need to handle
 func handleRequest(request msg) {
-	//log.Tracef("Got request: %+v", request)
 	switch request.Method {
 	case "HELLO":
 		sendResponse(msg{
@@ -169,9 +177,9 @@ func handleRequest(request msg) {
 func handleResponse(response msg) {
 	switch response.Method {
 	case "ACK":
-		//log.Tracef("Node %s request satisfied", n.id)
+		log.Tracef("%s HELLO request satisfied", t.address)
 	default:
-		log.Debugf("No request method specified!")
+		log.Errorf("No request method specified!")
 	}
 }
 
@@ -190,16 +198,15 @@ func send(msg msg) {
 	defer conn.Close()
 
 	// Apply unix timestamp to the msg
-	t := time.Now()
-	msg.Timestamp = t.Unix()
+	ti := time.Now()
+	msg.Timestamp = ti.Unix()
 
 	// Assign a new Id to the msg if it is not set
 	if msg.Id == "" {
 		msg.Id = uuid.New()[0:4]
 	}
 
-	//	log.Tracef("Node %s sent %s %s", n.id, msg.Method, msg.Type)
-	//log.Tracef("SENDING!: %+v", msg)
+	//	log.Tracef("%s: Sent %s %s", n.id, msg.Method, msg.Type)
 
 	// Serialize and send the message (also wait to simulate network delay)
 	time.Sleep(time.Millisecond * 400)
@@ -212,19 +219,17 @@ func send(msg msg) {
 	}
 
 	if err != nil {
-		//		log.Errorf("Node %s Error in send: %s", n.id, err.Error())
+		log.Errorf("%s: Error in send: %s", t.address, err.Error())
 	}
 }
 
 func receive() {
-
-	log.Infof("Listening on %s", t.address)
 	// Start receiveing
 	udpAddr, err := net.ResolveUDPAddr("udp", t.address)
 	conn, err := net.ListenUDP("udp", udpAddr)
 
 	if err != nil {
-		//		log.Errorf("Error in send on node %s, %s", n.id, err.Error())
+		log.Errorf("%s: Error in receive, %s", t.address, err.Error())
 		return
 	}
 
@@ -238,7 +243,8 @@ func receive() {
 	for {
 		msg := msg{}
 		err = dec.Decode(&msg)
-		//log.Tracef("Node %s got %s %s", n.id, msg.Method, msg.Type)
+		fmt.Printf("%s: Got %s %s", t.address, msg.Method, msg.Type)
+		log.Tracef("%s: Got %s %s", t.address, msg.Method, msg.Type)
 		time.Sleep(time.Millisecond * 400)
 		switch msg.Type {
 		case "Response":
