@@ -16,19 +16,22 @@ import (
 
 var t *transport
 
+const emptyDict = dictionary{}
 const timeoutSeconds = time.Second * 8
 
 type transport struct {
-	address  string
-	requests map[string]chan msg
+	id, address string
+	requests    map[string]chan msg
 }
 
 type msg struct {
 	Id, Type, Method, Src, Dst string
 	Timestamp                  int64
-	Values                     map[string]string
+	Values                     dictionary
 	Sync                       bool
 }
+
+type dictionary map[string]string
 
 // Initializer for the package, sets up the logger
 /*func init() {
@@ -60,7 +63,31 @@ func NewTransporter(ip, port string) {
 	go receive()
 }
 
-// TODO define a return type for all methods like this one, maybe map[string]string?
+func SendPredecessorRequest(destAddr string) (dictionary, error) {
+	m := msg{
+		Type:   "Request",
+		Method: "PREDECESSOR",
+		Dst:    destAddr,
+		Sync:   true,
+	}
+	response, err := send(m)
+
+	if err != nil {
+		return emptyMap, err
+	}
+
+	return dictionary{
+		"id":      response.Values["id"],
+		"address": response.Values["address"],
+		"port":    response.Values["port"],
+	}, nil
+}
+
+func RespondToPredecessorRequest() {
+
+}
+
+// TODO define a return type for all methods like this one, maybe dictionary?
 func SendLookupRequest(address, id string) {
 	// check queue
 	// if lookup in queue - forward request
@@ -79,29 +106,9 @@ func SendHelloRequest(ip string) {
 	sendRequest(request)
 }
 
-func PredecessorRequest(address string) {
-	// TODO
-}
-
 // ----------------------------------------------------------------------------------------
 //										middle layer
 // ----------------------------------------------------------------------------------------
-
-func sendRequest(request msg) {
-	// Construct the message
-	msg := msg{
-		Type:   "Request",
-		Method: request.Method,
-		Src:    t.address,
-		Dst:    request.Dst,
-	}
-
-	// This is to prevent send from generating a new msg.Id
-	if request.Id != "" {
-		msg.Id = request.Id
-	}
-	send(msg)
-}
 
 func sendResponse(response msg) {
 	//Construct the message
@@ -117,21 +124,6 @@ func sendResponse(response msg) {
 		msg.Id = response.Id
 	}
 	send(msg)
-}
-
-func waitForResponse(request msg) {
-
-	// Save the channel so that the receive() method can un-block
-	// this method when it receives a response with a matching id
-	t.requests[request.Id] = make(chan msg)
-
-	// Wait for the msg-specific channel to get data, or time out
-	select {
-	case response := <-t.requests[request.Id]:
-		handleResponse(response)
-	case <-time.After(timeoutSeconds):
-		log.Errorf("%s: %s request with id %s timed out", t.address, request.Method, request.Id)
-	}
 }
 
 // When you get a request you need to handle
@@ -190,8 +182,24 @@ func (m *msg) isResponse() bool { return m.Type == "Response" }
 //										lowest layer
 // ----------------------------------------------------------------------------------------
 
-func send(msg msg) {
+func waitForResponse(msgId string) (msg, error) {
 
+	// Save the channel so that the receive() method can un-block
+	// this method when it receives a response with a matching id
+	t.requests[msgId] = make(chan msg)
+
+	// Wait for the msg-specific channel to get data, or time out
+	select {
+	case responseMsg := <-t.requests[msgId]:
+		return responseMsg, nil
+	case <-time.After(timeoutSeconds):
+		log.Errorf("%s: request with id %s timed out", t.address, msgId)
+		return dictionary{}, errors.New("Timeout")
+	}
+}
+
+func send(msg msg) (msg, error) {
+	msg.Src = t.address
 	// Start up network stuff
 	udpAddr, err := net.ResolveUDPAddr("udp", msg.Dst)
 	conn, err := net.DialUDP("udp", nil, udpAddr)
@@ -214,13 +222,16 @@ func send(msg msg) {
 	jsonmsg, err := json.Marshal(msg)
 	_, err = conn.Write([]byte(jsonmsg))
 
-	// Blocks until something is received on the channel that is associated with msg.Id
-	if msg.isRequest() && msg.Sync {
-		waitForResponse(msg)
-	}
-
 	if err != nil {
 		log.Errorf("%s: Error in send: %s", t.address, err.Error())
+		return msg{}, err
+	}
+
+	// Blocks until something is received on the channel that is associated with msg.Id
+	if msg.isRequest() && msg.Sync {
+		return waitForResponse(msg)
+	} else {
+		return msg{}, nil
 	}
 }
 
@@ -234,27 +245,23 @@ func receive() {
 		return
 	}
 
-	defer conn.Close()
-
-	// receive again after this method finishes. TODO might be
-	// that there is a better way to do this
-	defer receive()
 	dec := json.NewDecoder(conn)
+	msg := msg{}
 
-	for {
-		msg := msg{}
-		err = dec.Decode(&msg)
-		fmt.Printf("%s: Got %s %s\n", t.address, msg.Method, msg.Type)
-		log.Tracef("%s: Got %s %s", t.address, msg.Method, msg.Type)
-		switch msg.Type {
-		case "Response":
-			// Pass message to sender
-			t.requests[msg.Id] <- msg
-		case "Request":
-			// Handle request
-			handleRequest(msg)
-		default:
-			log.Error("Message type not specified!")
-		}
+	err = dec.Decode(&msg)
+	fmt.Printf("%s: Got %s %s\n", t.address, msg.Method, msg.Type)
+	log.Tracef("%s: Got %s %s", t.address, msg.Method, msg.Type)
+	conn.Close()
+	go receive()
+
+	switch msg.Type {
+	case "Response":
+		// Pass message to sender
+		t.requests[msg.Id] <- msg
+	case "Request":
+		// Handle request
+		handleRequest(msg)
+	default:
+		log.Error("Message type not specified!")
 	}
 }

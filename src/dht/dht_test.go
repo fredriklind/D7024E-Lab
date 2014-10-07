@@ -3,17 +3,16 @@ package dht
 import "testing"
 
 func TestReceive(t *testing.T) {
-	node := makeLocalNode(nil, "localhost", "2000")
-	_ = node
+	newLocalNode(nil, "localhost", "2000")
 	block := make(chan bool)
 	<-block
 }
 
 func TestHELLO(t *testing.T) {
-	node1 := makeLocalNode(nil, "localhost", "3000")
+	newLocalNode(nil, "localhost", "3000")
 	node2 := &remoteNode{address: "localhost", port: "2000"}
 
-	node1.ping(node2)
+	theLocalNode.ping(node2)
 	block := make(chan bool)
 	<-block
 }

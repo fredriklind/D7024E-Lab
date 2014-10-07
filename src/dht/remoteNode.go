@@ -1,5 +1,9 @@
 package dht
 
+import (
+//	"transport"
+)
+
 // ----------------------------------------------------------------------------------------
 //										Getters + setters
 // ----------------------------------------------------------------------------------------
@@ -11,8 +15,15 @@ func (n *remoteNode) id() string {
 func (n *remoteNode) predecessor() node {
 	// TODO add conversion from what transport returns and what
 	// this method should return
-	//transport.PredecessorRequest(n.getAddress())
-	return n
+	dict, err := transport.PredecessorRequest(n.getAddress())
+	if err != nil {
+		panic(err)
+	}
+	if dict["id"] == theLocalNode.id() {
+		return theLocalNode
+	} else {
+		return &remoteNode{_id: dict["id"], address: dict["address"], port: dict["port"]}
+	}
 }
 
 func (n *remoteNode) updateSuccessor(node) {

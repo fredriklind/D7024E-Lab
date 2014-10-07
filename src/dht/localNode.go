@@ -8,7 +8,7 @@ import (
 // ----------------------------------------------------------------------------------------
 //										Initializer
 // ----------------------------------------------------------------------------------------
-func makeLocalNode(idPointer *string, address string, port string) *localNode {
+func newLocalNode(idPointer *string, address string, port string) {
 	var id string
 
 	if idPointer == nil {
@@ -16,9 +16,8 @@ func makeLocalNode(idPointer *string, address string, port string) *localNode {
 	} else {
 		id = *idPointer
 	}
-	node := localNode{_id: id}
+	theLocalNode = &localNode{_id: id}
 	transport.NewTransporter(address, port)
-	return &node
 }
 
 // ----------------------------------------------------------------------------------------
