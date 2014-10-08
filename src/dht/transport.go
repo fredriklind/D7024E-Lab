@@ -1,4 +1,4 @@
-package transport
+package dht
 
 import (
 	"encoding/json"
@@ -14,14 +14,14 @@ import (
 //										Init, types and variables
 // ----------------------------------------------------------------------------------------
 
-var t *transport
-
 const emptyDict = dictionary{}
 const timeoutSeconds = time.Second * 8
 
-type transport struct {
-	id, address string
-	requests    map[string]chan msg
+var theLocalNode *localNode
+
+type transporter struct {
+	address  string
+	requests map[string]chan msg
 }
 
 type msg struct {
@@ -56,14 +56,15 @@ type dictionary map[string]string
 
 // Instantiates a new transporter that listens on the provided ip and port.
 // This step is required to be able to use the transport package.
-func NewTransporter(ip, port string) {
+func newTransporter(address string) *transporter {
 	t = &transport{}
-	t.address = ip + ":" + port
+	t.address = address
 	t.requests = make(map[string]chan msg)
-	go receive()
+	go t.receive()
+	return t
 }
 
-func SendPredecessorRequest(destAddr string) (dictionary, error) {
+func (t *transporter) sendPredecessorRequest(destAddr string) (dictionary, error) {
 	m := msg{
 		Type:   "Request",
 		Method: "PREDECESSOR",
@@ -83,12 +84,27 @@ func SendPredecessorRequest(destAddr string) (dictionary, error) {
 	}, nil
 }
 
-func RespondToPredecessorRequest() {
+func (t *transporter) sendPredecessorResponse(request msg) {
+	m := msg{
+		Type:   "Response",
+		Method: "PREDECESSOR",
+		Dst:    request.Src,
+	}
 
+	node := theLocalNode.predecessor()
+	m.Values["id"] = node.id
+	switch node.(type) {
+	case localNode:
+		m.Values["address"] = t.address
+	case remoteNode:
+		m.Values["address"] = node.address
+	}
+
+	t.send(m)
 }
 
 // TODO define a return type for all methods like this one, maybe dictionary?
-func SendLookupRequest(address, id string) {
+func (t *transporter) sendLookupRequest(address, id string) {
 	// check queue
 	// if lookup in queue - forward request
 	// else send new lookupRequest
@@ -99,7 +115,7 @@ func SendLookupRequest(address, id string) {
 	sendRequest(lookupRequest)
 }
 
-func SendHelloRequest(ip string) {
+func (t *transporter) sendHelloRequest(ip string) {
 	request := msg{}
 	request.Dst = ip
 	request.Method = "HELLO"
@@ -110,7 +126,7 @@ func SendHelloRequest(ip string) {
 //										middle layer
 // ----------------------------------------------------------------------------------------
 
-func sendResponse(response msg) {
+func (t *transporter) sendResponse(response msg) {
 	//Construct the message
 	msg := msg{
 		Type:   "Response",
@@ -127,7 +143,7 @@ func sendResponse(response msg) {
 }
 
 // When you get a request you need to handle
-func handleRequest(request msg) {
+func (t *transporter) handleRequest(request msg) {
 	switch request.Method {
 	case "HELLO":
 		sendResponse(msg{
@@ -166,7 +182,7 @@ func handleRequest(request msg) {
 }
 
 // When you get something back from a request you sent (you = n)
-func handleResponse(response msg) {
+func (t *transporter) handleResponse(response msg) {
 	switch response.Method {
 	case "ACK":
 		log.Tracef("%s HELLO request satisfied", t.address)
@@ -182,7 +198,7 @@ func (m *msg) isResponse() bool { return m.Type == "Response" }
 //										lowest layer
 // ----------------------------------------------------------------------------------------
 
-func waitForResponse(msgId string) (msg, error) {
+func (t *transporter) waitForResponse(msgId string) (msg, error) {
 
 	// Save the channel so that the receive() method can un-block
 	// this method when it receives a response with a matching id
@@ -198,7 +214,7 @@ func waitForResponse(msgId string) (msg, error) {
 	}
 }
 
-func send(msg msg) (msg, error) {
+func (t *transporter) send(msg msg) (msg, error) {
 	msg.Src = t.address
 	// Start up network stuff
 	udpAddr, err := net.ResolveUDPAddr("udp", msg.Dst)
@@ -235,7 +251,7 @@ func send(msg msg) (msg, error) {
 	}
 }
 
-func receive() {
+func (t *transporter) receive() {
 	// Start receiveing
 	udpAddr, err := net.ResolveUDPAddr("udp", t.address)
 	conn, err := net.ListenUDP("udp", udpAddr)

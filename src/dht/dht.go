@@ -2,7 +2,7 @@ package dht
 
 const m = 160
 
-var theLocalNode *localNode
+var transport *transporter
 
 // This must be used when the type of node is not known.
 // For example when a method can return either a local or remote node
@@ -24,7 +24,7 @@ type localNode struct {
 }
 
 type remoteNode struct {
-	_id, address, port string
+	_id, address string
 }
 
 type finger struct {

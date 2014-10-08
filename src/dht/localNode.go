@@ -2,8 +2,9 @@ package dht
 
 import (
 	"fmt"
-	"transport"
 )
+
+type dictionary map[string]string
 
 // ----------------------------------------------------------------------------------------
 //										Initializer
@@ -17,7 +18,7 @@ func newLocalNode(idPointer *string, address string, port string) {
 		id = *idPointer
 	}
 	theLocalNode = &localNode{_id: id}
-	transport.NewTransporter(address, port)
+	transport = NewTransporter(address + ":" + port)
 }
 
 // ----------------------------------------------------------------------------------------
