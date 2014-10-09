@@ -1,26 +1,25 @@
 package dht
 
 import (
+	"code.google.com/p/go-uuid/uuid"
 	"encoding/json"
+	"errors"
 	"fmt"
+	log "github.com/cihub/seelog"
 	"net"
 	"time"
-
-	"code.google.com/p/go-uuid/uuid"
-	log "github.com/cihub/seelog"
 )
 
 // ----------------------------------------------------------------------------------------
 //										Init, types and variables
 // ----------------------------------------------------------------------------------------
 
-const emptyDict = dictionary{}
 const timeoutSeconds = time.Second * 8
 
 var theLocalNode *localNode
 
 type transporter struct {
-	address  string
+	Address  string
 	requests map[string]chan msg
 }
 
@@ -57,8 +56,8 @@ type dictionary map[string]string
 // Instantiates a new transporter that listens on the provided ip and port.
 // This step is required to be able to use the transport package.
 func newTransporter(address string) *transporter {
-	t = &transport{}
-	t.address = address
+	t := &transporter{}
+	t.Address = address
 	t.requests = make(map[string]chan msg)
 	go t.receive()
 	return t
@@ -71,10 +70,10 @@ func (t *transporter) sendPredecessorRequest(destAddr string) (dictionary, error
 		Dst:    destAddr,
 		Sync:   true,
 	}
-	response, err := send(m)
+	response, err := t.send(m)
 
 	if err != nil {
-		return emptyMap, err
+		return dictionary{}, err
 	}
 
 	return dictionary{
@@ -86,72 +85,54 @@ func (t *transporter) sendPredecessorRequest(destAddr string) (dictionary, error
 
 func (t *transporter) sendPredecessorResponse(request msg) {
 	m := msg{
+		Id:     request.Id,
 		Type:   "Response",
 		Method: "PREDECESSOR",
 		Dst:    request.Src,
 	}
-
-	node := theLocalNode.predecessor()
-	m.Values["id"] = node.id
-	switch node.(type) {
-	case localNode:
-		m.Values["address"] = t.address
-	case remoteNode:
-		m.Values["address"] = node.address
+	//n := theLocalNode.predecessor()
+	m.Values["id"] = "6899" //n.id()
+	if false {              //n.id() == theLocalNode.id() {
+		m.Values["address"] = t.Address
+	} else {
+		m.Values["address"] = "localhost:6000" //n.address()
 	}
+	log.Trace("sendPredecessorResponse")
+	_, err := t.send(m)
+	log.Errorf("Error in send: %s", err)
+}
 
+func (t *transporter) sendHelloRequest(address string) {
+	m := msg{
+		Type:   "Request",
+		Method: "HELLO",
+		Dst:    address,
+	}
 	t.send(m)
 }
 
-// TODO define a return type for all methods like this one, maybe dictionary?
-func (t *transporter) sendLookupRequest(address, id string) {
-	// check queue
-	// if lookup in queue - forward request
-	// else send new lookupRequest
-	lookupRequest := msg{
-		Method: "LOOKUP",
-		Dst:    t.address,
+func (t *transporter) sendAck(request msg) {
+	m := msg{
+		Type:   "Response",
+		Method: "ACK",
+		Dst:    request.Src,
 	}
-	sendRequest(lookupRequest)
-}
-
-func (t *transporter) sendHelloRequest(ip string) {
-	request := msg{}
-	request.Dst = ip
-	request.Method = "HELLO"
-	sendRequest(request)
+	t.send(m)
 }
 
 // ----------------------------------------------------------------------------------------
 //										middle layer
 // ----------------------------------------------------------------------------------------
 
-func (t *transporter) sendResponse(response msg) {
-	//Construct the message
-	msg := msg{
-		Type:   "Response",
-		Method: response.Method,
-		Src:    t.address,
-		Dst:    response.Dst,
-	}
-
-	// This is to prevent send from generating a new msg.Id
-	if response.Id != "" {
-		msg.Id = response.Id
-	}
-	send(msg)
-}
-
 // When you get a request you need to handle
 func (t *transporter) handleRequest(request msg) {
 	switch request.Method {
 	case "HELLO":
-		sendResponse(msg{
-			Id:     request.Id,
-			Method: "ACK",
-			Dst:    request.Src,
-		})
+		t.sendAck(request)
 
+	case "PREDECESSOR":
+		log.Trace("Handlerequest")
+		t.sendPredecessorResponse(request)
 		// Forwards a request to nextNode setting the method and Src depending
 		// on the Values["Method"] and Values["Sender"]
 		/*	case "FORWARD":
@@ -185,7 +166,7 @@ func (t *transporter) handleRequest(request msg) {
 func (t *transporter) handleResponse(response msg) {
 	switch response.Method {
 	case "ACK":
-		log.Tracef("%s HELLO request satisfied", t.address)
+		log.Tracef("%s HELLO request satisfied", t.Address)
 	default:
 		log.Errorf("No request method specified!")
 	}
@@ -209,43 +190,43 @@ func (t *transporter) waitForResponse(msgId string) (msg, error) {
 	case responseMsg := <-t.requests[msgId]:
 		return responseMsg, nil
 	case <-time.After(timeoutSeconds):
-		log.Errorf("%s: request with id %s timed out", t.address, msgId)
-		return dictionary{}, errors.New("Timeout")
+		log.Errorf("%s: request with id %s timed out", t.Address, msgId)
+		return msg{}, errors.New("Timeout")
 	}
 }
 
-func (t *transporter) send(msg msg) (msg, error) {
-	msg.Src = t.address
+func (t *transporter) send(m msg) (msg, error) {
+	m.Src = t.Address
 	// Start up network stuff
-	udpAddr, err := net.ResolveUDPAddr("udp", msg.Dst)
+	udpAddr, err := net.ResolveUDPAddr("udp", m.Dst)
 	conn, err := net.DialUDP("udp", nil, udpAddr)
 	defer conn.Close()
 
 	// Apply unix timestamp to the msg
 	ti := time.Now()
-	msg.Timestamp = ti.Unix()
+	m.Timestamp = ti.Unix()
 
 	// Assign a new Id to the msg if it is not set
-	if msg.Id == "" {
-		msg.Id = uuid.New()[0:4]
+	if m.Id == "" {
+		m.Id = uuid.New()[0:4]
 	}
 
-	//	log.Tracef("%s: Sent %s %s", n.id, msg.Method, msg.Type)
-	fmt.Printf("%s: Sent %s %s\n", t.address, msg.Method, msg.Type)
-	log.Tracef("%s: Sent %s %s", t.address, msg.Method, msg.Type)
+	//	log.Tracef("%s: Sent %s %s", n.id, m.Method, m.Type)
+	fmt.Printf("%s: Sent %s %s\n", t.Address, m.Method, m.Type)
+	log.Tracef("%s: Sent %s %s", t.Address, m.Method, m.Type)
 
 	// Serialize and send the message (also wait to simulate network delay)
-	jsonmsg, err := json.Marshal(msg)
+	jsonmsg, err := json.Marshal(m)
 	_, err = conn.Write([]byte(jsonmsg))
 
 	if err != nil {
-		log.Errorf("%s: Error in send: %s", t.address, err.Error())
+		log.Errorf("%s: Error in send: %s", t.Address, err.Error())
 		return msg{}, err
 	}
 
-	// Blocks until something is received on the channel that is associated with msg.Id
-	if msg.isRequest() && msg.Sync {
-		return waitForResponse(msg)
+	// Blocks until something is received on the channel that is associated with m.Id
+	if m.isRequest() && m.Sync {
+		return t.waitForResponse(m.Id)
 	} else {
 		return msg{}, nil
 	}
@@ -253,11 +234,11 @@ func (t *transporter) send(msg msg) (msg, error) {
 
 func (t *transporter) receive() {
 	// Start receiveing
-	udpAddr, err := net.ResolveUDPAddr("udp", t.address)
+	udpAddr, err := net.ResolveUDPAddr("udp", t.Address)
 	conn, err := net.ListenUDP("udp", udpAddr)
 
 	if err != nil {
-		log.Errorf("%s: Error in receive, %s", t.address, err.Error())
+		log.Errorf("%s: Error in receive, %s", t.Address, err.Error())
 		return
 	}
 
@@ -265,10 +246,10 @@ func (t *transporter) receive() {
 	msg := msg{}
 
 	err = dec.Decode(&msg)
-	fmt.Printf("%s: Got %s %s\n", t.address, msg.Method, msg.Type)
-	log.Tracef("%s: Got %s %s", t.address, msg.Method, msg.Type)
+	fmt.Printf("%s: Got %s %s\n", t.Address, msg.Method, msg.Type)
+	log.Tracef("%s: Got %s %s", t.Address, msg.Method, msg.Type)
 	conn.Close()
-	go receive()
+	go t.receive()
 
 	switch msg.Type {
 	case "Response":
@@ -276,7 +257,8 @@ func (t *transporter) receive() {
 		t.requests[msg.Id] <- msg
 	case "Request":
 		// Handle request
-		handleRequest(msg)
+		log.Trace("In receive, a request")
+		t.handleRequest(msg)
 	default:
 		log.Error("Message type not specified!")
 	}

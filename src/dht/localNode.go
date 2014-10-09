@@ -4,8 +4,6 @@ import (
 	"fmt"
 )
 
-type dictionary map[string]string
-
 // ----------------------------------------------------------------------------------------
 //										Initializer
 // ----------------------------------------------------------------------------------------
@@ -18,7 +16,7 @@ func newLocalNode(idPointer *string, address string, port string) {
 		id = *idPointer
 	}
 	theLocalNode = &localNode{_id: id}
-	transport = NewTransporter(address + ":" + port)
+	transport = newTransporter(address + ":" + port)
 }
 
 // ----------------------------------------------------------------------------------------
@@ -34,6 +32,10 @@ func (n *localNode) predecessor() node {
 
 func (n *localNode) successor() node {
 	return n.fingerTable[1].node
+}
+
+func (n *localNode) address() string {
+	return transport.Address
 }
 
 func (n *localNode) updatePredecessor(n2 node) {
@@ -232,5 +234,5 @@ func (n *localNode) fixFingers() {
 }
 
 func (n *localNode) ping(remote *remoteNode) {
-	transport.SendHelloRequest(remote.getAddress())
+	transport.sendHelloRequest(remote.address())
 }

@@ -1,18 +1,35 @@
 package dht
 
-import "testing"
+import (
+	log "github.com/cihub/seelog"
+	"testing"
+)
 
 func TestReceive(t *testing.T) {
 	newLocalNode(nil, "localhost", "2000")
+
+	node2 := &remoteNode{_id: "678687", _address: "localhost:5000"}
+	theLocalNode.updatePredecessor(node2)
+
 	block := make(chan bool)
 	<-block
 }
 
 func TestHELLO(t *testing.T) {
 	newLocalNode(nil, "localhost", "3000")
-	node2 := &remoteNode{address: "localhost", port: "2000"}
+	node2 := &remoteNode{_address: "localhost:2000"}
 
 	theLocalNode.ping(node2)
+	block := make(chan bool)
+	<-block
+}
+
+func TestPredecessorRequest(t *testing.T) {
+	newLocalNode(nil, "localhost", "3000")
+	node2 := &remoteNode{_address: "localhost:2000"}
+
+	pred := node2.predecessor()
+	log.Tracef("Predecessor: %+v", pred)
 	block := make(chan bool)
 	<-block
 }

@@ -10,6 +10,7 @@ type node interface {
 	// Getters
 	id() string
 	predecessor() node
+	address() string
 	// Methods
 	lookup(id string) node
 	updateSuccessor(node)
@@ -24,7 +25,7 @@ type localNode struct {
 }
 
 type remoteNode struct {
-	_id, address string
+	_id, _address string
 }
 
 type finger struct {
