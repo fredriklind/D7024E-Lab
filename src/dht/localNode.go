@@ -2,6 +2,7 @@ package dht
 
 import (
 	"fmt"
+	log "github.com/cihub/seelog"
 )
 
 // ----------------------------------------------------------------------------------------
@@ -38,12 +39,18 @@ func (n *localNode) address() string {
 	return transport.Address
 }
 
-func (n *localNode) updatePredecessor(n2 node) {
-	n.pred = n2
+func (n *localNode) updatePredecessor(candidate node) {
+	if between(hexStringToByteArr(n.predecessor().id()), hexStringToByteArr(n.id()), hexStringToByteArr(candidate.id())) {
+		n.pred = candidate
+		log.Tracef("Predecessor updated to: %s", candidate.id())
+	} else {
+		log.Tracef("Predecessor NOT updated to: %s", candidate.id())
+	}
 }
 
 func (n *localNode) updateSuccessor(n2 node) {
 	n.fingerTable[1].node = n2
+	log.Tracef("Successor updated to: %s", n2.id())
 }
 
 // ----------------------------------------------------------------------------------------

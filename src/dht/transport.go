@@ -89,17 +89,61 @@ func (t *transporter) sendPredecessorResponse(request msg) {
 		Type:   "Response",
 		Method: "PREDECESSOR",
 		Dst:    request.Src,
+		Values: dictionary{},
 	}
-	//n := theLocalNode.predecessor()
-	m.Values["id"] = "6899" //n.id()
-	if false {              //n.id() == theLocalNode.id() {
+
+	n := theLocalNode.predecessor()
+	m.Values["id"] = n.id() // "6899"
+
+	switch n.(type) {
+	case *remoteNode:
+		m.Values["address"] = n.address()
+	default:
 		m.Values["address"] = t.Address
-	} else {
-		m.Values["address"] = "localhost:6000" //n.address()
 	}
-	log.Trace("sendPredecessorResponse")
-	_, err := t.send(m)
-	log.Errorf("Error in send: %s", err)
+	t.send(m)
+}
+
+func (t *transporter) sendUpdatePredecessorCall(destAddr, candidateId, candidateAddr string) {
+	m := msg{
+		Type:   "Request",
+		Method: "UPDATE_PREDECESSOR",
+		Dst:    destAddr,
+		Values: dictionary{},
+	}
+	m.Values["id"] = candidateId
+	m.Values["address"] = candidateAddr
+	t.send(m)
+}
+
+func (_ *transporter) handleUpdatePredecessorCall(call msg) {
+	if call.Values["id"] == theLocalNode.id() {
+		theLocalNode.updatePredecessor(theLocalNode)
+	} else {
+		n := &remoteNode{_id: call.Values["id"], _address: call.Values["address"]}
+		theLocalNode.updatePredecessor(n)
+	}
+}
+
+func (t *transporter) sendUpdateSuccessorCall(destAddr, candidateId, candidateAddr string) {
+	m := msg{
+		Type:   "Request",
+		Method: "UPDATE_SUCCESSOR",
+		Dst:    destAddr,
+		Values: dictionary{},
+	}
+	m.Values["id"] = candidateId
+	m.Values["address"] = candidateAddr
+	t.send(m)
+}
+
+func (_ *transporter) handleUpdateSuccessorCall(call msg) {
+	if call.Values["id"] == theLocalNode.id() {
+		theLocalNode.updateSuccessor(theLocalNode)
+	} else {
+		n := &remoteNode{_id: call.Values["id"], _address: call.Values["address"]}
+		theLocalNode.updateSuccessor(n)
+	}
 }
 
 func (t *transporter) sendHelloRequest(address string) {
@@ -131,8 +175,13 @@ func (t *transporter) handleRequest(request msg) {
 		t.sendAck(request)
 
 	case "PREDECESSOR":
-		log.Trace("Handlerequest")
 		t.sendPredecessorResponse(request)
+
+	case "UPDATE_SUCCESSOR":
+		t.handleUpdateSuccessorCall(request)
+
+	case "UPDATE_PREDECESSOR":
+		t.handleUpdatePredecessorCall(request)
 		// Forwards a request to nextNode setting the method and Src depending
 		// on the Values["Method"] and Values["Sender"]
 		/*	case "FORWARD":
@@ -212,16 +261,15 @@ func (t *transporter) send(m msg) (msg, error) {
 	}
 
 	//	log.Tracef("%s: Sent %s %s", n.id, m.Method, m.Type)
-	fmt.Printf("%s: Sent %s %s\n", t.Address, m.Method, m.Type)
-	log.Tracef("%s: Sent %s %s", t.Address, m.Method, m.Type)
+	fmt.Printf("%s: Sent %s %s: %+v\n", t.Address, m.Method, m.Type, m)
+	log.Tracef("%s: Sent %s %s: %+v", t.Address, m.Method, m.Type, m)
 
 	// Serialize and send the message (also wait to simulate network delay)
 	jsonmsg, err := json.Marshal(m)
 	_, err = conn.Write([]byte(jsonmsg))
 
 	if err != nil {
-		log.Errorf("%s: Error in send: %s", t.Address, err.Error())
-		return msg{}, err
+		log.Errorf("%s: error in send: %s", t.Address, err.Error())
 	}
 
 	// Blocks until something is received on the channel that is associated with m.Id
@@ -243,22 +291,21 @@ func (t *transporter) receive() {
 	}
 
 	dec := json.NewDecoder(conn)
-	msg := msg{}
+	m := msg{}
 
-	err = dec.Decode(&msg)
-	fmt.Printf("%s: Got %s %s\n", t.Address, msg.Method, msg.Type)
-	log.Tracef("%s: Got %s %s", t.Address, msg.Method, msg.Type)
+	err = dec.Decode(&m)
+	fmt.Printf("%s: Got %s %s: %s\n", t.Address, m.Method, m.Type, m.Id)
+	log.Tracef("%s: Got %s %s: %s", t.Address, m.Method, m.Type, m.Id)
 	conn.Close()
 	go t.receive()
 
-	switch msg.Type {
+	switch m.Type {
 	case "Response":
 		// Pass message to sender
-		t.requests[msg.Id] <- msg
+		t.requests[m.Id] <- m
 	case "Request":
 		// Handle request
-		log.Trace("In receive, a request")
-		t.handleRequest(msg)
+		t.handleRequest(m)
 	default:
 		log.Error("Message type not specified!")
 	}

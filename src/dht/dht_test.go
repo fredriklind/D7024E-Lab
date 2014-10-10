@@ -1,15 +1,16 @@
 package dht
 
 import (
-	log "github.com/cihub/seelog"
+	//log "github.com/cihub/seelog"
 	"testing"
 )
 
 func TestReceive(t *testing.T) {
-	newLocalNode(nil, "localhost", "2000")
+	id := "5"
+	newLocalNode(&id, "localhost", "2000")
 
-	node2 := &remoteNode{_id: "678687", _address: "localhost:5000"}
-	theLocalNode.updatePredecessor(node2)
+	node2 := &remoteNode{_id: "4", _address: "localhost:6600"}
+	theLocalNode.pred = node2
 
 	block := make(chan bool)
 	<-block
@@ -28,8 +29,27 @@ func TestPredecessorRequest(t *testing.T) {
 	newLocalNode(nil, "localhost", "3000")
 	node2 := &remoteNode{_address: "localhost:2000"}
 
-	pred := node2.predecessor()
-	log.Tracef("Predecessor: %+v", pred)
+	_ = node2.predecessor()
+	block := make(chan bool)
+	<-block
+}
+
+func TestUpdateSuccessorCall(t *testing.T) {
+	newLocalNode(nil, "localhost", "3000")
+	node2 := &remoteNode{_address: "localhost:2000"}
+
+	candidate := &remoteNode{_id: "8888", _address: "localhost:8877"}
+	node2.updateSuccessor(candidate)
+	block := make(chan bool)
+	<-block
+}
+
+func TestUpdatePredecessorCall(t *testing.T) {
+	newLocalNode(nil, "localhost", "3000")
+	node2 := &remoteNode{_address: "localhost:2000"}
+
+	candidate := &remoteNode{_id: "3", _address: "localhost:8877"}
+	node2.updatePredecessor(candidate)
 	block := make(chan bool)
 	<-block
 }

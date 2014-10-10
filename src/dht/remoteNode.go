@@ -1,14 +1,14 @@
 package dht
 
-import (
-//	"transport"
-)
-
 // ----------------------------------------------------------------------------------------
 //										Getters + setters
 // ----------------------------------------------------------------------------------------
 func (n *remoteNode) id() string {
 	return n._id
+}
+
+func (n *remoteNode) address() string {
+	return n._address
 }
 
 // TODO maybe return (node, error) here, to be able to handle errors better.
@@ -26,16 +26,12 @@ func (n *remoteNode) predecessor() node {
 	}
 }
 
-func (n *remoteNode) address() string {
-	return n._address
+func (n *remoteNode) updatePredecessor(candidate node) {
+	transport.sendUpdatePredecessorCall(n.address(), candidate.id(), candidate.address())
 }
 
-func (n *remoteNode) updateSuccessor(node) {
-
-}
-
-func (n *remoteNode) updatePredecessor(node) {
-
+func (n *remoteNode) updateSuccessor(candidate node) {
+	transport.sendUpdateSuccessorCall(n.address(), candidate.id(), candidate.address())
 }
 
 // ----------------------------------------------------------------------------------------
