@@ -1,7 +1,7 @@
 package dht
 
 import (
-	//log "github.com/cihub/seelog"
+	log "github.com/cihub/seelog"
 	"testing"
 )
 
@@ -50,6 +50,52 @@ func TestUpdatePredecessorCall(t *testing.T) {
 
 	candidate := &remoteNode{_id: "3", _address: "localhost:8877"}
 	node2.updatePredecessor(candidate)
+	block := make(chan bool)
+	<-block
+}
+
+func TestNode0(t *testing.T) {
+	id := "00"
+	newLocalNode(&id, "localhost", "9000")
+	node4 := &remoteNode{_id: "04", _address: "localhost:4000"}
+	node6 := &remoteNode{_id: "06", _address: "localhost:6000"}
+	theLocalNode.pred = node6
+	theLocalNode.fingerTable[1].node = node4
+	theLocalNode.fingerTable[2].node = node4
+	theLocalNode.fingerTable[3].node = node4
+
+	key := "05"
+	n := theLocalNode.lookup(key)
+	log.Tracef("%s.lookup(%s) = %s", theLocalNode.id(), key, n.id())
+
+	block := make(chan bool)
+	<-block
+}
+
+func TestNode4(t *testing.T) {
+	id := "04"
+	newLocalNode(&id, "localhost", "4000")
+	node0 := &remoteNode{_id: "00", _address: "localhost:9000"}
+	node6 := &remoteNode{_id: "06", _address: "localhost:6000"}
+	theLocalNode.pred = node0
+	theLocalNode.fingerTable[1].node = node6
+	theLocalNode.fingerTable[2].node = node6
+	theLocalNode.fingerTable[3].node = node0
+
+	block := make(chan bool)
+	<-block
+}
+
+func TestNode6(t *testing.T) {
+	id := "06"
+	newLocalNode(&id, "localhost", "6000")
+	node4 := &remoteNode{_id: "04", _address: "localhost:4000"}
+	node0 := &remoteNode{_id: "00", _address: "localhost:9000"}
+	theLocalNode.pred = node4
+	theLocalNode.fingerTable[1].node = node0
+	theLocalNode.fingerTable[2].node = node0
+	theLocalNode.fingerTable[3].node = node4
+
 	block := make(chan bool)
 	<-block
 }

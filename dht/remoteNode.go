@@ -37,9 +37,21 @@ func (n *remoteNode) updateSuccessor(candidate node) {
 // ----------------------------------------------------------------------------------------
 //										remoteNode Methods
 // ----------------------------------------------------------------------------------------
-func (n *remoteNode) lookup(id string) node {
+func (n *remoteNode) lookup(key string) node {
 	// TODO add conversion from what transport returns and what
 	// this method should return
-	//transport.SendLookupRequest(n.getAddress(), id)
-	return n
+	dict, err := transport.sendLookupRequest(n.address(), key)
+
+	if err != nil {
+		panic(err)
+	}
+	if dict["id"] == theLocalNode.id() {
+		return theLocalNode
+	} else {
+		return &remoteNode{_id: dict["id"], _address: dict["address"]}
+	}
+}
+
+func (n *remoteNode) isAlive() bool {
+	return transport.ping(n.address())
 }

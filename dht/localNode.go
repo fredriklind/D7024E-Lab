@@ -48,9 +48,13 @@ func (n *localNode) updatePredecessor(candidate node) {
 	}
 }
 
-func (n *localNode) updateSuccessor(n2 node) {
-	n.fingerTable[1].node = n2
-	log.Tracef("Successor updated to: %s", n2.id())
+func (n *localNode) updateSuccessor(candidate node) {
+	//	if between(hexStringToByteArr(nextId(n.id())), hexStringToByteArr(n.successor().id()), hexStringToByteArr(candidate.id())) {
+	n.fingerTable[1].node = candidate
+	log.Tracef("Successor updated to: %s", candidate.id())
+	//	} else {
+	//		log.Tracef("Successor NOT updated to: %s", candidate.id())
+	//	}
 }
 
 // ----------------------------------------------------------------------------------------
@@ -99,6 +103,25 @@ func (n *localNode) specLookup(newNode *localNode, startId string) *localNode {
 	return newNode
 }
 
+func (n *localNode) forwardingLookup(id string, j int) (node, int) {
+	for i := j; i > 0; i-- {
+		// special case - when n´s finger points to itself
+		if n.fingerTable[i].node.id() == n.id() {
+
+			// what to do? go to next finger...
+			// id between finger and node - got to that finger
+		} else if between(
+			hexStringToByteArr(n.fingerTable[i].node.id()),
+			hexStringToByteArr(n.id()),
+			hexStringToByteArr(id),
+		) {
+			return n.fingerTable[i].node, i
+		}
+	}
+	// if id is not between any finger and n - then id must be between n and its successor
+	return n.successor(), 0
+}
+
 func (newNode *localNode) initFingerTable(n *localNode) {
 	oneNodeRing := false
 
@@ -110,6 +133,20 @@ func (newNode *localNode) initFingerTable(n *localNode) {
 
 	// Set newNodes predecessor to the the node it is being inserted after
 	newNode.pred = newNode.successor().predecessor()
+
+	err := theLocalNode.initialReplication()
+
+	if err != nil {
+		panic(err)
+	}
+
+	// replication
+	// getPredReplica
+	// getPredPredReplica
+
+	// getOwnDB from successor
+	//notifySuccessor - of Takeover(of data) and about Drop previous predpredReplica
+	//notifySuccessorSuccessor - new division of data and about Drop previous predpredReplica
 
 	// Set successor of newNode´s predecessor to newNode
 	newNode.predecessor().updateSuccessor(newNode)
@@ -238,8 +275,4 @@ func (nodeToAdd *localNode) join(n *localNode) {
 // Caleld periodically to update fingers
 func (n *localNode) fixFingers() {
 
-}
-
-func (n *localNode) ping(remote *remoteNode) {
-	transport.sendHelloRequest(remote.address())
 }

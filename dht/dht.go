@@ -1,6 +1,6 @@
 package dht
 
-const m = 160
+const m = 3
 
 var transport *transporter
 

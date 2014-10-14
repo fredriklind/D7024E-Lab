@@ -79,7 +79,6 @@ func (t *transporter) sendPredecessorRequest(destAddr string) (dictionary, error
 	return dictionary{
 		"id":      response.Values["id"],
 		"address": response.Values["address"],
-		"port":    response.Values["port"],
 	}, nil
 }
 
@@ -146,11 +145,77 @@ func (_ *transporter) handleUpdateSuccessorCall(call msg) {
 	}
 }
 
-func (t *transporter) sendHelloRequest(address string) {
+func (t *transporter) sendLookupRequest(destAddr, key string) (dictionary, error) {
+
+	m := msg{
+		Type:   "Request",
+		Method: "LOOKUP",
+		Dst:    destAddr,
+		Values: dictionary{},
+		Sync:   true,
+	}
+	m.Values["key"] = key
+	m.Id = uuid.New()[0:4]
+	m.Values["original_src"] = t.Address
+	m.Values["original_msgid"] = m.Id
+
+	response, err := t.send(m)
+
+	if err != nil {
+		return dictionary{}, err
+	}
+
+	return dictionary{
+		"id":      response.Values["id"],
+		"address": response.Values["address"],
+	}, nil
+}
+
+func (t *transporter) handleLookupRequest(request msg) {
+	mg := msg{
+		Type:   "Response",
+		Method: "LOOKUP_ACK",
+		Dst:    request.Src,
+	}
+	log.Trace("%s is in handleLookupRequest", t.Address)
+	t.send(mg)
+	if between(
+		hexStringToByteArr(nextId(theLocalNode.predecessor().id())),
+		hexStringToByteArr(nextId(theLocalNode.id())),
+		hexStringToByteArr(request.Values["key"]),
+	) {
+		mg := msg{
+			Id:     request.Values["original_msgid"],
+			Type:   "Response",
+			Method: "LOOKUP",
+			Dst:    request.Values["original_src"],
+			Values: dictionary{},
+		}
+		mg.Values["id"] = theLocalNode.id()
+		mg.Values["address"] = t.Address
+		t.send(mg)
+	} else {
+
+		for k := m; k > 0; {
+			n, N := theLocalNode.forwardingLookup(request.Values["key"], k)
+			request.Dst = n.address()
+			request.Id = ""
+			_, err := t.send(request)
+
+			if err == nil {
+				break
+			} else {
+				k = N - 1
+			}
+		}
+	}
+}
+
+func (t *transporter) sendHelloRequest(destAddr string) {
 	m := msg{
 		Type:   "Request",
 		Method: "HELLO",
-		Dst:    address,
+		Dst:    destAddr,
 	}
 	t.send(m)
 }
@@ -162,6 +227,20 @@ func (t *transporter) sendAck(request msg) {
 		Dst:    request.Src,
 	}
 	t.send(m)
+}
+
+func (t *transporter) ping(destAddr string) bool {
+	m := msg{
+		Type:   "Request",
+		Method: "PING",
+		Dst:    destAddr,
+	}
+	_, err = t.send(m)
+	if err == nil {
+		return true
+	} else {
+		return false
+	}
 }
 
 // ----------------------------------------------------------------------------------------
@@ -182,6 +261,8 @@ func (t *transporter) handleRequest(request msg) {
 
 	case "UPDATE_PREDECESSOR":
 		t.handleUpdatePredecessorCall(request)
+	case "LOOKUP":
+		t.handleLookupRequest(request)
 		// Forwards a request to nextNode setting the method and Src depending
 		// on the Values["Method"] and Values["Sender"]
 		/*	case "FORWARD":
@@ -228,7 +309,11 @@ func (m *msg) isResponse() bool { return m.Type == "Response" }
 //										lowest layer
 // ----------------------------------------------------------------------------------------
 
-func (t *transporter) waitForResponse(msgId string) (msg, error) {
+func (t *transporter) waitForResponse(msgId string, waitTime int) (msg, error) {
+
+	if waitTime == 0 {
+		waitTime == 5
+	}
 
 	// Save the channel so that the receive() method can un-block
 	// this method when it receives a response with a matching id
@@ -237,8 +322,23 @@ func (t *transporter) waitForResponse(msgId string) (msg, error) {
 	// Wait for the msg-specific channel to get data, or time out
 	select {
 	case responseMsg := <-t.requests[msgId]:
+		if responseMsg.Method == "LOOKUP_ACK" {
+			if responseMsg.Values["original_src"] == t.Address {
+				select {
+				case responseMsg := <-t.requests[msgId]:
+					return responseMsg, nil
+				case <-time.After(time.Second * 10):
+					return msg{}, errors.New("Timeout")
+				}
+				//
+			} else {
+				// OK, do nothing
+				t.requests[msgId] <- msg{}
+			}
+		}
+		log.Tracef("%s: after ack", t.Address)
 		return responseMsg, nil
-	case <-time.After(timeoutSeconds):
+	case <-time.After(time.Second * waitTime):
 		log.Errorf("%s: request with id %s timed out", t.Address, msgId)
 		return msg{}, errors.New("Timeout")
 	}
@@ -274,7 +374,7 @@ func (t *transporter) send(m msg) (msg, error) {
 
 	// Blocks until something is received on the channel that is associated with m.Id
 	if m.isRequest() && m.Sync {
-		return t.waitForResponse(m.Id)
+		return t.waitForResponse(m.Id, 0)
 	} else {
 		return msg{}, nil
 	}
@@ -301,8 +401,13 @@ func (t *transporter) receive() {
 
 	switch m.Type {
 	case "Response":
-		// Pass message to sender
-		t.requests[m.Id] <- m
+		// Send response to the waiting request sender, or time out if no
+		// one is waiting.
+		select {
+		case t.requests[m.Id] <- m:
+		case <-time.After(time.Millisecond * 300):
+		}
+
 	case "Request":
 		// Handle request
 		t.handleRequest(m)
