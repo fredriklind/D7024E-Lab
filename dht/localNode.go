@@ -134,20 +134,6 @@ func (newNode *localNode) initFingerTable(n *localNode) {
 	// Set newNodes predecessor to the the node it is being inserted after
 	newNode.pred = newNode.successor().predecessor()
 
-	err := theLocalNode.initialReplication()
-
-	if err != nil {
-		panic(err)
-	}
-
-	// replication
-	// getPredReplica
-	// getPredPredReplica
-
-	// getOwnDB from successor
-	//notifySuccessor - of Takeover(of data) and about Drop previous predpredReplica
-	//notifySuccessorSuccessor - new division of data and about Drop previous predpredReplica
-
 	// Set successor of newNode´s predecessor to newNode
 	newNode.predecessor().updateSuccessor(newNode)
 

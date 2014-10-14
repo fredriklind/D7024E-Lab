@@ -32,6 +32,8 @@ type msg struct {
 
 type dictionary map[string]string
 
+// add function for periodically clean request-array, use timestamps in the requests. <--------
+
 // Initializer for the package, sets up the logger
 /*func init() {
 	testConfig := `
