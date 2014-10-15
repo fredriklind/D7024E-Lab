@@ -1,7 +1,7 @@
 package dht
 
 import (
-	"fmt"
+	//	"fmt"
 	log "github.com/cihub/seelog"
 )
 
@@ -42,19 +42,20 @@ func (n *localNode) address() string {
 func (n *localNode) updatePredecessor(candidate node) {
 	if between(hexStringToByteArr(n.predecessor().id()), hexStringToByteArr(n.id()), hexStringToByteArr(candidate.id())) {
 		n.pred = candidate
-		log.Tracef("Predecessor updated to: %s", candidate.id())
+		log.Tracef("%s: Predecessor updated to: %s", transport.Address, candidate.id())
 	} else {
-		log.Tracef("Predecessor NOT updated to: %s", candidate.id())
+		log.Tracef("%s: Predecessor NOT updated to: %s", transport.Address, candidate.id())
 	}
 }
 
 func (n *localNode) updateSuccessor(candidate node) {
-	//	if between(hexStringToByteArr(nextId(n.id())), hexStringToByteArr(n.successor().id()), hexStringToByteArr(candidate.id())) {
-	n.fingerTable[1].node = candidate
-	log.Tracef("Successor updated to: %s", candidate.id())
-	//	} else {
-	//		log.Tracef("Successor NOT updated to: %s", candidate.id())
-	//	}
+	if between(hexStringToByteArr(n.id()), hexStringToByteArr(n.successor().id()), hexStringToByteArr(candidate.id())) {
+		n.fingerTable[1].node = candidate
+		log.Tracef("%s: Successor updated to: %s", transport.Address, candidate.id())
+	} else {
+		log.Tracef("%s: Successor NOT updated to: %s", transport.Address, candidate.id())
+	}
+	go n.fixFingers()
 }
 
 // ----------------------------------------------------------------------------------------
@@ -62,45 +63,31 @@ func (n *localNode) updateSuccessor(candidate node) {
 // ----------------------------------------------------------------------------------------
 
 // Returns the node who is responsible for the data corresponding to id, traversing the ring using finger tables
-func (n *localNode) lookup(id string) node {
+func (n *localNode) lookup(id string) (node, error) {
 	// n responsible for id
 	if between(
 		hexStringToByteArr(nextId(n.predecessor().id())),
 		hexStringToByteArr(nextId(n.id())),
 		hexStringToByteArr(id),
 	) {
-		return n
+		return n, nil
 		// otherwise use fingers of n, starting with the one that is furthest away, to find responsible node
 	} else {
-		for i := m; i >= 1; i-- {
-			// special case - when n´s finger points to itself
-			if n.fingerTable[i].node.id() == n.id() {
+		for k := m; k > 0; {
 
-				// what to do? go to next finger...
-				// id between finger and node - got to that finger
-			} else if between(
-				hexStringToByteArr(n.fingerTable[i].node.id()),
-				hexStringToByteArr(n.id()),
-				hexStringToByteArr(id),
-			) {
-				return ((n.fingerTable[i].node).lookup(id))
+			nextNode, i := theLocalNode.forwardingLookup(id, k)
+
+			responsibleNode, err := nextNode.lookup(id)
+
+			if err == nil {
+				return responsibleNode, nil
+			} else {
+				k = i - 1
 			}
 		}
-		// if id is not between any finger and n - then id must be between n and its successor
-		return n.successor()
+		// all fingers dead... what to do? fixfingers! and fix predAndsucc! don´t send ACK?
+		return nil, nil
 	}
-}
-
-// lookup of finger.node for the case when a second node is added to a ring with only one node
-func (n *localNode) specLookup(newNode *localNode, startId string) *localNode {
-	if between(
-		hexStringToByteArr(nextId(newNode.id())),
-		hexStringToByteArr(nextId(n.id())),
-		hexStringToByteArr(startId),
-	) {
-		return n
-	}
-	return newNode
 }
 
 func (n *localNode) forwardingLookup(id string, j int) (node, int) {
@@ -122,46 +109,107 @@ func (n *localNode) forwardingLookup(id string, j int) (node, int) {
 	return n.successor(), 0
 }
 
-func (newNode *localNode) initFingerTable(n *localNode) {
+// lookup of finger.node for the case when a second node is added to a ring with only one node
+func (newNode *localNode) specLookup(n *remoteNode, startId string) node {
+	if between(
+		hexStringToByteArr(nextId(n.id())),
+		hexStringToByteArr(nextId(newNode.id())),
+		hexStringToByteArr(startId),
+	) {
+		// newNodes first finger/successor is newNode itself
+		return newNode
+	}
+	// newNodes first finger/successor is n
+	return n
+}
+
+// n needs to be an up and running remote node in the ring
+func (newNode *localNode) join(n *remoteNode) {
+
+	// If newNode is the only node in the network
+	if n == nil {
+		newNode.pred = newNode
+		for i := 1; i <= m; i++ {
+			newNode.fingerTable[i].startId, _ = calcFinger(hexStringToByteArr(newNode.id()), i, m)
+			newNode.fingerTable[i].node = newNode
+		}
+
+	} else {
+		newNode.initFingers(n)
+	}
+}
+
+func (newNode *localNode) initFingers(n *remoteNode) {
 	oneNodeRing := false
 
 	// Calculating first finger
 	newNode.fingerTable[1].startId, _ = calcFinger(hexStringToByteArr(newNode.id()), 1, m)
 
 	// Successor to newNode
-	newNode.fingerTable[1].node = n.lookup(newNode.fingerTable[1].startId)
+	newNode.fingerTable[1].node, _ = n.lookup(newNode.fingerTable[1].startId)
+	log.Tracef("%s: Set successor to: %s", transport.Address, newNode.successor().id())
 
-	// Set newNodes predecessor to the the node it is being inserted after
+	// Predecessor to newNode
 	newNode.pred = newNode.successor().predecessor()
+	log.Tracef("%s: Set predecessor to: %s", transport.Address, newNode.predecessor().id())
 
-	// Set successor of newNode´s predecessor to newNode
-	newNode.predecessor().updateSuccessor(newNode)
-
-	if n.predecessor().id() == n.id() {
+	if newNode.successor().id() == newNode.predecessor().id() { // n.predecessor().id() == n.id() {
 		oneNodeRing = true
-	} else {
-		oneNodeRing = false
 	}
 
-	// Update the predecessor of the node that newNode is inserted before
+	// Update the predecessor of the node that newNode is inserted before  	  	<---------- should be sync?
 	newNode.successor().updatePredecessor(newNode)
 
-	for i := 1; i <= (m - 1); i++ {
+	// Set successor of newNode´s predecessor to newNode  						<----------- should be sync
+	newNode.predecessor().updateSuccessor(newNode)
+
+	for i := 1; i < m; i++ {
+
 		// Calculating finger
 		newNode.fingerTable[i+1].startId, _ = calcFinger(hexStringToByteArr(newNode.id()), i+1, m)
+
 		if between(
 			hexStringToByteArr(newNode.id()),
 			hexStringToByteArr(nextId(newNode.fingerTable[i].node.id())),
 			hexStringToByteArr(newNode.fingerTable[i+1].startId),
 		) {
-			// startId between node and previous finger.node
+			// startId between newNode and previous finger.node
 			newNode.fingerTable[i+1].node = newNode.fingerTable[i].node
+
 		} else {
+
 			if oneNodeRing {
-				newNode.fingerTable[i+1].node = n.specLookup(newNode, newNode.fingerTable[i+1].startId)
+				newNode.fingerTable[i+1].node = newNode.specLookup(n, newNode.fingerTable[i+1].startId)
+
 			} else {
-				newNode.fingerTable[i+1].node = n.lookup(newNode.fingerTable[i+1].startId)
+				newNode.fingerTable[i+1].node, _ = n.lookup(newNode.fingerTable[i+1].startId)
 			}
+		}
+	}
+}
+
+// Called periodically to update fingers
+func (n *localNode) fixFingers() {
+
+	//newNode.fingerTable[1].node, _ = n.lookup(n.fingerTable[1].startId)
+
+	for i := 1; i < m; i++ {
+		oldFingerId := n.fingerTable[i+1].node.id()
+
+		if between(
+			hexStringToByteArr(n.id()),
+			hexStringToByteArr(nextId(n.fingerTable[i].node.id())),
+			hexStringToByteArr(n.fingerTable[i+1].startId),
+		) {
+			// startId between n and previous finger.node
+			n.fingerTable[i+1].node = n.fingerTable[i].node
+
+		} else {
+			n.fingerTable[i+1].node, _ = n.lookup(n.fingerTable[i+1].startId)
+		}
+
+		if oldFingerId != n.fingerTable[i+1].node.id() {
+			log.Tracef("%s: In fixFingers: Updated finger %s to: %s", transport.Address, n.fingerTable[i+1].startId, n.fingerTable[i+1].node.id())
 		}
 	}
 }
@@ -229,36 +277,3 @@ func (n *localNode) updateFingerTable(s *localNode, i int) {
 		//			fmt.Println("Not going to that node")
 	}
 }*/
-
-func (nodeToAdd *localNode) join(n *localNode) {
-
-	//	fmt.Printf("Adding node %s\n", nodeToAdd.id())
-
-	// If nodeToAdd is the only node in the network
-	if n == nil {
-		//		fmt.Printf("\nNode %s joins an empty ring\n", nodeToAdd.id())
-		nodeToAdd.updatePredecessor(nodeToAdd)
-		for i := 1; i <= m; i++ {
-			nodeToAdd.fingerTable[i].startId, _ = calcFinger(hexStringToByteArr(nodeToAdd.id()), i, m)
-			nodeToAdd.fingerTable[i].node = nodeToAdd
-		}
-	} else {
-		//		fmt.Printf("\nNode %s joins, using node %s\n", nodeToAdd.id(), n.id())
-		nodeToAdd.initFingerTable(n)
-		fmt.Println("After initFingerTable:\n")
-		//		nodeToAdd.printNode2()
-		//		nodeToAdd.printRing2()
-		nodeToAdd.printNodeWithFingers()
-		//		fmt.Printf("Node %s joined and initiated its finger now time for updating others\n", nodeToAdd.id())
-		//nodeToAdd.updateOthers()
-		fmt.Println("After updateOthers:")
-	}
-	//	fmt.Printf("Ring structure after join, starting at %s: \n", nodeToAdd.id())
-	//	nodeToAdd.printRing()
-	//	fmt.Println("--- End ring\n")
-}
-
-// Caleld periodically to update fingers
-func (n *localNode) fixFingers() {
-
-}

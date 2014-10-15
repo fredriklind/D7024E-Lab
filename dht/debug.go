@@ -27,12 +27,12 @@ func (n *remoteNode) printNode2() {
 
 func (n *localNode) printNodeWithFingers() {
 	//fmt.Printf("Node %s, address %s, port %s\n", n.id, n.adress, n.port)
-	fmt.Printf("Node %s\n", n.id)
-	if n.pred != nil {
-		fmt.Printf("Predecessor %s\n", n.pred.id)
+	fmt.Printf("Node %s\n", n.id())
+	if n.predecessor() != nil {
+		fmt.Printf("Predecessor %s\n", n.predecessor().id())
 	}
 	for i := 1; i <= m; i++ {
-		fmt.Printf("Finger %s -> Node %s\n", n.fingerTable[i].startId, n.fingerTable[i].node.id)
+		fmt.Printf("Finger %s -> Node %s\n", n.fingerTable[i].startId, n.fingerTable[i].node.id())
 	}
 	fmt.Println("")
 }

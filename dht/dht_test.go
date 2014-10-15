@@ -1,6 +1,7 @@
 package dht
 
 import (
+	"fmt"
 	log "github.com/cihub/seelog"
 	"testing"
 )
@@ -20,7 +21,7 @@ func TestHELLO(t *testing.T) {
 	newLocalNode(nil, "localhost", "3000")
 	node2 := &remoteNode{_address: "localhost:2000"}
 
-	theLocalNode.ping(node2)
+	node2.isAlive()
 	block := make(chan bool)
 	<-block
 }
@@ -60,12 +61,16 @@ func TestNode0(t *testing.T) {
 	node4 := &remoteNode{_id: "04", _address: "localhost:4000"}
 	node6 := &remoteNode{_id: "06", _address: "localhost:6000"}
 	theLocalNode.pred = node6
-	theLocalNode.fingerTable[1].node = node4
-	theLocalNode.fingerTable[2].node = node4
+	//theLocalNode.fingerTable[1].node = node4
+	//theLocalNode.fingerTable[2].node = node4
 	theLocalNode.fingerTable[3].node = node4
 
-	key := "05"
-	n := theLocalNode.lookup(key)
+	node2 := &remoteNode{_id: "02", _address: "localhost:2000"}
+	theLocalNode.fingerTable[1].node = node2
+	theLocalNode.fingerTable[2].node = node2
+
+	key := "03"
+	n, _ := theLocalNode.lookup(key)
 	log.Tracef("%s.lookup(%s) = %s", theLocalNode.id(), key, n.id())
 
 	block := make(chan bool)
@@ -95,6 +100,45 @@ func TestNode6(t *testing.T) {
 	theLocalNode.fingerTable[1].node = node0
 	theLocalNode.fingerTable[2].node = node0
 	theLocalNode.fingerTable[3].node = node4
+
+	block := make(chan bool)
+	<-block
+}
+
+func TestJoin2(t *testing.T) {
+	id := "02"
+	newLocalNode(&id, "localhost", "2000")
+
+	node3 := &remoteNode{_id: "03", _address: "localhost:3000"}
+
+	theLocalNode.join(node3)
+	theLocalNode.printNodeWithFingers()
+	fmt.Printf("Node 3:s predecessor after the join of Node 0 = %s", node3.predecessor().id())
+
+	block := make(chan bool)
+	<-block
+}
+
+func TestJoin0(t *testing.T) {
+	id := "00"
+	newLocalNode(&id, "localhost", "9000")
+
+	node3 := &remoteNode{_id: "03", _address: "localhost:3000"}
+
+	theLocalNode.join(node3)
+	theLocalNode.printNodeWithFingers()
+	fmt.Printf("Node 3:s predecessor after the join of Node 0 = %s", node3.predecessor().id())
+
+	block := make(chan bool)
+	<-block
+}
+
+func TestJoin3(t *testing.T) {
+	id := "03"
+	newLocalNode(&id, "localhost", "3000")
+
+	theLocalNode.join(nil)
+	theLocalNode.printNodeWithFingers()
 
 	block := make(chan bool)
 	<-block
