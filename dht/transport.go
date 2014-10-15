@@ -1,13 +1,14 @@
 package dht
 
 import (
-	"code.google.com/p/go-uuid/uuid"
 	"encoding/json"
 	"errors"
 	"fmt"
-	log "github.com/cihub/seelog"
 	"net"
 	"time"
+
+	"code.google.com/p/go-uuid/uuid"
+	log "github.com/cihub/seelog"
 )
 
 // ----------------------------------------------------------------------------------------
@@ -235,7 +236,7 @@ func (t *transporter) ping(destAddr string) bool {
 		Method: "PING",
 		Dst:    destAddr,
 	}
-	_, err = t.send(m)
+	_, err := t.send(m)
 	if err == nil {
 		return true
 	} else {
@@ -312,7 +313,7 @@ func (m *msg) isResponse() bool { return m.Type == "Response" }
 func (t *transporter) waitForResponse(msgId string, waitTime int) (msg, error) {
 
 	if waitTime == 0 {
-		waitTime == 5
+		waitTime = 5
 	}
 
 	// Save the channel so that the receive() method can un-block
@@ -338,7 +339,7 @@ func (t *transporter) waitForResponse(msgId string, waitTime int) (msg, error) {
 		}
 		log.Tracef("%s: after ack", t.Address)
 		return responseMsg, nil
-	case <-time.After(time.Second * waitTime):
+	case <-time.After(timeoutSeconds):
 		log.Errorf("%s: request with id %s timed out", t.Address, msgId)
 		return msg{}, errors.New("Timeout")
 	}

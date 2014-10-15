@@ -1,8 +1,11 @@
 package dht
 
+import "github.com/boltdb/bolt"
+
 const m = 3
 
 var transport *transporter
+var db *bolt.DB
 
 // This must be used when the type of node is not known.
 // For example when a method can return either a local or remote node

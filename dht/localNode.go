@@ -2,6 +2,7 @@ package dht
 
 import (
 	"fmt"
+
 	log "github.com/cihub/seelog"
 )
 
@@ -18,6 +19,7 @@ func newLocalNode(idPointer *string, address string, port string) {
 	}
 	theLocalNode = &localNode{_id: id}
 	transport = newTransporter(address + ":" + port)
+	theLocalNode.initPrimaryDB()
 }
 
 // ----------------------------------------------------------------------------------------
@@ -133,12 +135,6 @@ func (newNode *localNode) initFingerTable(n *localNode) {
 
 	// Set newNodes predecessor to the the node it is being inserted after
 	newNode.pred = newNode.successor().predecessor()
-
-	err := theLocalNode.initialReplication()
-
-	if err != nil {
-		panic(err)
-	}
 
 	// replication
 	// getPredReplica
