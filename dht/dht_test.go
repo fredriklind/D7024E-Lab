@@ -1,7 +1,7 @@
 package dht
 
 import (
-	"fmt"
+	//"fmt"
 	log "github.com/cihub/seelog"
 	"testing"
 )
@@ -112,8 +112,6 @@ func TestJoin2(t *testing.T) {
 	node3 := &remoteNode{_id: "03", _address: "localhost:3000"}
 
 	theLocalNode.join(node3)
-	theLocalNode.printNodeWithFingers()
-	fmt.Printf("Node 3:s predecessor after the join of Node 0 = %s", node3.predecessor().id())
 
 	block := make(chan bool)
 	<-block
@@ -126,9 +124,6 @@ func TestJoin0(t *testing.T) {
 	node3 := &remoteNode{_id: "03", _address: "localhost:3000"}
 
 	theLocalNode.join(node3)
-	theLocalNode.printNodeWithFingers()
-	fmt.Printf("Node 3:s predecessor after the join of Node 0 = %s", node3.predecessor().id())
-
 	block := make(chan bool)
 	<-block
 }
@@ -138,7 +133,6 @@ func TestJoin3(t *testing.T) {
 	newLocalNode(&id, "localhost", "3000")
 
 	theLocalNode.join(nil)
-	theLocalNode.printNodeWithFingers()
 
 	block := make(chan bool)
 	<-block

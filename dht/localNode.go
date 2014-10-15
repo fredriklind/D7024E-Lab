@@ -3,6 +3,7 @@ package dht
 import (
 	//	"fmt"
 	log "github.com/cihub/seelog"
+	"time"
 )
 
 // ----------------------------------------------------------------------------------------
@@ -55,7 +56,6 @@ func (n *localNode) updateSuccessor(candidate node) {
 	} else {
 		log.Tracef("%s: Successor NOT updated to: %s", transport.Address, candidate.id())
 	}
-	go n.fixFingers()
 }
 
 // ----------------------------------------------------------------------------------------
@@ -137,6 +137,7 @@ func (newNode *localNode) join(n *remoteNode) {
 	} else {
 		newNode.initFingers(n)
 	}
+	go newNode.fixFingers()
 }
 
 func (newNode *localNode) initFingers(n *remoteNode) {
@@ -190,8 +191,10 @@ func (newNode *localNode) initFingers(n *remoteNode) {
 
 // Called periodically to update fingers
 func (n *localNode) fixFingers() {
+	//log.Tracef("%s: Running fixFingers", transport.Address)
 
-	//newNode.fingerTable[1].node, _ = n.lookup(n.fingerTable[1].startId)
+	succ, _ := n.lookup(n.fingerTable[1].startId)
+	n.updateSuccessor(succ)
 
 	for i := 1; i < m; i++ {
 		oldFingerId := n.fingerTable[i+1].node.id()
@@ -212,6 +215,8 @@ func (n *localNode) fixFingers() {
 			log.Tracef("%s: In fixFingers: Updated finger %s to: %s", transport.Address, n.fingerTable[i+1].startId, n.fingerTable[i+1].node.id())
 		}
 	}
+	time.Sleep(time.Second * 5)
+	defer n.fixFingers()
 }
 
 // Traverse the ring counter-clockwise to update all nodes whose finger table entries could/should refer to n

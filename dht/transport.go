@@ -352,8 +352,20 @@ func (t *transporter) send(m msg) (msg, error) {
 	}
 
 	//	log.Tracef("%s: Sent %s %s", n.id, m.Method, m.Type)
-	fmt.Printf("%s: Sent %s %s: %+v\n", t.Address, m.Method, m.Type, m)
-	log.Tracef("%s: Sent %s %s: %+v", t.Address, m.Method, m.Type, m)
+	if m.Method == "LOOKUP" {
+		if m.Type == "Request" {
+			log.Tracef("%s: Sent %s %s: %s to %s key: %s origMsgId:%s origSrc:%s", t.Address, m.Method, m.Type, m.Id, m.Dst, m.Values["key"], m.Values["original_msgid"], m.Values["original_src"])
+		} else if m.Type == "Response" {
+			log.Tracef("%s: Sent %s %s: %s to %s respNodeId:%s", t.Address, m.Method, m.Type, m.Id, m.Dst, m.Values["id"])
+		}
+	} else if m.Method == "LOOKUP_ACK" {
+		log.Tracef("%s: Sent %s %s: %s", t.Address, m.Method, m.Type, m.Id)
+	} else {
+		fmt.Printf("%s: Sent %s %s: %+v\n", t.Address, m.Method, m.Type, m)
+		log.Tracef("%s: Sent %s %s: %s to %s", t.Address, m.Method, m.Type, m.Id, m.Dst)
+	}
+
+	time.Sleep(time.Second * 1)
 
 	// Serialize and send the message (also wait to simulate network delay)
 	jsonmsg, err := json.Marshal(m)
