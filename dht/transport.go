@@ -33,6 +33,8 @@ type msg struct {
 
 type dictionary map[string]string
 
+// add function for periodically clean request-array, use timestamps in the requests. <--------
+
 // Initializer for the package, sets up the logger
 /*func init() {
 	testConfig := `
@@ -155,10 +157,11 @@ func (t *transporter) sendLookupRequest(destAddr, key string) (dictionary, error
 		Values: dictionary{},
 		Sync:   true,
 	}
+
 	m.Values["key"] = key
 	m.Id = uuid.New()[0:4]
-	m.Values["original_src"] = t.Address
 	m.Values["original_msgid"] = m.Id
+	m.Values["original_src"] = t.Address
 
 	response, err := t.send(m)
 
@@ -174,12 +177,15 @@ func (t *transporter) sendLookupRequest(destAddr, key string) (dictionary, error
 
 func (t *transporter) handleLookupRequest(request msg) {
 	mg := msg{
+		Id:     request.Id,
 		Type:   "Response",
 		Method: "LOOKUP_ACK",
 		Dst:    request.Src,
+		Values: dictionary{},
 	}
-	log.Trace("%s is in handleLookupRequest", t.Address)
+	mg.Values["original_src"] = request.Values["original_src"]
 	t.send(mg)
+
 	if between(
 		hexStringToByteArr(nextId(theLocalNode.predecessor().id())),
 		hexStringToByteArr(nextId(theLocalNode.id())),
@@ -198,15 +204,16 @@ func (t *transporter) handleLookupRequest(request msg) {
 	} else {
 
 		for k := m; k > 0; {
-			n, N := theLocalNode.forwardingLookup(request.Values["key"], k)
-			request.Dst = n.address()
+			nextNode, i := theLocalNode.forwardingLookup(request.Values["key"], k)
+			request.Dst = nextNode.address()
 			request.Id = ""
+
 			_, err := t.send(request)
 
 			if err == nil {
 				break
 			} else {
-				k = N - 1
+				k = i - 1
 			}
 		}
 	}
@@ -235,6 +242,7 @@ func (t *transporter) ping(destAddr string) bool {
 		Type:   "Request",
 		Method: "PING",
 		Dst:    destAddr,
+		Sync:   true,
 	}
 	_, err := t.send(m)
 	if err == nil {
@@ -248,7 +256,7 @@ func (t *transporter) ping(destAddr string) bool {
 //										middle layer
 // ----------------------------------------------------------------------------------------
 
-// When you get a request you need to handle
+// Parse requests and pass them on to their handler
 func (t *transporter) handleRequest(request msg) {
 	switch request.Method {
 	case "HELLO":
@@ -262,34 +270,9 @@ func (t *transporter) handleRequest(request msg) {
 
 	case "UPDATE_PREDECESSOR":
 		t.handleUpdatePredecessorCall(request)
+
 	case "LOOKUP":
 		t.handleLookupRequest(request)
-		// Forwards a request to nextNode setting the method and Src depending
-		// on the Values["Method"] and Values["Sender"]
-		/*	case "FORWARD":
-				// If n is the final destination, answer the original sender
-				if n.id == request.Values["FinalDestinationId"] {
-					//			log.Tracef("Node %s is FinalDestination", n.id)
-					newRequest := msg{
-						Method: request.Values["Method"],
-						Src:    request.Values["Sender"],
-					}
-					// Handle the request contained in the FORWARD request
-					handleRequest(newRequest)
-				} else {
-					// If n is not the searched for node, forward the request to the next node
-					nextNodeAddress := "127.0.0.1:4000"
-					forwardRequest := msg{
-						Id:     request.Id,
-						Method: "FORWARD",
-						Dst:    nextNodeAddress,
-						Sync:   false,
-					}
-					sendRequest(forwardRequest)
-				}
-
-			default:
-				log.Error("No request method specified!")*/
 	}
 }
 
@@ -310,11 +293,27 @@ func (m *msg) isResponse() bool { return m.Type == "Response" }
 //										lowest layer
 // ----------------------------------------------------------------------------------------
 
-func (t *transporter) waitForResponse(msgId string, waitTime int) (msg, error) {
+func (t *transporter) waitForLookupResponse(ackMsg msg) (msg, error) {
 
-	if waitTime == 0 {
-		waitTime = 5
+	// Got LOOKUP_ACK, wait for
+
+	if ackMsg.Values["original_src"] == t.Address {
+		select {
+		// wait for real response
+		case responseMsg := <-t.requests[ackMsg.Id]:
+			return responseMsg, nil
+
+		case <-time.After(time.Second * 10):
+			return msg{}, errors.New("Timeout")
+
+		}
+	} else {
+		// OK, got ACK, not original sender - don´t wait for any other response
+		return msg{}, nil
 	}
+}
+
+func (t *transporter) waitForResponse(msgId string, waitSeconds time.Duration) (msg, error) {
 
 	// Save the channel so that the receive() method can un-block
 	// this method when it receives a response with a matching id
@@ -322,24 +321,16 @@ func (t *transporter) waitForResponse(msgId string, waitTime int) (msg, error) {
 
 	// Wait for the msg-specific channel to get data, or time out
 	select {
+
 	case responseMsg := <-t.requests[msgId]:
+
 		if responseMsg.Method == "LOOKUP_ACK" {
-			if responseMsg.Values["original_src"] == t.Address {
-				select {
-				case responseMsg := <-t.requests[msgId]:
-					return responseMsg, nil
-				case <-time.After(time.Second * 10):
-					return msg{}, errors.New("Timeout")
-				}
-				//
-			} else {
-				// OK, do nothing
-				t.requests[msgId] <- msg{}
-			}
+			return t.waitForLookupResponse(responseMsg)
+		} else {
+			return responseMsg, nil
 		}
-		log.Tracef("%s: after ack", t.Address)
-		return responseMsg, nil
-	case <-time.After(timeoutSeconds):
+
+	case <-time.After(time.Second * waitSeconds):
 		log.Errorf("%s: request with id %s timed out", t.Address, msgId)
 		return msg{}, errors.New("Timeout")
 	}
@@ -362,8 +353,20 @@ func (t *transporter) send(m msg) (msg, error) {
 	}
 
 	//	log.Tracef("%s: Sent %s %s", n.id, m.Method, m.Type)
-	fmt.Printf("%s: Sent %s %s: %+v\n", t.Address, m.Method, m.Type, m)
-	log.Tracef("%s: Sent %s %s: %+v", t.Address, m.Method, m.Type, m)
+	if m.Method == "LOOKUP" {
+		if m.Type == "Request" {
+			log.Tracef("%s: Sent %s %s: %s to %s key: %s origMsgId:%s origSrc:%s", t.Address, m.Method, m.Type, m.Id, m.Dst, m.Values["key"], m.Values["original_msgid"], m.Values["original_src"])
+		} else if m.Type == "Response" {
+			log.Tracef("%s: Sent %s %s: %s to %s respNodeId:%s", t.Address, m.Method, m.Type, m.Id, m.Dst, m.Values["id"])
+		}
+	} else if m.Method == "LOOKUP_ACK" {
+		log.Tracef("%s: Sent %s %s: %s", t.Address, m.Method, m.Type, m.Id)
+	} else {
+		fmt.Printf("%s: Sent %s %s: %+v\n", t.Address, m.Method, m.Type, m)
+		log.Tracef("%s: Sent %s %s: %s to %s", t.Address, m.Method, m.Type, m.Id, m.Dst)
+	}
+
+	time.Sleep(time.Second * 1)
 
 	// Serialize and send the message (also wait to simulate network delay)
 	jsonmsg, err := json.Marshal(m)
@@ -375,7 +378,7 @@ func (t *transporter) send(m msg) (msg, error) {
 
 	// Blocks until something is received on the channel that is associated with m.Id
 	if m.isRequest() && m.Sync {
-		return t.waitForResponse(m.Id, 0)
+		return t.waitForResponse(m.Id, 5)
 	} else {
 		return msg{}, nil
 	}

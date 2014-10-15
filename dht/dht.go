@@ -15,7 +15,7 @@ type node interface {
 	predecessor() node
 	address() string
 	// Methods
-	lookup(id string) node
+	lookup(id string) (node, error)
 	updateSuccessor(node)
 	updatePredecessor(node)
 }
