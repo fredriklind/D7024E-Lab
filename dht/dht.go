@@ -1,6 +1,12 @@
 package dht
 
-import "github.com/boltdb/bolt"
+import (
+	"bufio"
+	"fmt"
+	"os"
+
+	"github.com/boltdb/bolt"
+)
 
 const m = 3
 
@@ -34,4 +40,19 @@ type remoteNode struct {
 type finger struct {
 	startId string
 	node    node
+}
+
+func main() {
+	go startWebServer()
+	go startAPI()
+
+	for true {
+		reader := bufio.NewReader(os.Stdin)
+		fmt.Print("Enter command: ")
+		cmd, _ := reader.ReadString('\n')
+		if cmd == "e\n" {
+			db.Close()
+			break
+		}
+	}
 }

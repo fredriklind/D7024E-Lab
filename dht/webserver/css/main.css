@@ -1,0 +1,207 @@
+::selection {
+  color: #fff;
+  background: #d22dc3;
+}
+
+body {
+    background: #293134;
+}
+
+.page-wrap {
+    width: 450px;
+    margin: 0 auto;
+
+}
+
+header {
+    padding: 30px;
+}
+
+header h1 {
+    color: #FFD545;
+    text-align: center;
+    margin: 0;
+    line-height: 30px;
+}
+
+h2 {
+    margin-top: 0;
+    margin-bottom: 10px;
+}
+
+.content {
+    margin: 30px;
+    border-radius: 7px;
+    overflow: hidden;
+}
+
+.section h2 {
+    padding: 15px;
+    margin: 0 -30px 19px;
+    background: rgba(255,255,255,0.12);
+    color: #FC750F;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+}
+
+.section h2 span {
+    position: absolute;
+    right: 0;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    text-align: center;
+    font-size: 22px;
+    color: #fff;
+    line-height: 58px;
+    opacity: 0;
+    transition: opacity .4s ease;
+}
+
+.section h2 span.show {
+    opacity: 1;
+}
+
+.section h2 span.error {
+    background-color: #B71600;
+    color: #FFF;
+}
+
+.section h2 span.success {
+    color: #fff;
+    background-color: #00C32B;
+}
+
+.content .section.hidden:last-child h2 { margin-bottom: 0;}
+
+.content .section.hidden h2:hover {
+  background: rgba(255,255,255,0.07);
+  cursor: pointer;
+}
+
+.section {
+    background: rgba(255,255,255,0.03);
+    padding: 0 30px 18px;
+    -webkit-transition: all .3s ease;
+    transition: all .3s ease;
+
+}
+
+.section form { max-height: 200px;}
+.section.hidden form { max-height: 0;}
+.section.hidden { padding-bottom: 0;}
+.section.hidden h2 { color: #2BACDF; background: rgba(255,255,255,0.03);}
+
+
+.section.status {
+    position: relative;
+}
+.section.status::after {
+    content:"";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255,255,255,0.03);
+    font-size: 22px;
+    color: #fff;
+    animation: fade 1.3s ease;
+    text-align: center;
+    padding: 40px;
+}
+
+@keyframes fade {
+  0%   { opacity: 1; }
+  100% { opacity: 0; display: none; }
+}
+
+.section.status.set-successful {
+    content: "Set successful";
+    color: green;
+}
+
+.section.status.key-exists {
+    content: "Key already exists"
+    color: red;
+}
+
+form {
+    overflow: hidden;
+    -webkit-transition: all .3s ease;
+    transition: all .3s ease;
+}
+
+input[type="text"] {
+    background: rgba(0, 0, 0, 0);
+    border: none;
+    outline: none;
+    color: #FFD545;
+    position: relative;
+    padding: 0 0 0 8px;
+    width: 100%;
+}
+
+.text {
+    float: left;
+
+}
+
+.field {
+    display: block;
+    overflow: hidden;
+}
+
+input[type="text"]:hover::-webkit-input-placeholder {
+   color: #fff;
+}
+
+input[type="submit"] {
+    border: none;
+    color: #00C32B;
+    background: rgba(0, 0, 0, 0);
+    padding: 10px 0;
+    outline: none;
+}
+
+input[type="text"].loading {
+    background: url(../img/loader.gif) no-repeat 5px center;
+}
+
+input[type="submit"]:hover {
+    color: #0ad938;
+} 
+
+label {
+    color: #B8B8B8;
+    display: block;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.4);
+    overflow: hidden;
+    padding: 8px 0;
+    margin-bottom: 10px;
+}
+
+input[type="text"].not-found::selection {
+  color: #fff;
+  background: #B71600;
+}
+
+.key:before {
+    content: "Key:";
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.value:before {
+    content: "Value";
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.hide { display: none;}
+
+
+
