@@ -18,10 +18,10 @@ type node interface {
 }
 
 type localNode struct {
-	_id         string
-	pred        node
-	fingerTable [m + 1]finger
-	isListening chan bool
+	_id            string
+	pred           node
+	fingerTable    [m + 1]finger
+	fixFingersChan chan bool
 }
 
 type remoteNode struct {
