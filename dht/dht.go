@@ -5,7 +5,7 @@ const m = 3
 var transport *transporter
 
 // This must be used when the type of node is not known.
-// For example when a method can return either a local or remote node
+// For example when a method can return either a local or remote node.
 type node interface {
 	// Getters
 	id() string

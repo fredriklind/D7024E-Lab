@@ -13,8 +13,6 @@ func (n *remoteNode) address() string {
 
 // TODO maybe return (node, error) here, to be able to handle errors better.
 func (n *remoteNode) predecessor() node {
-	// TODO add conversion from what transport returns and what
-	// this method should return
 	dict, err := transport.sendPredecessorRequest(n.address())
 	if err != nil {
 		panic(err)
@@ -38,8 +36,6 @@ func (n *remoteNode) updateSuccessor(candidate node) {
 //										remoteNode Methods
 // ----------------------------------------------------------------------------------------
 func (n *remoteNode) lookup(key string) (node, error) {
-	// TODO add conversion from what transport returns and what
-	// this method should return
 	dict, err := transport.sendLookupRequest(n.address(), key)
 
 	if err != nil {

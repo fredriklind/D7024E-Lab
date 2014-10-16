@@ -204,6 +204,12 @@ func (n *localNode) startFixFingers() {
 	}
 }
 
+// an optimized fixFingers could be called from updateSuccessor and updatePredecessor.
+// In those functions you get a candidate. Use the candidates id
+// to determine for each finger if it should be updated to the candidate or not.
+// fixFingers without any remote lookup requests.
+// se old updateFingerTable.
+
 // Called periodically to update fingers
 func (n *localNode) fixFingers() {
 
@@ -233,38 +239,7 @@ func (n *localNode) fixFingers() {
 
 }
 
-// Traverse the ring counter-clockwise to update all nodes whose finger table entries could/should refer to n
-/*func (n *localNode) updateOthers() {
-	for i := 1; i <= m; i++ {
-		// Find last preceeding node p whose i:th finger might be n
-		nId := big.Int{}
-		nId.SetString(n.id(), base)
-
-		y := big.Int{}
-		two := big.NewInt(2)
-		mbig := big.NewInt(m)
-
-		y.Exp(two, big.NewInt(int64(i-1)), nil)
-		y.Sub(&nId, &y)
-
-		two.Exp(two, mbig, nil)
-		y.Mod(&y, two)
-		// y = nId - 2^(i-1)
-
-		yBytes := y.Bytes()
-		yHex := fmt.Sprintf("%x", yBytes)
-
-		p := n.lookup(yHex)
-
-		if p.id() != yHex {
-			p = p.predecessor()
-		}
-		if p.id() != n.id() {
-			p.updateFingerTable(n, i)
-		}
-	}
-}
-
+/*
 // If s should be the i:th finger of n -> update n's finger table entry nr i with s
 func (n *localNode) updateFingerTable(s *localNode, i int) {
 	// n´s finger.node points to n itself
