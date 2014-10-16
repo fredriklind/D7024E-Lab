@@ -49,6 +49,7 @@ func (n *localNode) updatePredecessor(candidate node) {
 	} else {
 		log.Tracef("%s: Predecessor NOT updated to: %s", transport.Address, candidate.id())
 	}
+	theLocalNode.fixFingersChan <- true
 }
 
 func (n *localNode) updateSuccessor(candidate node) {
@@ -58,6 +59,7 @@ func (n *localNode) updateSuccessor(candidate node) {
 	} else {
 		log.Tracef("%s: Successor NOT updated to: %s", transport.Address, candidate.id())
 	}
+	theLocalNode.fixFingersChan <- true
 }
 
 // ----------------------------------------------------------------------------------------
@@ -85,6 +87,7 @@ func (n *localNode) lookup(id string) (node, error) {
 				return responsibleNode, nil
 			} else {
 				k = i - 1
+
 			}
 		}
 		// all fingers dead... what to do? fixfingers! and fix predAndsucc! don´t send ACK?
@@ -139,7 +142,7 @@ func (newNode *localNode) join(n *remoteNode) {
 	} else {
 		newNode.initFingers(n)
 	}
-	go newNode.fixFingers()
+	go newNode.startFixFingers()
 }
 
 func (newNode *localNode) initFingers(n *remoteNode) {
@@ -186,20 +189,40 @@ func (newNode *localNode) initFingers(n *remoteNode) {
 
 			} else {
 				newNode.fingerTable[i+1].node, _ = n.lookup(newNode.fingerTable[i+1].startId)
+				log.Tracef("%s: In join, set finger %s to %s", transport.Address, newNode.fingerTable[i+1].startId, newNode.fingerTable[i+1].node.id())
 			}
 		}
 	}
 }
 
+func (n *localNode) startFixFingers() {
+	for {
+		select {
+		case <-time.After(time.Second * 10):
+			n.fixFingers()
+		case <-theLocalNode.fixFingersChan:
+			n.fixFingers()
+		}
+	}
+}
+
+// an optimized fixFingers could be called from updateSuccessor and updatePredecessor.
+// In those functions you get a candidate. Use the candidates id
+// to determine for each finger if it should be updated to the candidate or not.
+// fixFingers without any remote lookup requests.
+// se old updateFingerTable.
+
 // Called periodically to update fingers
 func (n *localNode) fixFingers() {
+
 	//log.Tracef("%s: Running fixFingers", transport.Address)
 
 	succ, _ := n.lookup(n.fingerTable[1].startId)
-	n.updateSuccessor(succ)
+	if succ.id() != n.successor().id() {
+		n.updateSuccessor(succ)
+	}
 
 	for i := 1; i < m; i++ {
-		oldFingerId := n.fingerTable[i+1].node.id()
 
 		if between(
 			hexStringToByteArr(n.id()),
@@ -208,51 +231,17 @@ func (n *localNode) fixFingers() {
 		) {
 			// startId between n and previous finger.node
 			n.fingerTable[i+1].node = n.fingerTable[i].node
-
 		} else {
 			n.fingerTable[i+1].node, _ = n.lookup(n.fingerTable[i+1].startId)
-		}
-
-		if oldFingerId != n.fingerTable[i+1].node.id() {
-			log.Tracef("%s: In fixFingers: Updated finger %s to: %s", transport.Address, n.fingerTable[i+1].startId, n.fingerTable[i+1].node.id())
-		}
-	}
-	time.Sleep(time.Second * 5)
-	defer n.fixFingers()
-}
-
-// Traverse the ring counter-clockwise to update all nodes whose finger table entries could/should refer to n
-/*func (n *localNode) updateOthers() {
-	for i := 1; i <= m; i++ {
-		// Find last preceeding node p whose i:th finger might be n
-		nId := big.Int{}
-		nId.SetString(n.id(), base)
-
-		y := big.Int{}
-		two := big.NewInt(2)
-		mbig := big.NewInt(m)
-
-		y.Exp(two, big.NewInt(int64(i-1)), nil)
-		y.Sub(&nId, &y)
-
-		two.Exp(two, mbig, nil)
-		y.Mod(&y, two)
-		// y = nId - 2^(i-1)
-
-		yBytes := y.Bytes()
-		yHex := fmt.Sprintf("%x", yBytes)
-
-		p := n.lookup(yHex)
-
-		if p.id() != yHex {
-			p = p.predecessor()
-		}
-		if p.id() != n.id() {
-			p.updateFingerTable(n, i)
+			if transport.Address == "localhost:2000" {
+				log.Tracef("%s: In fixFingers: Lookuped and updated finger %s to: %s", transport.Address, n.fingerTable[i+1].startId, n.fingerTable[i+1].node.id())
+			}
 		}
 	}
+
 }
 
+/*
 // If s should be the i:th finger of n -> update n's finger table entry nr i with s
 func (n *localNode) updateFingerTable(s *localNode, i int) {
 	// n´s finger.node points to n itself
