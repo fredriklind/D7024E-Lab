@@ -3,10 +3,15 @@ package dht
 import (
 	"bytes"
 	"crypto/sha1"
+	"encoding/hex"
 	"fmt"
-	"github.com/nu7hatch/gouuid"
 	"math/big"
+
+	log "github.com/cihub/seelog"
+	"github.com/nu7hatch/gouuid"
 )
+
+const base = 16
 
 func distance(a, b []byte, bits int) *big.Int {
 	var ring big.Int
@@ -47,46 +52,46 @@ func between(id1, id2, key []byte) bool {
 
 // (n + 2^(k-1)) mod (2^m)
 func calcFinger(n []byte, k int, m int) (string, []byte) {
-//	fmt.Println("calulcating result = (n+2^(k-1)) mod (2^m)")
+	//	fmt.Println("calulcating result = (n+2^(k-1)) mod (2^m)")
 
 	// convert the n to a bigint
 	nBigInt := big.Int{}
 	nBigInt.SetBytes(n)
 
-//	fmt.Printf("n            %s\n", nBigInt.String())
+	//	fmt.Printf("n            %s\n", nBigInt.String())
 
-//	fmt.Printf("k            %d\n", k)
+	//	fmt.Printf("k            %d\n", k)
 
-//	fmt.Printf("m            %d\n", m)
+	//	fmt.Printf("m            %d\n", m)
 
 	// get the right addend, i.e. 2^(k-1)
 	two := big.NewInt(2)
 	addend := big.Int{}
 	addend.Exp(two, big.NewInt(int64(k-1)), nil)
 
-//	fmt.Printf("2^(k-1)      %s\n", addend.String())
+	//	fmt.Printf("2^(k-1)      %s\n", addend.String())
 
 	// calculate sum
 	sum := big.Int{}
 	sum.Add(&nBigInt, &addend)
 
-//	fmt.Printf("(n+2^(k-1))  %s\n", sum.String())
+	//	fmt.Printf("(n+2^(k-1))  %s\n", sum.String())
 
 	// calculate 2^m
 	ceil := big.Int{}
 	ceil.Exp(two, big.NewInt(int64(m)), nil)
 
-//	fmt.Printf("2^m          %s\n", ceil.String())
+	//	fmt.Printf("2^m          %s\n", ceil.String())
 
 	// apply the mod
 	result := big.Int{}
 	result.Mod(&sum, &ceil)
 
-//	fmt.Printf("finger       %s\n", result.String())
+	//	fmt.Printf("finger       %s\n", result.String())
 
 	resultBytes := result.Bytes()
 	resultHex := fmt.Sprintf("%x", resultBytes)
-	
+
 	return resultHex, resultBytes
 }
 
@@ -105,4 +110,66 @@ func sha1hash(str string) string {
 	hasher.Write([]byte(str))
 
 	return fmt.Sprintf("%x", hasher.Sum(nil))
+}
+
+func nextId(id string) string {
+
+	nId := big.Int{}
+	nId.SetString(id, base)
+
+	y := big.Int{}
+	two := big.NewInt(2)
+	one := big.NewInt(1)
+	mbig := big.NewInt(m)
+
+	y.Add(&nId, one)
+	// 2^m
+	two.Exp(two, mbig, nil)
+	y.Mod(&y, two)
+
+	yBytes := y.Bytes()
+	yHex := fmt.Sprintf("%x", yBytes)
+	return yHex
+}
+
+func prevId(id string) string {
+
+	nId := big.Int{}
+	nId.SetString(id, base)
+
+	y := big.Int{}
+	two := big.NewInt(2)
+	one := big.NewInt(1)
+	mbig := big.NewInt(m)
+
+	y.Sub(&nId, one)
+	// 2^m
+	two.Exp(two, mbig, nil)
+	y.Mod(&y, two)
+
+	yBytes := y.Bytes()
+	yHex := fmt.Sprintf("%x", yBytes)
+	return yHex
+}
+
+func hexStringToByteArr(hexId string) []byte {
+	var hexbytes []byte
+	hexbytes, _ = hex.DecodeString(hexId)
+	return hexbytes
+}
+
+// Initializer for the dht package, sets up the logger
+func init() {
+	testConfig := `
+		<seelog type="sync">
+			<outputs>
+				<file formatid="onlytime" path="logfile.log"/>
+			</outputs>
+			<formats>
+				<format id="onlytime" format="%Time [%LEVEL] %Msg%n"/>
+			</formats>
+		</seelog>
+	`
+	logger, _ := log.LoggerFromConfigAsBytes([]byte(testConfig))
+	log.ReplaceLogger(logger)
 }
