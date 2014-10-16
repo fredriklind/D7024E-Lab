@@ -181,13 +181,12 @@ func TestLocalDbBackup(t *testing.T) {
 	theLocalNode.backupLocalDB()
 
 
-func TestJoin2(t *testing.T) {
-	id := "02"
-	newLocalNode(&id, "localhost", "2000")
+// Run TestJoin3, TestJoin0 and TestJoin2 in that order from three separate tabs in terminal. (To test obj2).
+func TestJoin3(t *testing.T) {
+	id := "03"
+	newLocalNode(&id, "localhost", "3000")
 
-	node3 := &remoteNode{_id: "03", _address: "localhost:3000"}
-
-	theLocalNode.join(node3)
+	theLocalNode.join(nil)
 
 	block := make(chan bool)
 	<-block
@@ -204,11 +203,13 @@ func TestJoin0(t *testing.T) {
 	<-block
 }
 
-func TestJoin3(t *testing.T) {
-	id := "03"
-	newLocalNode(&id, "localhost", "3000")
+func TestJoin2(t *testing.T) {
+	id := "02"
+	newLocalNode(&id, "localhost", "2000")
 
-	theLocalNode.join(nil)
+	node3 := &remoteNode{_id: "03", _address: "localhost:3000"}
+
+	theLocalNode.join(node3)
 
 	block := make(chan bool)
 	<-block

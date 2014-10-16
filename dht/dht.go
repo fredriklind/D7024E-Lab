@@ -14,7 +14,7 @@ var transport *transporter
 var db *bolt.DB
 
 // This must be used when the type of node is not known.
-// For example when a method can return either a local or remote node
+// For example when a method can return either a local or remote node.
 type node interface {
 	// Getters
 	id() string
@@ -27,10 +27,10 @@ type node interface {
 }
 
 type localNode struct {
-	_id         string
-	pred        node
-	fingerTable [m + 1]finger
-	isListening chan bool
+	_id            string
+	pred           node
+	fingerTable    [m + 1]finger
+	fixFingersChan chan bool
 }
 
 type remoteNode struct {
