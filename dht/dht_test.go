@@ -105,7 +105,7 @@ func TestNode6(t *testing.T) {
 	<-block
 }
 
-// Run TestJoin3, TestJoin0 and TestJoin2 in that order from three separate tabs in terminal. (To test obj2)
+// Run TestJoin3, TestJoin0 and TestJoin2 in that order from three separate tabs in terminal. (To test obj2).
 
 func TestJoin3(t *testing.T) {
 	id := "03"
