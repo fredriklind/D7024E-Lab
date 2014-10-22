@@ -163,10 +163,13 @@ func (newNode *localNode) initFingers(n *remoteNode) {
 		oneNodeRing = true
 	}
 
-	// Update the predecessor of the node that newNode is inserted before  	  	<---------- should be sync?
+	// backup predecessors db and takeover part of successors db
+	newNode.startReplication()
+
+	// Update the predecessor of the node that newNode is inserted before  	  	<---------- should be made sync!
 	newNode.successor().updatePredecessor(newNode)
 
-	// Set successor of newNode´s predecessor to newNode  						<----------- should be sync
+	// Set successor of newNode´s predecessor to newNode  						<----------- should be made sync!
 	newNode.predecessor().updateSuccessor(newNode)
 
 	for i := 1; i < m; i++ {

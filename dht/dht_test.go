@@ -2,11 +2,9 @@ package dht
 
 import (
 	"fmt"
-	log "github.com/cihub/seelog"
-	"testing"
-
 	"github.com/boltdb/bolt"
 	log "github.com/cihub/seelog"
+	"testing"
 )
 
 func TestReceive(t *testing.T) {
@@ -179,7 +177,7 @@ func TestLocalDbBackup(t *testing.T) {
 	id := "01"
 	newLocalNode(&id, "localhost", "3000")
 	theLocalNode.backupLocalDB()
-
+}
 
 // Run TestJoin3, TestJoin0 and TestJoin2 in that order from three separate tabs in terminal. (To test obj2).
 func TestJoin3(t *testing.T) {
@@ -213,6 +211,10 @@ func TestJoin2(t *testing.T) {
 
 	block := make(chan bool)
 	<-block
+}
+
+func TestBuild(t *testing.T) {
+	// just test if the program compiles
 }
 
 /*
