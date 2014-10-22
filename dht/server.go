@@ -60,28 +60,39 @@ func (serv fileAPI) GetAll() string {
 func (serv fileAPI) GetPair(key string) string {
 	serv.setPerms()
 
-	if key == "" {
-		// 400 Bad request
-		serv.ResponseBuilder().SetResponseCode(400).Overide(true)
-		return ""
-	}
+	responsibleNode, _ := theLocalNode.lookup(key)
 
-	var value []byte
+	// If I'm responsible
+	if responsibleNode.id() == theLocalNode.id() {
+		if key == "" {
+			// 400 Bad request
+			serv.ResponseBuilder().SetResponseCode(400).Overide(true)
+			return ""
+		}
 
-	// Start view transaction, get value
-	db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("main"))
-		value = b.Get([]byte(key))
-		return nil
-	})
+		var value []byte
 
-	if value != nil {
-		return string(value)
+		// Start view transaction, get value
+		db.View(func(tx *bolt.Tx) error {
+			b := tx.Bucket([]byte("main"))
+			value = b.Get([]byte(key))
+			return nil
+		})
+
+		if value != nil {
+			return string(value)
+		} else {
+			// 404 Not found
+			serv.ResponseBuilder().SetResponseCode(404).Overide(true)
+			return ""
+		}
+
+		// If someone else is responsible, sent request to that guy
 	} else {
-		// 404 Not found
-		serv.ResponseBuilder().SetResponseCode(404).Overide(true)
-		return ""
+		//restClient, _ := gorest.NewRequestBuilder("http://" + responsibleNode.address())
 	}
+
+	return ""
 }
 
 // POST /storage

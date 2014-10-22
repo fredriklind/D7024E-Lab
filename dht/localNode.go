@@ -10,7 +10,7 @@ import (
 // ----------------------------------------------------------------------------------------
 //										Initializer
 // ----------------------------------------------------------------------------------------
-func newLocalNode(idPointer *string, address string, port string) {
+func newLocalNode(idPointer *string, ip, port, apiPort, dbPort string) {
 	var id string
 
 	if idPointer == nil {
@@ -19,7 +19,7 @@ func newLocalNode(idPointer *string, address string, port string) {
 		id = *idPointer
 	}
 	theLocalNode = &localNode{_id: id}
-	transport = newTransporter(address + ":" + port)
+	transport = newTransporter(ip, port, apiPort, dbPort)
 	theLocalNode.initPrimaryDB()
 }
 
@@ -28,6 +28,22 @@ func newLocalNode(idPointer *string, address string, port string) {
 // ----------------------------------------------------------------------------------------
 func (n *localNode) id() string {
 	return n._id
+}
+
+func (n *localNode) ip() string {
+	return transport.Ip
+}
+
+func (n *localNode) port() string {
+	return transport.Port
+}
+
+func (n *localNode) apiPort() string {
+	return transport.ApiPort
+}
+
+func (n *localNode) dbPort() string {
+	return transport.DbPort
 }
 
 func (n *localNode) predecessor() node {
@@ -39,15 +55,23 @@ func (n *localNode) successor() node {
 }
 
 func (n *localNode) address() string {
-	return transport.Address
+	return transport.Ip + ":" + transport.Port
+}
+
+func (n *localNode) apiAddress() string {
+	return transport.Ip + ":" + transport.ApiPort
+}
+
+func (n *localNode) dbAddress() string {
+	return transport.Ip + ":" + transport.DbPort
 }
 
 func (n *localNode) updatePredecessor(candidate node) {
 	if between(hexStringToByteArr(n.predecessor().id()), hexStringToByteArr(n.id()), hexStringToByteArr(candidate.id())) {
 		n.pred = candidate
-		log.Tracef("%s: Predecessor updated to: %s", transport.Address, candidate.id())
+		log.Tracef("%s: Predecessor updated to: %s", theLocalNode.address(), candidate.id())
 	} else {
-		log.Tracef("%s: Predecessor NOT updated to: %s", transport.Address, candidate.id())
+		log.Tracef("%s: Predecessor NOT updated to: %s", theLocalNode.address(), candidate.id())
 	}
 	theLocalNode.fixFingersChan <- true
 }
@@ -55,9 +79,9 @@ func (n *localNode) updatePredecessor(candidate node) {
 func (n *localNode) updateSuccessor(candidate node) {
 	if between(hexStringToByteArr(n.id()), hexStringToByteArr(n.successor().id()), hexStringToByteArr(candidate.id())) {
 		n.fingerTable[1].node = candidate
-		log.Tracef("%s: Successor updated to: %s", transport.Address, candidate.id())
+		log.Tracef("%s: Successor updated to: %s", theLocalNode.address(), candidate.id())
 	} else {
-		log.Tracef("%s: Successor NOT updated to: %s", transport.Address, candidate.id())
+		log.Tracef("%s: Successor NOT updated to: %s", theLocalNode.address(), candidate.id())
 	}
 	theLocalNode.fixFingersChan <- true
 }
@@ -153,11 +177,11 @@ func (newNode *localNode) initFingers(n *remoteNode) {
 
 	// Successor to newNode
 	newNode.fingerTable[1].node, _ = n.lookup(newNode.fingerTable[1].startId)
-	log.Tracef("%s: Set successor to: %s", transport.Address, newNode.successor().id())
+	log.Tracef("%s: Set successor to: %s", theLocalNode.address(), newNode.successor().id())
 
 	// Predecessor to newNode
 	newNode.pred = newNode.successor().predecessor()
-	log.Tracef("%s: Set predecessor to: %s", transport.Address, newNode.predecessor().id())
+	log.Tracef("%s: Set predecessor to: %s", theLocalNode.address(), newNode.predecessor().id())
 
 	if newNode.successor().id() == newNode.predecessor().id() { // n.predecessor().id() == n.id() {
 		oneNodeRing = true
@@ -189,7 +213,7 @@ func (newNode *localNode) initFingers(n *remoteNode) {
 
 			} else {
 				newNode.fingerTable[i+1].node, _ = n.lookup(newNode.fingerTable[i+1].startId)
-				log.Tracef("%s: In join, set finger %s to %s", transport.Address, newNode.fingerTable[i+1].startId, newNode.fingerTable[i+1].node.id())
+				log.Tracef("%s: In join, set finger %s to %s", theLocalNode.address(), newNode.fingerTable[i+1].startId, newNode.fingerTable[i+1].node.id())
 			}
 		}
 	}
@@ -215,7 +239,7 @@ func (n *localNode) startFixFingers() {
 // Called periodically to update fingers
 func (n *localNode) fixFingers() {
 
-	//log.Tracef("%s: Running fixFingers", transport.Address)
+	//log.Tracef("%s: Running fixFingers", theLocalNode.address())
 
 	succ, _ := n.lookup(n.fingerTable[1].startId)
 	if succ.id() != n.successor().id() {
@@ -233,8 +257,8 @@ func (n *localNode) fixFingers() {
 			n.fingerTable[i+1].node = n.fingerTable[i].node
 		} else {
 			n.fingerTable[i+1].node, _ = n.lookup(n.fingerTable[i+1].startId)
-			if transport.Address == "localhost:2000" {
-				log.Tracef("%s: In fixFingers: Lookuped and updated finger %s to: %s", transport.Address, n.fingerTable[i+1].startId, n.fingerTable[i+1].node.id())
+			if theLocalNode.address() == "localhost:2000" {
+				log.Tracef("%s: In fixFingers: Lookuped and updated finger %s to: %s", theLocalNode.address(), n.fingerTable[i+1].startId, n.fingerTable[i+1].node.id())
 			}
 		}
 	}

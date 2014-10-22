@@ -1,5 +1,9 @@
 package dht
 
+func newRemoteNode(id, ip, port, apiPort, dbPort string) *remoteNode {
+	return &remoteNode{_id: id, _ip: ip, _port: port, _apiPort: apiPort, _dbPort: dbPort}
+}
+
 // ----------------------------------------------------------------------------------------
 //										Getters + setters
 // ----------------------------------------------------------------------------------------
@@ -7,20 +11,44 @@ func (n *remoteNode) id() string {
 	return n._id
 }
 
+func (n *remoteNode) ip() string {
+	return n._ip
+}
+
+func (n *remoteNode) port() string {
+	return n._port
+}
+
+func (n *remoteNode) apiPort() string {
+	return n._apiPort
+}
+
+func (n *remoteNode) dbPort() string {
+	return n._dbPort
+}
+
 func (n *remoteNode) address() string {
-	return n._address
+	return n.ip() + ":" + n.port()
+}
+
+func (n *remoteNode) apiAddress() string {
+	return n.ip() + ":" + n.apiPort()
+}
+
+func (n *remoteNode) dbAddress() string {
+	return n.ip() + ":" + n.dbPort()
 }
 
 // TODO maybe return (node, error) here, to be able to handle errors better.
 func (n *remoteNode) predecessor() node {
-	dict, err := transport.sendPredecessorRequest(n.address())
+	pred, err := transport.sendPredecessorRequest(n.address())
 	if err != nil {
 		panic(err)
 	}
-	if dict["id"] == theLocalNode.id() {
+	if pred["id"] == theLocalNode.id() {
 		return theLocalNode
 	} else {
-		return &remoteNode{_id: dict["id"], _address: dict["address"]}
+		return newRemoteNode(pred["id"], pred["ip"], pred["port"], pred["apiPort"], pred["dbPort"])
 	}
 }
 
@@ -44,7 +72,7 @@ func (n *remoteNode) lookup(key string) (node, error) {
 	if dict["id"] == theLocalNode.id() {
 		return theLocalNode, nil
 	} else {
-		return &remoteNode{_id: dict["id"], _address: dict["address"]}, nil
+		return newRemoteNode(dict["id"], dict["ip"], dict["port"], dict["apiPort"], dict["dbPort"]), nil
 	}
 }
 

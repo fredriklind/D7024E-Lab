@@ -20,8 +20,8 @@ const timeoutSeconds = time.Second * 8
 var theLocalNode *localNode
 
 type transporter struct {
-	Address  string
-	requests map[string]chan msg
+	Ip, Port, ApiPort, DbPort string
+	requests                  map[string]chan msg
 }
 
 type msg struct {
@@ -58,9 +58,12 @@ type dictionary map[string]string
 
 // Instantiates a new transporter that listens on the provided ip and port.
 // This step is required to be able to use the transport package.
-func newTransporter(address string) *transporter {
+func newTransporter(ip, port, apiPort, dbPort string) *transporter {
 	t := &transporter{}
-	t.Address = address
+	t.Ip = ip
+	t.Port = port
+	t.ApiPort = apiPort
+	t.DbPort = dbPort
 	t.requests = make(map[string]chan msg)
 	go t.receive()
 	return t
@@ -81,7 +84,10 @@ func (t *transporter) sendPredecessorRequest(destAddr string) (dictionary, error
 
 	return dictionary{
 		"id":      response.Values["id"],
-		"address": response.Values["address"],
+		"ip":      response.Values["ip"],
+		"port":    response.Values["port"],
+		"apiPort": response.Values["apiPort"],
+		"dbPort":  response.Values["dbPort"],
 	}, nil
 }
 
@@ -96,13 +102,10 @@ func (t *transporter) sendPredecessorResponse(request msg) {
 
 	n := theLocalNode.predecessor()
 	m.Values["id"] = n.id() // "6899"
-
-	switch n.(type) {
-	case *remoteNode:
-		m.Values["address"] = n.address()
-	default:
-		m.Values["address"] = t.Address
-	}
+	m.Values["ip"] = n.ip()
+	m.Values["port"] = n.port()
+	m.Values["apiport"] = n.apiPort()
+	m.Values["dbport"] = n.dbPort()
 	t.send(m)
 }
 
@@ -122,7 +125,7 @@ func (_ *transporter) handleUpdatePredecessorCall(call msg) {
 	if call.Values["id"] == theLocalNode.id() {
 		theLocalNode.updatePredecessor(theLocalNode)
 	} else {
-		n := &remoteNode{_id: call.Values["id"], _address: call.Values["address"]}
+		n := newRemoteNode(call.Values["id"], call.Values["ip"], call.Values["port"], call.Values["apiPort"], call.Values["dbPort"])
 		theLocalNode.updatePredecessor(n)
 	}
 }
@@ -143,7 +146,7 @@ func (_ *transporter) handleUpdateSuccessorCall(call msg) {
 	if call.Values["id"] == theLocalNode.id() {
 		theLocalNode.updateSuccessor(theLocalNode)
 	} else {
-		n := &remoteNode{_id: call.Values["id"], _address: call.Values["address"]}
+		n := newRemoteNode(call.Values["id"], call.Values["ip"], call.Values["port"], call.Values["apiPort"], call.Values["dbPort"])
 		theLocalNode.updateSuccessor(n)
 	}
 }
@@ -161,7 +164,7 @@ func (t *transporter) sendLookupRequest(destAddr, key string) (dictionary, error
 	m.Values["key"] = key
 	m.Id = uuid.New()[0:4]
 	m.Values["original_msgid"] = m.Id
-	m.Values["original_src"] = t.Address
+	m.Values["original_src"] = theLocalNode.address()
 
 	response, err := t.send(m)
 
@@ -199,7 +202,7 @@ func (t *transporter) handleLookupRequest(request msg) {
 			Values: dictionary{},
 		}
 		mg.Values["id"] = theLocalNode.id()
-		mg.Values["address"] = t.Address
+		mg.Values["address"] = theLocalNode.address()
 		t.send(mg)
 	} else {
 
@@ -280,7 +283,7 @@ func (t *transporter) handleRequest(request msg) {
 func (t *transporter) handleResponse(response msg) {
 	switch response.Method {
 	case "ACK":
-		log.Tracef("%s HELLO request satisfied", t.Address)
+		log.Tracef("%s HELLO request satisfied", theLocalNode.address())
 	default:
 		log.Errorf("No request method specified!")
 	}
@@ -297,7 +300,7 @@ func (t *transporter) waitForLookupResponse(ackMsg msg) (msg, error) {
 
 	// Got LOOKUP_ACK, wait for
 
-	if ackMsg.Values["original_src"] == t.Address {
+	if ackMsg.Values["original_src"] == theLocalNode.address() {
 		select {
 		// wait for real response
 		case responseMsg := <-t.requests[ackMsg.Id]:
@@ -331,13 +334,13 @@ func (t *transporter) waitForResponse(msgId string, waitSeconds time.Duration) (
 		}
 
 	case <-time.After(time.Second * waitSeconds):
-		log.Errorf("%s: request with id %s timed out", t.Address, msgId)
+		log.Errorf("%s: request with id %s timed out", theLocalNode.address(), msgId)
 		return msg{}, errors.New("Timeout")
 	}
 }
 
 func (t *transporter) send(m msg) (msg, error) {
-	m.Src = t.Address
+	m.Src = theLocalNode.address()
 	// Start up network stuff
 	udpAddr, err := net.ResolveUDPAddr("udp", m.Dst)
 	conn, err := net.DialUDP("udp", nil, udpAddr)
@@ -355,15 +358,15 @@ func (t *transporter) send(m msg) (msg, error) {
 	//	log.Tracef("%s: Sent %s %s", n.id, m.Method, m.Type)
 	if m.Method == "LOOKUP" {
 		if m.Type == "Request" {
-			log.Tracef("%s: Sent %s %s: %s to %s key: %s origMsgId:%s origSrc:%s", t.Address, m.Method, m.Type, m.Id, m.Dst, m.Values["key"], m.Values["original_msgid"], m.Values["original_src"])
+			log.Tracef("%s: Sent %s %s: %s to %s key: %s origMsgId:%s origSrc:%s", theLocalNode.address(), m.Method, m.Type, m.Id, m.Dst, m.Values["key"], m.Values["original_msgid"], m.Values["original_src"])
 		} else if m.Type == "Response" {
-			log.Tracef("%s: Sent %s %s: %s to %s respNodeId:%s", t.Address, m.Method, m.Type, m.Id, m.Dst, m.Values["id"])
+			log.Tracef("%s: Sent %s %s: %s to %s respNodeId:%s", theLocalNode.address(), m.Method, m.Type, m.Id, m.Dst, m.Values["id"])
 		}
 	} else if m.Method == "LOOKUP_ACK" {
-		log.Tracef("%s: Sent %s %s: %s", t.Address, m.Method, m.Type, m.Id)
+		log.Tracef("%s: Sent %s %s: %s", theLocalNode.address(), m.Method, m.Type, m.Id)
 	} else {
-		fmt.Printf("%s: Sent %s %s: %+v\n", t.Address, m.Method, m.Type, m)
-		log.Tracef("%s: Sent %s %s: %s to %s", t.Address, m.Method, m.Type, m.Id, m.Dst)
+		fmt.Printf("%s: Sent %s %s: %+v\n", theLocalNode.address(), m.Method, m.Type, m)
+		log.Tracef("%s: Sent %s %s: %s to %s", theLocalNode.address(), m.Method, m.Type, m.Id, m.Dst)
 	}
 
 	time.Sleep(time.Second * 1)
@@ -373,7 +376,7 @@ func (t *transporter) send(m msg) (msg, error) {
 	_, err = conn.Write([]byte(jsonmsg))
 
 	if err != nil {
-		log.Errorf("%s: error in send: %s", t.Address, err.Error())
+		log.Errorf("%s: error in send: %s", theLocalNode.address(), err.Error())
 	}
 
 	// Blocks until something is received on the channel that is associated with m.Id
@@ -386,11 +389,11 @@ func (t *transporter) send(m msg) (msg, error) {
 
 func (t *transporter) receive() {
 	// Start receiveing
-	udpAddr, err := net.ResolveUDPAddr("udp", t.Address)
+	udpAddr, err := net.ResolveUDPAddr("udp", theLocalNode.address())
 	conn, err := net.ListenUDP("udp", udpAddr)
 
 	if err != nil {
-		log.Errorf("%s: Error in receive, %s", t.Address, err.Error())
+		log.Errorf("%s: Error in receive, %s", theLocalNode.address(), err.Error())
 		return
 	}
 
@@ -398,8 +401,8 @@ func (t *transporter) receive() {
 	m := msg{}
 
 	err = dec.Decode(&m)
-	fmt.Printf("%s: Got %s %s: %s\n", t.Address, m.Method, m.Type, m.Id)
-	log.Tracef("%s: Got %s %s: %s", t.Address, m.Method, m.Type, m.Id)
+	fmt.Printf("%s: Got %s %s: %s\n", theLocalNode.address(), m.Method, m.Type, m.Id)
+	log.Tracef("%s: Got %s %s: %s", theLocalNode.address(), m.Method, m.Type, m.Id)
 	conn.Close()
 	go t.receive()
 
