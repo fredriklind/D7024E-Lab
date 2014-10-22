@@ -2,6 +2,9 @@ package dht
 
 import (
 	"github.com/boltdb/bolt"
+
+	"fmt"
+	log "github.com/cihub/seelog"
 	"testing"
 )
 
@@ -80,6 +83,7 @@ func TestDB(t *testing.T) {
 }
 
 /*
+
 // Run TestJoin3, TestJoin0 and TestJoin2 in that order from three separate tabs in terminal. (To test obj2).
 func TestJoin3(t *testing.T) {
 	id := "03"
@@ -112,4 +116,10 @@ func TestJoin2(t *testing.T) {
 
 	block := make(chan bool)
 	<-block
-}*/
+}
+
+func TestBuild(t *testing.T) {
+	// just test if the program compiles
+}
+
+/*
