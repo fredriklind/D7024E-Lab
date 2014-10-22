@@ -11,6 +11,7 @@ import (
 const m = 3
 
 var transport *transporter
+
 var db *bolt.DB
 
 // This must be used when the type of node is not known.

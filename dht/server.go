@@ -1,14 +1,12 @@
-package main
+package dht
 
 import (
 	"net/http"
 	"time"
 
 	"code.google.com/p/gorest"
-	"github.com/cznic/kv"
+	"github.com/boltdb/bolt"
 )
-
-var db *kv.DB
 
 // For serving static files
 func startWebServer() {
@@ -17,19 +15,6 @@ func startWebServer() {
 }
 
 func startAPI() {
-	opt := &kv.Options{}
-	var err error
-
-	db, err = kv.Open("keyValueStore", opt)
-
-	if err != nil {
-		db, err = kv.Create("keyValueStore", opt)
-		if err != nil {
-			panic("Could not open or create DB")
-		}
-	}
-
-	db.Set([]byte("abc"), []byte("Testing"))
 	serv := new(fileAPI)
 	gorest.RegisterService(serv)
 	serv.RestService.ResponseBuilder()
@@ -81,7 +66,15 @@ func (serv fileAPI) GetPair(key string) string {
 		return ""
 	}
 
-	value, _ := db.Get(nil, []byte(key))
+	var value []byte
+
+	// Start view transaction, get value
+	db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("main"))
+		value = b.Get([]byte(key))
+		return nil
+	})
+
 	if value != nil {
 		return string(value)
 	} else {
@@ -101,15 +94,18 @@ func (serv fileAPI) SetPair(PostData KeyValuePair) {
 		return
 	}
 
+	didWrite := false
+	var err error
 	// Set the value, if the key does not already exist
-	_, didWrite, err := db.Put(nil, []byte(PostData.Key),
-		func(k, existingValue []byte) ([]byte, bool, error) {
-			if existingValue == nil {
-				return []byte(PostData.Value), true, nil
-			} else {
-				return nil, false, nil
-			}
-		})
+	db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("main"))
+		existingValue := b.Get([]byte(PostData.Key))
+		if existingValue == nil {
+			err := b.Put([]byte(PostData.Key), []byte(PostData.Value))
+			return err
+		}
+		return nil
+	})
 
 	if !didWrite {
 		// 403 Forbidden
@@ -132,15 +128,18 @@ func (serv fileAPI) UpdatePair(PostData string, key string) {
 		return
 	}
 
+	didWrite := false
+	var err error
 	// Set the value, only if the key already exist
-	_, didWrite, err := db.Put(nil, []byte(key),
-		func(k, existingValue []byte) ([]byte, bool, error) {
-			if existingValue == nil {
-				return nil, false, nil
-			} else {
-				return []byte(PostData), true, nil
-			}
-		})
+	db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("main"))
+		existingValue := b.Get([]byte(key))
+		if existingValue != nil {
+			err := b.Put([]byte(key), []byte(PostData))
+			return err
+		}
+		return nil
+	})
 
 	if !didWrite {
 		// 404 Not found
@@ -153,14 +152,29 @@ func (serv fileAPI) UpdatePair(PostData string, key string) {
 	}
 }
 
-// GET /storage/{key}
+// DELETE /storage/{key}
 func (serv fileAPI) DeletePair(key string) {
 	serv.setPerms()
-	value, err := db.Extract(nil, []byte(key))
+	var value []byte
+	var err error
+
+	// Check if value exists
+	db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("main"))
+		value = b.Get([]byte(key))
+		return nil
+	})
 
 	if value == nil {
 		// 404 Not found
 		serv.ResponseBuilder().SetResponseCode(404).Overide(true)
+	} else {
+		// Delete the value
+		db.Update(func(tx *bolt.Tx) error {
+			b := tx.Bucket([]byte("main"))
+			err = b.Delete([]byte(key))
+			return err
+		})
 	}
 
 	if err != nil {

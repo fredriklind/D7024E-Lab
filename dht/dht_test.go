@@ -1,8 +1,6 @@
 package dht
 
 import (
-	"fmt"
-	log "github.com/cihub/seelog"
 	"testing"
 
 	"github.com/boltdb/bolt"
@@ -110,17 +108,15 @@ func TestNode6(t *testing.T) {
 
 // 1. Sets up one primary db
 // 2. Saves a value to it
-// 3. Backs up the db
+// 3. Backs up the db to /replicas/primary.db
 // 4. Reads the saved value from the backup db
 func TestDB(t *testing.T) {
-	db, err := bolt.Open("db/primary.db", 0600, nil)
-	if err != nil {
-		t.Errorf("Error opening db", err)
-	}
+	id := "01"
+	newLocalNode(&id, "localhost", "6000")
 
 	// Start a read-write transaction
-	err = db.Update(func(tx *bolt.Tx) error {
-		b, err := tx.CreateBucket([]byte("bucket1"))
+	err := db.Update(func(tx *bolt.Tx) error {
+		b, err := tx.CreateBucketIfNotExists([]byte("main"))
 		err = b.Put([]byte("answer"), []byte("42"))
 		return err
 	})
@@ -133,7 +129,7 @@ func TestDB(t *testing.T) {
 
 	// Start a read transaction
 	err = db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("bucket1"))
+		b := tx.Bucket([]byte("main"))
 		value = string(b.Get([]byte("answer")))
 		return nil
 	})
@@ -146,10 +142,8 @@ func TestDB(t *testing.T) {
 		t.Errorf("Read wrong value from db. Expected 42, got %s", value)
 	}
 
-	err = db.View(func(tx *bolt.Tx) error {
-		err := tx.CopyFile("db/replicas/primary.db", 0600)
-		return err
-	})
+	// Backup the local DB
+	theLocalNode.backupLocalDB()
 
 	db2, err := bolt.Open("db/replicas/primary.db", 0600, nil)
 	if err != nil {
@@ -158,8 +152,10 @@ func TestDB(t *testing.T) {
 
 	// Start a read transaction
 	err = db2.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("bucket1"))
-		value = string(b.Get([]byte("answer")))
+		b := tx.Bucket([]byte("main"))
+		if b != nil {
+			value = string(b.Get([]byte("answer")))
+		}
 		return nil
 	})
 
@@ -170,16 +166,8 @@ func TestDB(t *testing.T) {
 	if value != "42" {
 		t.Errorf("Read wrong value from db2. Expected 42, got %s", value)
 	}
-
-	fmt.Println(db.GoString())
-	db.Close()
+	db2.Close()
 }
-
-func TestLocalDbBackup(t *testing.T) {
-	id := "01"
-	newLocalNode(&id, "localhost", "3000")
-	theLocalNode.backupLocalDB()
-
 
 // Run TestJoin3, TestJoin0 and TestJoin2 in that order from three separate tabs in terminal. (To test obj2).
 func TestJoin3(t *testing.T) {

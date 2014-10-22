@@ -34,6 +34,10 @@ func (n *localNode) initPrimaryDB() {
 	if err != nil {
 		log.Errorf("Could not open db: %s")
 	}
+	db.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucketIfNotExists([]byte("main"))
+		return err
+	})
 }
 
 func (n *localNode) serveDBs() {
@@ -51,4 +55,5 @@ func (n *localNode) backupLocalDB() error {
 func (n *localNode) backupPredecessorDB() error {
 	// Get db from predecessor
 	// Save it to db/replicas
+	return nil
 }
