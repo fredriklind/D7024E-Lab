@@ -1,10 +1,6 @@
 package dht
 
 import (
-	"bufio"
-	"fmt"
-	"os"
-
 	"github.com/boltdb/bolt"
 )
 
@@ -58,7 +54,7 @@ func main() {
 	go startWebServer()
 	go startAPI()
 
-	for true {
+	/*for true {
 		reader := bufio.NewReader(os.Stdin)
 		fmt.Print("Enter command: ")
 		cmd, _ := reader.ReadString('\n')
@@ -67,4 +63,5 @@ func main() {
 			break
 		}
 	}
+	*/
 }

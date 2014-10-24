@@ -53,11 +53,11 @@ func (n *remoteNode) predecessor() node {
 }
 
 func (n *remoteNode) updatePredecessor(candidate node) {
-	transport.sendUpdatePredecessorCall(n.address(), candidate.id(), candidate.address())
+	transport.sendUpdatePredecessorCall(n.address(), candidate)
 }
 
 func (n *remoteNode) updateSuccessor(candidate node) {
-	transport.sendUpdateSuccessorCall(n.address(), candidate.id(), candidate.address())
+	transport.sendUpdateSuccessorCall(n.address(), candidate)
 }
 
 // ----------------------------------------------------------------------------------------

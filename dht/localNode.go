@@ -20,7 +20,8 @@ func newLocalNode(idPointer *string, ip, port, apiPort, dbPort string) {
 	}
 	theLocalNode = &localNode{_id: id}
 	transport = newTransporter(ip, port, apiPort, dbPort)
-	theLocalNode.initPrimaryDB()
+	//theLocalNode.initPrimaryDB()
+	log.Tracef("Node %s started", theLocalNode.address())
 }
 
 // ----------------------------------------------------------------------------------------
@@ -262,7 +263,6 @@ func (n *localNode) fixFingers() {
 			}
 		}
 	}
-
 }
 
 /*

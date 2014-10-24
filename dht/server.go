@@ -2,6 +2,7 @@ package dht
 
 import (
 	"net/http"
+	"net/url"
 	"time"
 
 	"code.google.com/p/gorest"
@@ -10,7 +11,7 @@ import (
 
 // For serving static files
 func startWebServer() {
-	fs := http.FileServer(http.Dir("."))
+	fs := http.FileServer(http.Dir("./webserver"))
 	http.ListenAndServe(":8080", fs)
 }
 
@@ -58,39 +59,40 @@ func (serv fileAPI) GetAll() string {
 
 // GET /storage/{key}
 func (serv fileAPI) GetPair(key string) string {
+	key, _ = url.QueryUnescape(key)
 	serv.setPerms()
 
-	responsibleNode, _ := theLocalNode.lookup(key)
+	//responsibleNode, _ := theLocalNode.lookup(key)
 
 	// If I'm responsible
-	if responsibleNode.id() == theLocalNode.id() {
-		if key == "" {
-			// 400 Bad request
-			serv.ResponseBuilder().SetResponseCode(400).Overide(true)
-			return ""
-		}
-
-		var value []byte
-
-		// Start view transaction, get value
-		db.View(func(tx *bolt.Tx) error {
-			b := tx.Bucket([]byte("main"))
-			value = b.Get([]byte(key))
-			return nil
-		})
-
-		if value != nil {
-			return string(value)
-		} else {
-			// 404 Not found
-			serv.ResponseBuilder().SetResponseCode(404).Overide(true)
-			return ""
-		}
-
-		// If someone else is responsible, sent request to that guy
-	} else {
-		//restClient, _ := gorest.NewRequestBuilder("http://" + responsibleNode.address())
+	//if responsibleNode.id() == theLocalNode.id() {
+	if key == "" {
+		// 400 Bad request
+		serv.ResponseBuilder().SetResponseCode(400).Overide(true)
+		return ""
 	}
+
+	var value []byte
+
+	// Start view transaction, get value
+	db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("main"))
+		value = b.Get([]byte(key))
+		return nil
+	})
+
+	if value != nil {
+		return string(value)
+	} else {
+		// 404 Not found
+		serv.ResponseBuilder().SetResponseCode(404).Overide(true)
+		return ""
+	}
+
+	// If someone else is responsible, sent request to that guy
+	//} else {
+	//restClient, _ := gorest.NewRequestBuilder("http://" + responsibleNode.address())
+	//}
 
 	return ""
 }
@@ -113,14 +115,17 @@ func (serv fileAPI) SetPair(PostData KeyValuePair) {
 		existingValue := b.Get([]byte(PostData.Key))
 		if existingValue == nil {
 			err := b.Put([]byte(PostData.Key), []byte(PostData.Value))
+			if err == nil {
+				didWrite = true
+			}
 			return err
 		}
 		return nil
 	})
 
 	if !didWrite {
-		// 403 Forbidden
-		serv.ResponseBuilder().SetResponseCode(403).Overide(true)
+		// 409 Conflict
+		serv.ResponseBuilder().SetResponseCode(409).Overide(true)
 	}
 
 	if err != nil {
@@ -147,6 +152,9 @@ func (serv fileAPI) UpdatePair(PostData string, key string) {
 		existingValue := b.Get([]byte(key))
 		if existingValue != nil {
 			err := b.Put([]byte(key), []byte(PostData))
+			if err == nil {
+				didWrite = true
+			}
 			return err
 		}
 		return nil

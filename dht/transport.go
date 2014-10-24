@@ -109,15 +109,18 @@ func (t *transporter) sendPredecessorResponse(request msg) {
 	t.send(m)
 }
 
-func (t *transporter) sendUpdatePredecessorCall(destAddr, candidateId, candidateAddr string) {
+func (t *transporter) sendUpdatePredecessorCall(destAddr string, candidateNode node) {
 	m := msg{
 		Type:   "Request",
 		Method: "UPDATE_PREDECESSOR",
 		Dst:    destAddr,
 		Values: dictionary{},
 	}
-	m.Values["id"] = candidateId
-	m.Values["address"] = candidateAddr
+	m.Values["id"] = candidateNode.id()
+	m.Values["ip"] = candidateNode.ip()
+	m.Values["port"] = candidateNode.port()
+	m.Values["apiPort"] = candidateNode.apiPort()
+	m.Values["dbPort"] = candidateNode.dbPort()
 	t.send(m)
 }
 
@@ -130,15 +133,18 @@ func (_ *transporter) handleUpdatePredecessorCall(call msg) {
 	}
 }
 
-func (t *transporter) sendUpdateSuccessorCall(destAddr, candidateId, candidateAddr string) {
+func (t *transporter) sendUpdateSuccessorCall(destAddr string, candidateNode node) {
 	m := msg{
 		Type:   "Request",
 		Method: "UPDATE_SUCCESSOR",
 		Dst:    destAddr,
 		Values: dictionary{},
 	}
-	m.Values["id"] = candidateId
-	m.Values["address"] = candidateAddr
+	m.Values["id"] = candidateNode.id()
+	m.Values["ip"] = candidateNode.ip()
+	m.Values["port"] = candidateNode.port()
+	m.Values["apiPort"] = candidateNode.apiPort()
+	m.Values["dbPort"] = candidateNode.dbPort()
 	t.send(m)
 }
 
@@ -174,7 +180,10 @@ func (t *transporter) sendLookupRequest(destAddr, key string) (dictionary, error
 
 	return dictionary{
 		"id":      response.Values["id"],
-		"address": response.Values["address"],
+		"ip":      response.Values["ip"],
+		"port":    response.Values["port"],
+		"apiPort": response.Values["apiPort"],
+		"dbPort":  response.Values["dbPort"],
 	}, nil
 }
 
@@ -202,7 +211,10 @@ func (t *transporter) handleLookupRequest(request msg) {
 			Values: dictionary{},
 		}
 		mg.Values["id"] = theLocalNode.id()
-		mg.Values["address"] = theLocalNode.address()
+		mg.Values["ip"] = theLocalNode.ip()
+		mg.Values["port"] = theLocalNode.port()
+		mg.Values["apiPort"] = theLocalNode.apiPort()
+		mg.Values["dbPort"] = theLocalNode.dbPort()
 		t.send(mg)
 	} else {
 

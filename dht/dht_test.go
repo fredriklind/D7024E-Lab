@@ -79,7 +79,14 @@ func TestDB(t *testing.T) {
 	db2.Close()
 }
 
-/*
+func TestMain(t *testing.T) {
+	id := "01"
+	newLocalNode(&id, "localhost", "3000", "", "")
+	main()
+	block := make(chan bool)
+	<-block
+}
+
 // Run TestJoin3, TestJoin0 and TestJoin2 in that order from three separate tabs in terminal. (To test obj2).
 func TestJoin3(t *testing.T) {
 	id := "03"
@@ -95,7 +102,7 @@ func TestJoin0(t *testing.T) {
 	id := "00"
 	newLocalNode(&id, "localhost", "9000", "", "")
 
-	node3 := &remoteNode{_id: "03", _address: "localhost:3000"}
+	node3 := newRemoteNode("03", "localhost", "3000", "", "")
 
 	theLocalNode.join(node3)
 	block := make(chan bool)
@@ -106,10 +113,10 @@ func TestJoin2(t *testing.T) {
 	id := "02"
 	newLocalNode(&id, "localhost", "2000", "", "")
 
-	node3 := &remoteNode{_id: "03", _address: "localhost:3000"}
+	node3 := newRemoteNode("03", "localhost", "3000", "", "")
 
 	theLocalNode.join(node3)
 
 	block := make(chan bool)
 	<-block
-}*/
+}
