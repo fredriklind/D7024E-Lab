@@ -20,8 +20,7 @@ func newLocalNode(idPointer *string, ip, port, apiPort, dbPort string) {
 	}
 	theLocalNode = &localNode{_id: id}
 	transport = newTransporter(ip, port, apiPort, dbPort)
-	//theLocalNode.initPrimaryDB()
-	log.Tracef("Node %s started", theLocalNode.address())
+	theLocalNode.initPrimaryAndReplicaDB(theLocalNode.id())
 }
 
 // ----------------------------------------------------------------------------------------
@@ -188,11 +187,17 @@ func (newNode *localNode) initFingers(n *remoteNode) {
 		oneNodeRing = true
 	}
 
-	// Update the predecessor of the node that newNode is inserted before  	  	<---------- should be sync?
+	// backup predecessors db and takeover correct part of successors db
+	newNode.startReplication()
+
+	// Set successor of newNode´s predecessor to newNode  						<----------- should be made sync!
+	newNode.predecessor().updateSuccessor(newNode)
+
+	// Update the predecessor of the node that newNode is inserted before  	  	<---------- should be made sync!
 	newNode.successor().updatePredecessor(newNode)
 
-	// Set successor of newNode´s predecessor to newNode  						<----------- should be sync
-	newNode.predecessor().updateSuccessor(newNode)
+	// request successor node to split its primary and replace its previous replica with part from its primary
+	newNode.requestSplit(newNode.successor())
 
 	for i := 1; i < m; i++ {
 
@@ -259,7 +264,7 @@ func (n *localNode) fixFingers() {
 		} else {
 			n.fingerTable[i+1].node, _ = n.lookup(n.fingerTable[i+1].startId)
 			if theLocalNode.address() == "localhost:2000" {
-				log.Tracef("%s: In fixFingers: Lookuped and updated finger %s to: %s", theLocalNode.address(), n.fingerTable[i+1].startId, n.fingerTable[i+1].node.id())
+				//				log.Tracef("%s: In fixFingers: Lookuped and updated finger %s to: %s", theLocalNode.address(), n.fingerTable[i+1].startId, n.fingerTable[i+1].node.id())
 			}
 		}
 	}

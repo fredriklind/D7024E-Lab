@@ -354,7 +354,11 @@ func (t *transporter) waitForResponse(msgId string, waitSeconds time.Duration) (
 func (t *transporter) send(m msg) (msg, error) {
 	m.Src = theLocalNode.address()
 	// Start up network stuff
+	log.Tracef("%s: m.Dest: %s", theLocalNode.id(), m.Dst)
 	udpAddr, err := net.ResolveUDPAddr("udp", m.Dst)
+	if err != nil {
+		log.Tracef("%s: %s", theLocalNode.id(), err)
+	}
 	conn, err := net.DialUDP("udp", nil, udpAddr)
 	defer conn.Close()
 
