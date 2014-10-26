@@ -3,7 +3,7 @@ package dht
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
+	//"fmt"
 	"net"
 	"time"
 
@@ -81,8 +81,6 @@ func (t *transporter) sendPredecessorRequest(destAddr string) (dictionary, error
 	if err != nil {
 		return dictionary{}, err
 	}
-
-	log.Tracef("After send: %s", response.Values["dbPort"])
 
 	return dictionary{
 		"id":      response.Values["id"],
@@ -356,7 +354,6 @@ func (t *transporter) waitForResponse(msgId string, waitSeconds time.Duration) (
 func (t *transporter) send(m msg) (msg, error) {
 	m.Src = theLocalNode.address()
 	// Start up network stuff
-	log.Tracef("%s: m.Dest: %s", theLocalNode.id(), m.Dst)
 	udpAddr, err := net.ResolveUDPAddr("udp", m.Dst)
 	if err != nil {
 		log.Tracef("%s: %s", theLocalNode.id(), err)
@@ -373,19 +370,21 @@ func (t *transporter) send(m msg) (msg, error) {
 		m.Id = uuid.New()[0:4]
 	}
 
-	//	log.Tracef("%s: Sent %s %s", n.id, m.Method, m.Type)
-	if m.Method == "LOOKUP" {
-		if m.Type == "Request" {
-			log.Tracef("%s: Sent %s %s: %s to %s key: %s origMsgId:%s origSrc:%s", theLocalNode.address(), m.Method, m.Type, m.Id, m.Dst, m.Values["key"], m.Values["original_msgid"], m.Values["original_src"])
-		} else if m.Type == "Response" {
-			log.Tracef("%s: Sent %s %s: %s to %s respNodeId:%s", theLocalNode.address(), m.Method, m.Type, m.Id, m.Dst, m.Values["id"])
+	log.Tracef("%s: Sent %s %s", theLocalNode.id(), m.Method, m.Type)
+	/*
+		if m.Method == "LOOKUP" {
+			if m.Type == "Request" {
+				log.Tracef("%s: Sent %s %s: %s to %s key: %s origMsgId:%s origSrc:%s", theLocalNode.address(), m.Method, m.Type, m.Id, m.Dst, m.Values["key"], m.Values["original_msgid"], m.Values["original_src"])
+			} else if m.Type == "Response" {
+				log.Tracef("%s: Sent %s %s: %s to %s respNodeId:%s", theLocalNode.address(), m.Method, m.Type, m.Id, m.Dst, m.Values["id"])
+			}
+		} else if m.Method == "LOOKUP_ACK" {
+			log.Tracef("%s: Sent %s %s: %s", theLocalNode.address(), m.Method, m.Type, m.Id)
+		} else {
+			fmt.Printf("%s: Sent %s %s: %+v\n", theLocalNode.address(), m.Method, m.Type, m)
+			log.Tracef("%s: Sent %s %s: %s to %s", theLocalNode.address(), m.Method, m.Type, m.Id, m.Dst)
 		}
-	} else if m.Method == "LOOKUP_ACK" {
-		log.Tracef("%s: Sent %s %s: %s", theLocalNode.address(), m.Method, m.Type, m.Id)
-	} else {
-		fmt.Printf("%s: Sent %s %s: %+v\n", theLocalNode.address(), m.Method, m.Type, m)
-		log.Tracef("%s: Sent %s %s: %s to %s", theLocalNode.address(), m.Method, m.Type, m.Id, m.Dst)
-	}
+	*/
 
 	time.Sleep(time.Second * 1)
 
@@ -419,8 +418,11 @@ func (t *transporter) receive() {
 	m := msg{}
 
 	err = dec.Decode(&m)
-	fmt.Printf("%s: Got %s %s: %s\n", theLocalNode.address(), m.Method, m.Type, m.Id)
-	log.Tracef("%s: Got %s %s: %s %+v", theLocalNode.address(), m.Method, m.Type, m.Id, m)
+
+	log.Tracef("%s: Got %s %s", theLocalNode.id(), m.Method, m.Type)
+	//fmt.Printf("%s: Got %s %s: %s\n", theLocalNode.address(), m.Method, m.Type, m.Id)
+	//log.Tracef("%s: Got %s %s: %s", theLocalNode.address(), m.Method, m.Type, m.Id) // add &+v and m for more information of message received
+
 	conn.Close()
 	go t.receive()
 

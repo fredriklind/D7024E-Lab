@@ -4,14 +4,15 @@ import (
 	"github.com/boltdb/bolt"
 	log "github.com/cihub/seelog"
 	//	"time"
-	//	"fmt"
+	"fmt"
 	//"html"
-	"errors"
+	//"errors"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 )
 
 var primaryDB *bolt.DB
@@ -94,6 +95,7 @@ func getDbHandleFunc(w http.ResponseWriter, req *http.Request) {
 
 func splitDBHandleFunc(w http.ResponseWriter, req *http.Request) {
 
+	log.Tracef("%s: in splitDBHandleFunc", theLocalNode.id())
 	// drop previous replica and copy primary to replica
 	err := copyFileContents("db/primary"+theLocalNode.id()+".db", "db/replicas/primary"+theLocalNode.id()+".db")
 	if err != nil {
@@ -106,7 +108,7 @@ func splitDBHandleFunc(w http.ResponseWriter, req *http.Request) {
 	// run splitreplica
 	theLocalNode.splitReplicaDB()
 
-	io.WriteString(w, "split-dbs OK\n")
+	io.WriteString(w, "split-dbs OK")
 }
 
 func (n *localNode) startReplication() {
@@ -124,8 +126,6 @@ func (n *localNode) startReplication() {
 
 // get DB from remote node n2
 func (n *localNode) getDB(n2 node, setDbAs int) {
-
-	log.Trace(n2.dbAddress())
 
 	// Get db from remote node
 	resp, err := http.Get("http://" + n2.dbAddress() + "/db")
@@ -165,16 +165,14 @@ func (n *localNode) requestSplit(n2 node) {
 		}*/
 	resp, err2 := http.Get("http://" + n2.dbAddress() + "/split-dbs")
 	if err2 != nil {
-		log.Error(err2)
+		log.Errorf("%s: %s", n.id(), err2)
 	}
 	defer resp.Body.Close()
 	body, err3 := ioutil.ReadAll(resp.Body)
 	if err3 != nil {
 		log.Error(err3)
-		os.Exit(1)
 	}
-
-	log.Tracef("%s: in requestSplit, response-body: %s", n.id(), body)
+	log.Tracef("%s: %s", n.id(), body)
 }
 
 func (n *localNode) splitPrimaryDB() {
@@ -205,6 +203,11 @@ func (n *localNode) splitPrimaryDB() {
 }
 
 func (n *localNode) splitReplicaDB() {
+	for i := 0; i < 10000; i++ {
+		if i == 10000 {
+			fmt.Println(n.id())
+		}
+	}
 
 	err := replicaDB.Update(func(tx *bolt.Tx) error {
 
@@ -271,7 +274,7 @@ func copyFileContents(src, dst string) (err error) {
 }
 
 func (n *localNode) storeValue(key, value []byte) error {
-	err := replicaDB.Update(func(tx *bolt.Tx) error {
+	err := primaryDB.Update(func(tx *bolt.Tx) error {
 
 		b := tx.Bucket(mainBucket)
 		err := b.Put(key, value)
@@ -280,12 +283,23 @@ func (n *localNode) storeValue(key, value []byte) error {
 	return err
 }
 
+func (n *localNode) printDBsPeriodic() {
+	for {
+		log.Tracef("%s: primaryDB:", n.id())
+		n.printMainBucket(primaryDB)
+		log.Tracef("%s: replicaDB:", n.id())
+		n.printMainBucket(replicaDB)
+		time.Sleep(time.Second * 10)
+	}
+}
+
 func (n *localNode) printMainBucket(db *bolt.DB) error {
 
-	if db == nil {
-		return errors.New("db not opened")
+	if db == primaryDB {
+		log.Tracef("%s: primaryDB:", n.id())
+	} else if db == replicaDB {
+		log.Tracef("%s: replicaDB:", n.id())
 	}
-
 	err := db.View(func(tx *bolt.Tx) error {
 
 		b := tx.Bucket(mainBucket)

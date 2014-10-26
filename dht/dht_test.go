@@ -7,6 +7,47 @@ import (
 	"testing"
 )
 
+// this test fails every other time, in splitReplica: -> panic: assertion failed: page 2 already freed [recovered]
+// something wrong in bolt, found some one that had related problem but that was said to be fixed?
+func TestJoinSplitRequest(t *testing.T) {
+
+	id := "04"
+	newLocalNode(&id, "localhost", "", "", "4444")
+	n := theLocalNode
+	node2 := newRemoteNode("02", "localhost", "", "", "")
+
+	theLocalNode.storeValue([]byte("01"), []byte("02"))
+	theLocalNode.storeValue([]byte("02"), []byte("02"))
+	theLocalNode.storeValue([]byte("03"), []byte("04"))
+	theLocalNode.storeValue([]byte("04"), []byte("04"))
+	theLocalNode.storeValue([]byte("05"), []byte("02"))
+	n.pred = node2
+
+	n.printMainBucket(primaryDB)
+	n.printMainBucket(replicaDB)
+
+	err := copyFileContents("db/primary"+n.id()+".db", "db/replicas/primary"+n.id()+".db")
+	if err != nil {
+		log.Trace(err)
+	}
+
+	log.Trace("Copied primary to replica")
+
+	// run splitprimary
+	theLocalNode.splitPrimaryDB()
+
+	log.Trace("After splitPrimary:")
+	n.printMainBucket(primaryDB)
+	n.printMainBucket(replicaDB)
+
+	// run splitreplica
+	theLocalNode.splitReplicaDB()
+
+	log.Trace("After splitReplica:")
+	n.printMainBucket(primaryDB)
+	n.printMainBucket(replicaDB)
+}
+
 // Run TestJoin2_all, TestJoin4_all and TestJoin7_akk in that order from three separate tabs in terminal. (Obj 3)
 func TestJoin2_all(t *testing.T) {
 	id := "02"
@@ -15,6 +56,8 @@ func TestJoin2_all(t *testing.T) {
 	theLocalNode.storeValue([]byte("2222"), []byte("8"))
 
 	theLocalNode.join(nil)
+
+	//theLocalNode.printDBsPeriodic()
 
 	block := make(chan bool)
 	<-block
@@ -27,10 +70,10 @@ func TestJoin4_all(t *testing.T) {
 	theLocalNode.storeValue([]byte("4444"), []byte("16"))
 
 	node2 := newRemoteNode("02", "localhost", "2000", "", "2222")
-	//log.Trace(node2.dbPort())
 
 	theLocalNode.join(node2)
-	log.Trace(node2.dbAddress())
+
+	//theLocalNode.printDBsPeriodic()
 
 	block := make(chan bool)
 	<-block
@@ -45,6 +88,8 @@ func TestJoin7_all(t *testing.T) {
 	node2 := newRemoteNode("02", "localhost", "2000", "", "2222")
 
 	theLocalNode.join(node2)
+
+	theLocalNode.printDBsPeriodic()
 
 	block := make(chan bool)
 	<-block

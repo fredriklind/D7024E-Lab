@@ -69,9 +69,9 @@ func (n *localNode) dbAddress() string {
 func (n *localNode) updatePredecessor(candidate node) {
 	if between(hexStringToByteArr(n.predecessor().id()), hexStringToByteArr(n.id()), hexStringToByteArr(candidate.id())) {
 		n.pred = candidate
-		log.Tracef("%s: Predecessor updated to: %s", theLocalNode.address(), candidate.id())
+		log.Tracef("%s: Predecessor updated to: %s", theLocalNode.id(), candidate.id())
 	} else {
-		log.Tracef("%s: Predecessor NOT updated to: %s", theLocalNode.address(), candidate.id())
+		log.Tracef("%s: Predecessor NOT updated to: %s", theLocalNode.id(), candidate.id())
 	}
 	theLocalNode.fixFingersChan <- true
 }
@@ -79,9 +79,9 @@ func (n *localNode) updatePredecessor(candidate node) {
 func (n *localNode) updateSuccessor(candidate node) {
 	if between(hexStringToByteArr(n.id()), hexStringToByteArr(n.successor().id()), hexStringToByteArr(candidate.id())) {
 		n.fingerTable[1].node = candidate
-		log.Tracef("%s: Successor updated to: %s", theLocalNode.address(), candidate.id())
+		log.Tracef("%s: Successor updated to: %s", theLocalNode.id(), candidate.id())
 	} else {
-		log.Tracef("%s: Successor NOT updated to: %s", theLocalNode.address(), candidate.id())
+		log.Tracef("%s: Successor NOT updated to: %s", theLocalNode.id(), candidate.id())
 	}
 	theLocalNode.fixFingersChan <- true
 }
@@ -177,19 +177,15 @@ func (newNode *localNode) initFingers(n *remoteNode) {
 
 	// Successor to newNode
 	newNode.fingerTable[1].node, _ = n.lookup(newNode.fingerTable[1].startId)
-	log.Tracef("%s: Set successor to: %s", theLocalNode.address(), newNode.successor().id())
-
-	log.Tracef("%+v", newNode.successor())
+	log.Tracef("%s: Set successor to: %s", theLocalNode.id(), newNode.successor().id())
 
 	// Predecessor to newNode
 	newNode.pred = newNode.successor().predecessor()
-	log.Tracef("%s: Set predecessor to: %s", theLocalNode.address(), newNode.predecessor().id())
+	log.Tracef("%s: Set predecessor to: %s", theLocalNode.id(), newNode.predecessor().id())
 
 	if newNode.successor().id() == newNode.predecessor().id() { // n.predecessor().id() == n.id() {
 		oneNodeRing = true
 	}
-
-	log.Tracef("%+v", newNode.predecessor())
 
 	// backup predecessors db and takeover correct part of successors db
 	newNode.startReplication()
@@ -199,6 +195,8 @@ func (newNode *localNode) initFingers(n *remoteNode) {
 
 	// Update the predecessor of the node that newNode is inserted before  	  	<---------- should be made sync!
 	newNode.successor().updatePredecessor(newNode)
+
+	time.Sleep(time.Second * 1)
 
 	// request successor node to split its primary and replace its previous replica with part from its primary
 	newNode.requestSplit(newNode.successor())
