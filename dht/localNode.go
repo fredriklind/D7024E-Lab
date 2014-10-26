@@ -179,6 +179,8 @@ func (newNode *localNode) initFingers(n *remoteNode) {
 	newNode.fingerTable[1].node, _ = n.lookup(newNode.fingerTable[1].startId)
 	log.Tracef("%s: Set successor to: %s", theLocalNode.address(), newNode.successor().id())
 
+	log.Tracef("%+v", newNode.successor())
+
 	// Predecessor to newNode
 	newNode.pred = newNode.successor().predecessor()
 	log.Tracef("%s: Set predecessor to: %s", theLocalNode.address(), newNode.predecessor().id())
@@ -186,6 +188,8 @@ func (newNode *localNode) initFingers(n *remoteNode) {
 	if newNode.successor().id() == newNode.predecessor().id() { // n.predecessor().id() == n.id() {
 		oneNodeRing = true
 	}
+
+	log.Tracef("%+v", newNode.predecessor())
 
 	// backup predecessors db and takeover correct part of successors db
 	newNode.startReplication()

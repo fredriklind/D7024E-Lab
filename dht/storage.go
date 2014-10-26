@@ -44,7 +44,7 @@ func (n *localNode) initPrimaryAndReplicaDB(id string) {
 	primaryDB.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucket(mainBucket)
 		if err != nil {
-			return log.Errorf("%s: %s", n.id(), err)
+			return err // log.Errorf("%s: %s", n.id(), err)
 		}
 		return nil
 	})
@@ -58,7 +58,7 @@ func (n *localNode) initPrimaryAndReplicaDB(id string) {
 	replicaDB.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucket(mainBucket)
 		if err != nil {
-			return log.Errorf("%s: %s", n.id(), err)
+			return err // log.Errorf("%s: %s", n.id(), err)
 		}
 		return nil
 	})
@@ -125,18 +125,18 @@ func (n *localNode) startReplication() {
 // get DB from remote node n2
 func (n *localNode) getDB(n2 node, setDbAs int) {
 
+	log.Trace(n2.dbAddress())
+
 	// Get db from remote node
 	resp, err := http.Get("http://" + n2.dbAddress() + "/db")
 	if err != nil {
 		log.Errorf("%s: %s", n.id(), err)
-		os.Exit(1)
 	}
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Error(err)
-		os.Exit(1)
 	}
 
 	var saveFileTo string

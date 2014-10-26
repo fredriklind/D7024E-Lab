@@ -10,7 +10,7 @@ import (
 // Run TestJoin2_all, TestJoin4_all and TestJoin7_akk in that order from three separate tabs in terminal. (Obj 3)
 func TestJoin2_all(t *testing.T) {
 	id := "02"
-	newLocalNode(&id, "localhost", "2000", "", "2001")
+	newLocalNode(&id, "localhost", "2000", "", "2222")
 
 	theLocalNode.storeValue([]byte("2222"), []byte("8"))
 
@@ -26,9 +26,11 @@ func TestJoin4_all(t *testing.T) {
 
 	theLocalNode.storeValue([]byte("4444"), []byte("16"))
 
-	node2 := newRemoteNode("02", "localhost", "2000", "", "2001")
+	node2 := newRemoteNode("02", "localhost", "2000", "", "2222")
+	//log.Trace(node2.dbPort())
 
 	theLocalNode.join(node2)
+	log.Trace(node2.dbAddress())
 
 	block := make(chan bool)
 	<-block
@@ -40,7 +42,7 @@ func TestJoin7_all(t *testing.T) {
 
 	theLocalNode.storeValue([]byte("7777"), []byte("28"))
 
-	node2 := newRemoteNode("02", "localhost", "2000", "", "2001")
+	node2 := newRemoteNode("02", "localhost", "2000", "", "2222")
 
 	theLocalNode.join(node2)
 

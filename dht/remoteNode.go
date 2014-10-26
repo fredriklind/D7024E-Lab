@@ -1,5 +1,9 @@
 package dht
 
+import (
+	log "github.com/cihub/seelog"
+)
+
 func newRemoteNode(id, ip, port, apiPort, dbPort string) *remoteNode {
 	return &remoteNode{_id: id, _ip: ip, _port: port, _apiPort: apiPort, _dbPort: dbPort}
 }
@@ -48,6 +52,7 @@ func (n *remoteNode) predecessor() node {
 	if pred["id"] == theLocalNode.id() {
 		return theLocalNode
 	} else {
+		log.Tracef("In remoteNode.predecessor after transport layer is done: %s", pred["dbPort"])
 		return newRemoteNode(pred["id"], pred["ip"], pred["port"], pred["apiPort"], pred["dbPort"])
 	}
 }

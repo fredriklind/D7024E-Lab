@@ -82,6 +82,8 @@ func (t *transporter) sendPredecessorRequest(destAddr string) (dictionary, error
 		return dictionary{}, err
 	}
 
+	log.Tracef("After send: %s", response.Values["dbPort"])
+
 	return dictionary{
 		"id":      response.Values["id"],
 		"ip":      response.Values["ip"],
@@ -104,8 +106,8 @@ func (t *transporter) sendPredecessorResponse(request msg) {
 	m.Values["id"] = n.id() // "6899"
 	m.Values["ip"] = n.ip()
 	m.Values["port"] = n.port()
-	m.Values["apiport"] = n.apiPort()
-	m.Values["dbport"] = n.dbPort()
+	m.Values["apiPort"] = n.apiPort()
+	m.Values["dbPort"] = n.dbPort()
 	t.send(m)
 }
 
