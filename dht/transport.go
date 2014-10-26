@@ -418,7 +418,7 @@ func (t *transporter) receive() {
 
 	err = dec.Decode(&m)
 	fmt.Printf("%s: Got %s %s: %s\n", theLocalNode.address(), m.Method, m.Type, m.Id)
-	log.Tracef("%s: Got %s %s: %s", theLocalNode.address(), m.Method, m.Type, m.Id)
+	log.Tracef("%s: Got %s %s: %s %+v", theLocalNode.address(), m.Method, m.Type, m.Id, m)
 	conn.Close()
 	go t.receive()
 

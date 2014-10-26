@@ -7,6 +7,112 @@ import (
 	"testing"
 )
 
+// Run TestJoin2_all, TestJoin4_all and TestJoin7_akk in that order from three separate tabs in terminal. (Obj 3)
+func TestJoin2_all(t *testing.T) {
+	id := "02"
+	newLocalNode(&id, "localhost", "2000", "", "2001")
+
+	theLocalNode.storeValue([]byte("2222"), []byte("8"))
+
+	theLocalNode.join(nil)
+
+	block := make(chan bool)
+	<-block
+}
+
+func TestJoin4_all(t *testing.T) {
+	id := "04"
+	newLocalNode(&id, "localhost", "4000", "", "4001")
+
+	theLocalNode.storeValue([]byte("4444"), []byte("16"))
+
+	node2 := newRemoteNode("02", "localhost", "2000", "", "2001")
+
+	theLocalNode.join(node2)
+
+	block := make(chan bool)
+	<-block
+}
+
+func TestJoin7_all(t *testing.T) {
+	id := "07"
+	newLocalNode(&id, "localhost", "7000", "", "7001")
+
+	theLocalNode.storeValue([]byte("7777"), []byte("28"))
+
+	node2 := newRemoteNode("02", "localhost", "2000", "", "2001")
+
+	theLocalNode.join(node2)
+
+	block := make(chan bool)
+	<-block
+}
+
+///////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////
+
+func TestSplit(t *testing.T) {
+	id := "04"
+	newLocalNode(&id, "localhost", "", "", "")
+	n := theLocalNode
+	node2 := newRemoteNode("02", "localhost", "", "", "")
+	n.pred = node2
+
+	n.storeValue([]byte("01"), []byte("OUTSIDE"))
+	n.storeValue([]byte("02"), []byte("OUTSIDE"))
+	n.storeValue([]byte("03"), []byte("IN"))
+	n.storeValue([]byte("04"), []byte("IN"))
+
+	log.Tracef("Before split")
+	n.printMainBucket(primaryDB)
+
+	n.splitPrimaryDB()
+	log.Tracef("After split")
+	n.printMainBucket(primaryDB)
+}
+
+func TestCopyFile(t *testing.T) {
+
+	copyFileContents("db/primary04.db", "db/replicas/primary04.db")
+}
+
+func TestReplica(t *testing.T) {
+	id := "04"
+	newLocalNode(&id, "localhost", "", "", "")
+	n := theLocalNode
+
+	var err error
+	replicaDB, err = bolt.Open("db/replicas/primary"+id+".db", 0600, nil)
+	if err != nil {
+		log.Errorf("Could not open db: %s", err)
+	}
+
+	n.printMainBucket(replicaDB)
+}
+
+func TestSplitReplica(t *testing.T) {
+	id := "04"
+	newLocalNode(&id, "localhost", "", "", "")
+	n := theLocalNode
+	node2 := newRemoteNode("02", "localhost", "", "", "")
+	n.pred = node2
+
+	var err error
+	replicaDB, err = bolt.Open("db/replicas/primary"+id+".db", 0600, nil)
+	if err != nil {
+		log.Errorf("Could not open db: %s", err)
+	}
+
+	n.storeValue([]byte("01"), []byte("02"))
+	n.storeValue([]byte("02"), []byte("02"))
+	n.storeValue([]byte("03"), []byte("04"))
+	n.storeValue([]byte("04"), []byte("04"))
+	n.storeValue([]byte("05"), []byte("02"))
+
+	n.splitReplicaDB()
+	n.printMainBucket(replicaDB)
+}
+
 func TestReceive(t *testing.T) {
 	id := "05"
 	newLocalNode(&id, "localhost", "5000", "", "")
@@ -106,9 +212,6 @@ func TestBuild(t *testing.T) {
 	// just test if the program compiles
 }
 
-///////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////
-
 // 1. Sets up one primary db
 // 2. Saves a value to it
 // 3. Backs up the db to /replicas/primary.db
@@ -171,7 +274,6 @@ func TestDB(t *testing.T) {
 	}
 	db2.Close()
 }
-<<<<<<< HEAD
 
 func TestMain(t *testing.T) {
 	id := "01"
@@ -214,5 +316,3 @@ func TestJoin2(t *testing.T) {
 	block := make(chan bool)
 	<-block
 }
-=======
->>>>>>> 3689c10fbc1fc46671b9abbd7409991595e14926
