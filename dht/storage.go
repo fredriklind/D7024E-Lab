@@ -4,14 +4,15 @@ import (
 	"github.com/boltdb/bolt"
 	log "github.com/cihub/seelog"
 	//	"time"
-	//"fmt"
+	"fmt"
 	//"html"
-	"errors"
+	//"errors"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"os"
 	"strconv"
+	"time"
 )
 
 var primaryDB *bolt.DB
@@ -35,7 +36,7 @@ const rearrange = 4
 func (n *localNode) initPrimaryAndReplicaDB(id string) {
 	var err error
 
-	// open primary db
+	// Open primary db
 	primaryDB, err = bolt.Open("db/primary"+id+".db", 0600, nil)
 	if err != nil {
 		log.Errorf("Could not open db: %s", err)
@@ -44,34 +45,34 @@ func (n *localNode) initPrimaryAndReplicaDB(id string) {
 	primaryDB.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucket(mainBucket)
 		if err != nil {
-			return log.Errorf("%s: %s", n.id(), err)
+			return err // log.Errorf("%s: %s", n.id(), err)
 		}
 		return nil
 	})
-	/*
-		// open replica db
-		replicaDB, err = bolt.Open("db/replicas/primary"+id+".db", 0600, nil)
+
+	// Open replica db
+	replicaDB, err = bolt.Open("db/replicas/primary"+id+".db", 0600, nil)
+	if err != nil {
+		log.Errorf("Could not open db: %s", err)
+	}
+	// Create one main bucket
+	replicaDB.Update(func(tx *bolt.Tx) error {
+		_, err := tx.CreateBucket(mainBucket)
 		if err != nil {
-			log.Errorf("Could not open db: %s", err)
+			return err // log.Errorf("%s: %s", n.id(), err)
 		}
-		// Create one main bucket
-		replicaDB.Update(func(tx *bolt.Tx) error {
-			_, err := tx.CreateBucket(mainBucket)
-			if err != nil {
-				return log.Errorf("%s: %s", n.id(), err)
-			}
-			return nil
-		})
-	*/
+		return nil
+	})
+
 	go n.serveDBs()
 }
 
 func (n *localNode) serveDBs() {
 
 	http.HandleFunc("/db", getDbHandleFunc)
-	http.HandleFunc("/rearrange-dbs", splitDBHandleFunc)
+	http.HandleFunc("/split-dbs", splitDBHandleFunc)
 
-	// Set up http server to listen for requests of db
+	// Set up http server to listen for requests
 	err := http.ListenAndServe(":"+n.dbPort(), nil)
 	if err != nil {
 		log.Errorf("%s: ListenAndServe: %s", n.dbAddress(), err)
@@ -94,20 +95,26 @@ func getDbHandleFunc(w http.ResponseWriter, req *http.Request) {
 
 func splitDBHandleFunc(w http.ResponseWriter, req *http.Request) {
 
-	//theLocalNode.copyPrimaryDBtoReplica()
-
-	err := copyFileContents("db/primary.db", "db/replicas/primary.db")
+	log.Tracef("%s: in splitDBHandleFunc", theLocalNode.id())
+	// drop previous replica and copy primary to replica
+	err := copyFileContents("db/primary"+theLocalNode.id()+".db", "db/replicas/primary"+theLocalNode.id()+".db")
 	if err != nil {
-		log.Error(err)
+		log.Trace(err)
 	}
+
+	// run splitprimary
 	theLocalNode.splitPrimaryDB()
+
+	// run splitreplica
 	theLocalNode.splitReplicaDB()
 
-	io.WriteString(w, "rearrange-dbs OK\n")
-
+	io.WriteString(w, "split-dbs OK")
 }
 
 func (n *localNode) startReplication() {
+
+	// backup predecessors db
+	n.getDB(n.predecessor(), replica)
 
 	// get successors db, set it as n´s own primary db
 	n.getDB(n.successor(), primary)
@@ -115,8 +122,6 @@ func (n *localNode) startReplication() {
 	// take over only a part of it, A, drop the rest
 	n.splitPrimaryDB()
 
-	// backup predecessors db
-	n.getDB(n.predecessor(), replica)
 }
 
 // get DB from remote node n2
@@ -126,32 +131,29 @@ func (n *localNode) getDB(n2 node, setDbAs int) {
 	resp, err := http.Get("http://" + n2.dbAddress() + "/db")
 	if err != nil {
 		log.Errorf("%s: %s", n.id(), err)
-		os.Exit(1)
 	}
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Error(err)
-		os.Exit(1)
 	}
 
-	log.Tracef("%s: in getDB, response-body: %s", n.id(), body)
-
-	saveFileTo := "db/nones.db"
+	var saveFileTo string
 	if setDbAs == primary {
+
 		// save file as own primary.db
-		saveFileTo = "db/primary04.db" // 				<---- change this after test
+		saveFileTo = "db/primary" + n.id() + ".db"
+
 	} else if setDbAs == replica {
+
 		// save file as replica primary.db
-		saveFileTo = "db/replicas/primary88.db" //		<---- change this after test
+		saveFileTo = "db/replicas/primary" + n.id() + ".db"
 	}
 	err = ioutil.WriteFile(saveFileTo, body, 0600)
 	if err != nil {
 		log.Error(err)
 	}
-
-	//err := os.Remove(filepath) // if ok - nil
 }
 
 func (n *localNode) requestSplit(n2 node) {
@@ -161,39 +163,34 @@ func (n *localNode) requestSplit(n2 node) {
 		if err != nil {
 			log.Error(err)
 		}*/
-	resp, err2 := http.Get("http://" + n2.dbAddress() + "/rearrange-dbs")
+	resp, err2 := http.Get("http://" + n2.dbAddress() + "/split-dbs")
 	if err2 != nil {
-		log.Error(err2)
+		log.Errorf("%s: %s", n.id(), err2)
 	}
 	defer resp.Body.Close()
 	body, err3 := ioutil.ReadAll(resp.Body)
 	if err3 != nil {
 		log.Error(err3)
-		os.Exit(1)
 	}
-
-	log.Tracef("%s: in requestSplit, response-body: %s", n.id(), body)
-
+	log.Tracef("%s: %s", n.id(), body)
 }
 
 func (n *localNode) splitPrimaryDB() {
 
-	// drop keys with values larger than
 	err := primaryDB.Update(func(tx *bolt.Tx) error {
 
 		b := tx.Bucket(mainBucket)
 		c := b.Cursor()
 
 		for k, _ := c.First(); k != nil; k, _ = c.Next() {
-			//fmt.Printf("key=%s, value=%s\n", k, v)
 
 			// keep keys in interval (n.pred, n], delete keys outside that interval
 			if between(
-				hexStringToByteArr(nextId(n.predecessor().id())),
-				hexStringToByteArr(nextId(n.id())),
+				[]byte(nextId(n.predecessor().id())),
+				[]byte(nextId(n.id())),
 				k,
 			) {
-				// keep (k,v)
+				// keep (k,v), in other words - do nothing
 			} else {
 				b.Delete(k)
 			}
@@ -206,20 +203,23 @@ func (n *localNode) splitPrimaryDB() {
 }
 
 func (n *localNode) splitReplicaDB() {
+	for i := 0; i < 10000; i++ {
+		if i == 10000 {
+			fmt.Println(n.id())
+		}
+	}
 
-	// drop keys with values larger than
 	err := replicaDB.Update(func(tx *bolt.Tx) error {
 
 		b := tx.Bucket(mainBucket)
 		c := b.Cursor()
 
 		for k, _ := c.First(); k != nil; k, _ = c.Next() {
-			//fmt.Printf("key=%s, value=%s\n", k, v)
 
-			// keep keys in interval (n.pred, n], delete keys outside that interval
+			// delete keys in interval (n.pred, n] - they belong in primaryDB
 			if between(
-				hexStringToByteArr(nextId(n.predecessor().id())),
-				hexStringToByteArr(nextId(n.id())),
+				[]byte(nextId(n.predecessor().id())),
+				[]byte(nextId(n.id())),
 				k,
 			) {
 				b.Delete(k)
@@ -283,12 +283,23 @@ func (n *localNode) storeValue(key, value []byte) error {
 	return err
 }
 
+func (n *localNode) printDBsPeriodic() {
+	for {
+		log.Tracef("%s: primaryDB:", n.id())
+		n.printMainBucket(primaryDB)
+		log.Tracef("%s: replicaDB:", n.id())
+		n.printMainBucket(replicaDB)
+		time.Sleep(time.Second * 10)
+	}
+}
+
 func (n *localNode) printMainBucket(db *bolt.DB) error {
 
-	if db == nil {
-		return errors.New("db not opened")
+	if db == primaryDB {
+		log.Tracef("%s: primaryDB:", n.id())
+	} else if db == replicaDB {
+		log.Tracef("%s: replicaDB:", n.id())
 	}
-
 	err := db.View(func(tx *bolt.Tx) error {
 
 		b := tx.Bucket(mainBucket)

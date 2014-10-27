@@ -1,5 +1,9 @@
 package dht
 
+import (
+//log "github.com/cihub/seelog"
+)
+
 func newRemoteNode(id, ip, port, apiPort, dbPort string) *remoteNode {
 	return &remoteNode{_id: id, _ip: ip, _port: port, _apiPort: apiPort, _dbPort: dbPort}
 }
