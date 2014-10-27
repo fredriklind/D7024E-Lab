@@ -68,7 +68,7 @@ func (n *localNode) initPrimaryAndReplicaDB(id string) {
 
 func (n *localNode) serveDBs() {
 
-	http.HandleFunc("/", getDbHandleFunc)
+	http.HandleFunc("/db", getDbHandleFunc)
 	http.HandleFunc("/rearrange-dbs", splitDBHandleFunc)
 
 	// Set up http server to listen for requests of db
@@ -123,7 +123,7 @@ func (n *localNode) startReplication() {
 func (n *localNode) getDB(n2 node, setDbAs int) {
 
 	// Get db from remote node
-	resp, err := http.Get("http://" + n2.dbAddress() + "/")
+	resp, err := http.Get("http://" + n2.dbAddress() + "/db")
 	if err != nil {
 		log.Errorf("%s: %s", n.id(), err)
 		os.Exit(1)
@@ -298,14 +298,6 @@ func (n *localNode) printMainBucket(db *bolt.DB) error {
 			log.Tracef("%s: (%s, %s)", n.id(), k, v)
 			return nil
 		})
-		return err
-	})
-	return err
-}
-
-func (n *localNode) backupLocalDB() error {
-	err := db.View(func(tx *bolt.Tx) error {
-		err := tx.CopyFile("db/replicas/primary.db", 0600)
 		return err
 	})
 	return err

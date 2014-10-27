@@ -118,7 +118,7 @@ func TestDB(t *testing.T) {
 	newLocalNode(&id, "localhost", "6000", "", "")
 
 	// Start a read-write transaction
-	err := db.Update(func(tx *bolt.Tx) error {
+	err := primaryDB.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte("main"))
 		err = b.Put([]byte("answer"), []byte("42"))
 		return err
@@ -127,51 +127,24 @@ func TestDB(t *testing.T) {
 	var value string
 
 	if err != nil {
-		t.Errorf("Failed to set value in db: %s", err)
+		t.Errorf("Failed to set value in primaryDB: %s", err)
 	}
 
 	// Start a read transaction
-	err = db.View(func(tx *bolt.Tx) error {
+	err = primaryDB.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("main"))
 		value = string(b.Get([]byte("answer")))
 		return nil
 	})
 
 	if err != nil {
-		t.Errorf("Could not read from db: ", err)
+		t.Errorf("Could not read from primaryDB: ", err)
 	}
 
 	if value != "42" {
-		t.Errorf("Read wrong value from db. Expected 42, got %s", value)
+		t.Errorf("Read wrong value from primaryDB. Expected 42, got %s", value)
 	}
-
-	// Backup the local DB
-	theLocalNode.backupLocalDB()
-
-	db2, err := bolt.Open("db/replicas/primary.db", 0600, nil)
-	if err != nil {
-		t.Errorf("Error opening db2", err)
-	}
-
-	// Start a read transaction
-	err = db2.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("main"))
-		if b != nil {
-			value = string(b.Get([]byte("answer")))
-		}
-		return nil
-	})
-
-	if err != nil {
-		t.Errorf("Could not read from db2: ", err)
-	}
-
-	if value != "42" {
-		t.Errorf("Read wrong value from db2. Expected 42, got %s", value)
-	}
-	db2.Close()
 }
-<<<<<<< HEAD
 
 func TestMain(t *testing.T) {
 	id := "01"
@@ -214,5 +187,3 @@ func TestJoin2(t *testing.T) {
 	block := make(chan bool)
 	<-block
 }
-=======
->>>>>>> 3689c10fbc1fc46671b9abbd7409991595e14926

@@ -62,7 +62,7 @@ func (serv fileAPI) GetPair(key string) string {
 	key, _ = url.QueryUnescape(key)
 	serv.setPerms()
 
-	//responsibleNode, _ := theLocalNode.lookup(key)
+	responsibleNode, _ := theLocalNode.lookup(key)
 
 	// If I'm responsible
 	//if responsibleNode.id() == theLocalNode.id() {
@@ -75,8 +75,8 @@ func (serv fileAPI) GetPair(key string) string {
 	var value []byte
 
 	// Start view transaction, get value
-	db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("main"))
+	primaryDB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(mainBucket)
 		value = b.Get([]byte(key))
 		return nil
 	})
@@ -110,8 +110,8 @@ func (serv fileAPI) SetPair(PostData KeyValuePair) {
 	didWrite := false
 	var err error
 	// Set the value, if the key does not already exist
-	db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("main"))
+	primaryDB.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket(mainBucket)
 		existingValue := b.Get([]byte(PostData.Key))
 		if existingValue == nil {
 			err := b.Put([]byte(PostData.Key), []byte(PostData.Value))
@@ -147,8 +147,8 @@ func (serv fileAPI) UpdatePair(PostData string, key string) {
 	didWrite := false
 	var err error
 	// Set the value, only if the key already exist
-	db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("main"))
+	primaryDB.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket(mainBucket)
 		existingValue := b.Get([]byte(key))
 		if existingValue != nil {
 			err := b.Put([]byte(key), []byte(PostData))
@@ -178,8 +178,8 @@ func (serv fileAPI) DeletePair(key string) {
 	var err error
 
 	// Check if value exists
-	db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket([]byte("main"))
+	primaryDB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(mainBucket)
 		value = b.Get([]byte(key))
 		return nil
 	})
@@ -189,8 +189,8 @@ func (serv fileAPI) DeletePair(key string) {
 		serv.ResponseBuilder().SetResponseCode(404).Overide(true)
 	} else {
 		// Delete the value
-		db.Update(func(tx *bolt.Tx) error {
-			b := tx.Bucket([]byte("main"))
+		primaryDB.Update(func(tx *bolt.Tx) error {
+			b := tx.Bucket(mainBucket)
 			err = b.Delete([]byte(key))
 			return err
 		})
