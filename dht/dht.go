@@ -10,7 +10,18 @@ type node interface {
 	// Getters
 	id() string
 	predecessor() node
+	// Address for the transport layer
 	address() string
+	// Address for the REST API
+	apiAddress() string
+	// Address for accessing DB
+	dbAddress() string
+
+	ip() string
+	port() string
+	apiPort() string
+	dbPort() string
+
 	// Methods
 	lookup(id string) (node, error)
 	updateSuccessor(node)
@@ -25,10 +36,26 @@ type localNode struct {
 }
 
 type remoteNode struct {
-	_id, _address string
+	_id, _ip, _port, _apiPort, _dbPort string
 }
 
 type finger struct {
 	startId string
 	node    node
+}
+
+func main() {
+	go startWebServer()
+	go startAPI()
+
+	/*for true {
+		reader := bufio.NewReader(os.Stdin)
+		fmt.Print("Enter command: ")
+		cmd, _ := reader.ReadString('\n')
+		if cmd == "e\n" {
+			db.Close()
+			break
+		}
+	}
+	*/
 }

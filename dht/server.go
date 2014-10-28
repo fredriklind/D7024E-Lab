@@ -1,0 +1,202 @@
+package dht
+
+import (
+	"code.google.com/p/gorest"
+	"github.com/boltdb/bolt"
+	"net/http"
+	"net/url"
+	"time"
+)
+
+// For serving static files
+func startWebServer() {
+	fs := http.FileServer(http.Dir("./webserver"))
+	http.ListenAndServe(":8080", fs)
+}
+
+func startAPI() {
+	serv := new(fileAPI)
+	gorest.RegisterService(serv)
+	serv.RestService.ResponseBuilder()
+	http.Handle("/", gorest.Handle())
+	http.ListenAndServe(":8787", nil)
+}
+
+func (serv fileAPI) setPerms() {
+	serv.RB().AddHeader("Access-Control-Allow-Origin", "*")
+	serv.RB().AddHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
+	// TODO Remove this
+	time.Sleep(time.Millisecond * 500)
+}
+
+//Service Definition
+type fileAPI struct {
+	gorest.RestService `root:"/api/" consumes:"application/json" produces:"application/json"`
+	getAll             gorest.EndPoint `method:"GET" path:"/storage/" output:"string"`
+	getPair            gorest.EndPoint `method:"GET" path:"/storage/{key:string}" output:"string"`
+	setPair            gorest.EndPoint `method:"POST" path:"/storage" postdata:"KeyValuePair"`
+	updatePair         gorest.EndPoint `method:"PUT" path:"/storage/{key:string}" postdata:"string"`
+	deletePair         gorest.EndPoint `method:"DELETE" path:"/storage/{key:string}"`
+	optionsRoute       gorest.EndPoint `method:"OPTIONS" path:"/storage/{key:string}"`
+}
+
+type KeyValuePair struct {
+	Key, Value string
+}
+
+// Needed to allow jQuery to do PUT/DELETE. (jQuery first sends OPTION)
+func (serv fileAPI) OptionsRoute(_ string) {
+	serv.setPerms()
+}
+
+// GET /storage (NOT IMPLEMENTED)
+func (serv fileAPI) GetAll() string {
+	// 400 Bad request
+	serv.ResponseBuilder().SetResponseCode(400).Overide(true)
+	return ""
+}
+
+// GET /storage/{key}
+func (serv fileAPI) GetPair(key string) string {
+	key, _ = url.QueryUnescape(key)
+	serv.setPerms()
+
+	responsibleNode, _ := theLocalNode.lookup(key)
+
+	// If I'm responsible
+	//if responsibleNode.id() == theLocalNode.id() {
+	if key == "" {
+		// 400 Bad request
+		serv.ResponseBuilder().SetResponseCode(400).Overide(true)
+		return ""
+	}
+
+	var value []byte
+
+	// Start view transaction, get value
+	primaryDB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(mainBucket)
+		value = b.Get([]byte(key))
+		return nil
+	})
+
+	if value != nil {
+		return string(value)
+	} else {
+		// 404 Not found
+		serv.ResponseBuilder().SetResponseCode(404).Overide(true)
+		return ""
+	}
+
+	// If someone else is responsible, sent request to that guy
+	//} else {
+	//restClient, _ := gorest.NewRequestBuilder("http://" + responsibleNode.address())
+	//}
+
+	return ""
+}
+
+// POST /storage
+func (serv fileAPI) SetPair(PostData KeyValuePair) {
+	serv.setPerms()
+
+	if PostData.Key == "" || PostData.Value == "" {
+		// 400 Bad request
+		serv.ResponseBuilder().SetResponseCode(400).Overide(true)
+		return
+	}
+
+	didWrite := false
+	var err error
+	// Set the value, if the key does not already exist
+	primaryDB.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket(mainBucket)
+		existingValue := b.Get([]byte(PostData.Key))
+		if existingValue == nil {
+			err := b.Put([]byte(PostData.Key), []byte(PostData.Value))
+			if err == nil {
+				didWrite = true
+			}
+			return err
+		}
+		return nil
+	})
+
+	if !didWrite {
+		// 409 Conflict
+		serv.ResponseBuilder().SetResponseCode(409).Overide(true)
+	}
+
+	if err != nil {
+		// 500 internal server error
+		serv.ResponseBuilder().SetResponseCode(500).Overide(true)
+	}
+}
+
+// PUT /storage/{key}
+func (serv fileAPI) UpdatePair(PostData string, key string) {
+	serv.setPerms()
+
+	if key == "" || PostData == "" {
+		// 400 Bad request
+		serv.ResponseBuilder().SetResponseCode(400).Overide(true)
+		return
+	}
+
+	didWrite := false
+	var err error
+	// Set the value, only if the key already exist
+	primaryDB.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket(mainBucket)
+		existingValue := b.Get([]byte(key))
+		if existingValue != nil {
+			err := b.Put([]byte(key), []byte(PostData))
+			if err == nil {
+				didWrite = true
+			}
+			return err
+		}
+		return nil
+	})
+
+	if !didWrite {
+		// 404 Not found
+		serv.ResponseBuilder().SetResponseCode(404).Overide(true)
+	}
+
+	if err != nil {
+		// 500 internal server error
+		serv.ResponseBuilder().SetResponseCode(500).Overide(true)
+	}
+}
+
+// DELETE /storage/{key}
+func (serv fileAPI) DeletePair(key string) {
+	serv.setPerms()
+	var value []byte
+	var err error
+
+	// Check if value exists
+	primaryDB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(mainBucket)
+		value = b.Get([]byte(key))
+		return nil
+	})
+
+	if value == nil {
+		// 404 Not found
+		serv.ResponseBuilder().SetResponseCode(404).Overide(true)
+	} else {
+		// Delete the value
+		primaryDB.Update(func(tx *bolt.Tx) error {
+			b := tx.Bucket(mainBucket)
+			err = b.Delete([]byte(key))
+			return err
+		})
+	}
+
+	if err != nil {
+		// 500 Internal server error
+		serv.ResponseBuilder().SetResponseCode(500).Overide(true)
+	}
+}

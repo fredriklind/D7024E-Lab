@@ -1,0 +1,222 @@
+::selection {
+  color: #fff;
+  background: #d22dc3;
+}
+
+body {
+    background: #fafafa;
+    font-family: 'Open Sans', sans-serif;
+}
+
+.page-wrap {
+    width: 450px;
+    margin: 30px auto;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+    border-radius: 7px;
+}
+
+header {
+    padding: 30px;
+}
+
+header h1 {
+    color: #FFD545;
+    text-align: center;
+    margin: 0;
+    line-height: 30px;
+}
+
+h2 {
+    margin-top: 0;
+    margin-bottom: 10px;
+    font-family: 'Montserrat', sans-serif;
+}
+
+.content {
+    overflow: hidden;
+    border-radius: 7px;
+    background: #fff;
+}
+
+.section h2 {
+    border-top: 1px solid #efefef;
+    padding: 15px;
+    margin: 0 -30px 19px;
+    color: #fff;
+    background: #2BACDF;
+    position: relative;
+    overflow: hidden;
+    z-index: 1;
+    transition: margin-bottom .4s ease;
+}
+
+.section:first-child h2 { border-top: none; }
+
+.section h2 span {
+    position: absolute;
+    right: 0;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    text-align: center;
+    font-size: 22px;
+    color: #fff;
+    line-height: 58px;
+    opacity: 0;
+    transition: opacity .4s ease;
+}
+
+.section h2 span.show {
+    opacity: 1;
+}
+
+.section h2 span.error {
+    background-color: #B71600;
+    color: #FFF;
+}
+
+.section h2 span.success {
+    color: #fff;
+    background-color: #00C32B;
+}
+
+.content .section.hidden:last-child h2 { margin-bottom: 0;}
+
+.content .section.hidden h2:hover {
+  background: rgba(255,255,255,0.07);
+  cursor: pointer;
+}
+
+.content .section.hidden h2 {
+    margin-bottom: 0;
+}
+
+.section {
+    padding: 0 30px 18px;
+    transition: all .4s ease;
+}
+
+.section { max-height: 260px; transition: all 0.5s ease; overflow: hidden;}
+.section.hidden { max-height: 59px;}
+
+.section form { transition: all .4s .1s ease; }
+.section.hidden { padding-bottom: 0;}
+.section.hidden h2 { color: #2BACDF; background: rgba(255,255,255,0.03);}
+
+.section.hidden form {
+    transform: rotateX(90deg)
+}
+
+.section.status {
+    position: relative;
+}
+.section.status::after {
+    content:"";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255,255,255,0.03);
+    font-size: 22px;
+    color: #fff;
+    animation: fade 1.3s ease;
+    text-align: center;
+    padding: 40px;
+}
+
+@keyframes fade {
+  0%   { opacity: 1; }
+  100% { opacity: 0; display: none; }
+}
+
+.section.status.set-successful {
+    content: "Set successful";
+    color: green;
+}
+
+.section.status.key-exists {
+    content: "Key already exists"
+    color: red;
+}
+
+form {
+    overflow: hidden;
+    transition: all .3s ease;
+}
+
+input[type="text"] {
+    background: rgba(0, 0, 0, 0);
+    border: none;
+    outline: none;
+    color: #F2BB00;
+    position: relative;
+    padding: 0 0 0 8px;
+    width: 100%;
+}
+
+.text {
+    float: left;
+
+}
+
+.field {
+    display: block;
+    overflow: hidden;
+}
+
+input[type="text"]:hover::-webkit-input-placeholder {
+   color: #fff;
+}
+
+input[type="submit"] {
+    border: none;
+    color: #fff;
+    background: rgba(0, 0, 0, 0);
+    margin: 10px 0;
+    outline: none;
+    background: #00C32B;
+    border-radius: 3px;
+    font-size: 15px;
+}
+
+input[type="text"].loading {
+    background: url(../img/loader.gif) no-repeat 5px center;
+}
+
+input[type="submit"]:hover {
+    color: #0ad938;
+} 
+
+label {
+    color: #6E6E6E;
+    display: block;
+    border-bottom: 1px solid #DADADA;
+    overflow: hidden;
+    padding: 8px 0;
+    margin-bottom: 10px;
+}
+
+input[type="text"].not-found::selection {
+  color: #fff;
+  background: #B71600;
+}
+
+.key:before {
+    content: "Key:";
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.value:before {
+    content: "Value";
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+.hide { display: none;}
+
+
+
