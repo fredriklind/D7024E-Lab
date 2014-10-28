@@ -158,18 +158,17 @@ func hexStringToByteArr(hexId string) []byte {
 	return hexbytes
 }
 
-// Initializer for the dht package, sets up the logger
-func init() {
-	testConfig := `
+func setupLogging(prefix string) {
+	config := `
 		<seelog type="sync">
 			<outputs>
 				<file formatid="onlytime" path="logfile.log"/>
 			</outputs>
 			<formats>
-				<format id="onlytime" format="%Time [%LEVEL] %Msg%n"/>
+				<format id="onlytime" format="%Time [%LEVEL] ` + prefix + ` (%FuncShort:%Line) %Msg%n"/>
 			</formats>
 		</seelog>
 	`
-	logger, _ := log.LoggerFromConfigAsBytes([]byte(testConfig))
+	logger, _ := log.LoggerFromConfigAsBytes([]byte(config))
 	log.ReplaceLogger(logger)
 }

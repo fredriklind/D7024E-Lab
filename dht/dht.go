@@ -44,10 +44,12 @@ type finger struct {
 	node    node
 }
 
-func main() {
-	go startWebServer()
-	go startAPI()
+// Initializer for the dht package
+func init() {
+	setupLogging("")
+}
 
+func main() {
 	/*for true {
 		reader := bufio.NewReader(os.Stdin)
 		fmt.Print("Enter command: ")

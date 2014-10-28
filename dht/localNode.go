@@ -21,6 +21,11 @@ func newLocalNode(idPointer *string, ip, port, apiPort, dbPort string) {
 	theLocalNode = &localNode{_id: id}
 	transport = newTransporter(ip, port, apiPort, dbPort)
 	theLocalNode.initPrimaryAndReplicaDB(theLocalNode.id())
+	go startWebServer()
+	go startAPI()
+
+	logPrefix := theLocalNode.ip() + ":" + theLocalNode.port()
+	setupLogging(logPrefix)
 }
 
 // ----------------------------------------------------------------------------------------
@@ -92,6 +97,7 @@ func (n *localNode) updateSuccessor(candidate node) {
 
 // Returns the node who is responsible for the data corresponding to id, traversing the ring using finger tables
 func (n *localNode) lookup(id string) (node, error) {
+	id = sha1hash(id)
 	// n responsible for id
 	if between(
 		hexStringToByteArr(nextId(n.predecessor().id())),

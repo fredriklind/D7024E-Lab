@@ -337,3 +337,28 @@ func TestJoin2(t *testing.T) {
 	block := make(chan bool)
 	<-block
 }
+
+func TestGetForwarding(t *testing.T) {
+	TestGetForwardingReceiver(t)
+	TestGetForwardingSender(t)
+}
+
+func TestGetForwardingReceiver(t *testing.T) {
+	t.Parallel()
+	id := "03"
+	newLocalNode(&id, "localhost", "5000", "5100", "5200")
+	theLocalNode.storeValue([]byte("Answer"), []byte("42"))
+
+	block := make(chan bool)
+	<-block
+}
+
+func TestGetForwardingSender(t *testing.T) {
+	t.Parallel()
+	id := "01"
+	newLocalNode(&id, "localhost", "4000", "4100", "4200")
+	theLocalNode.storeValue([]byte("Answer"), []byte("42"))
+
+	block := make(chan bool)
+	<-block
+}

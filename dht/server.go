@@ -1,33 +1,54 @@
 package dht
 
 import (
+	"io/ioutil"
 	"net/http"
 	"net/url"
-	"time"
 
 	"code.google.com/p/gorest"
 	"github.com/boltdb/bolt"
+	log "github.com/cihub/seelog"
 )
 
-// For serving static files
+const (
+	webServerRootPath = "./webserver"
+	webServerPort     = "8080"
+)
+
+// Serves static files, such as index.html
 func startWebServer() {
-	fs := http.FileServer(http.Dir("./webserver"))
-	http.ListenAndServe(":8080", fs)
+	// Write port number of API to a file
+	port := theLocalNode.apiPort()
+	err := ioutil.WriteFile(webServerRootPath+"/port.txt", []byte(port), 0777)
+
+	if err != nil || port == "" {
+		panic("Could not start web server")
+	}
+
+	// Start servig files
+	fs := http.FileServer(http.Dir(webServerRootPath))
+	http.ListenAndServe(":"+webServerPort, fs)
 }
 
+// Registers and starts the file api that serves all reqests to ip:apiPort/api
 func startAPI() {
 	serv := new(fileAPI)
 	gorest.RegisterService(serv)
 	serv.RestService.ResponseBuilder()
 	http.Handle("/", gorest.Handle())
-	http.ListenAndServe(":8787", nil)
+	if theLocalNode.apiPort() != "" {
+		http.ListenAndServe(":"+theLocalNode.apiPort(), nil)
+	} else {
+		panic("API port not set, cannot start API")
+	}
 }
 
+// Sets headers so that the API can be accessed from other domains, and so that
+// jQuery works with PUT and DELETE
 func (serv fileAPI) setPerms() {
 	serv.RB().AddHeader("Access-Control-Allow-Origin", "*")
 	serv.RB().AddHeader("Access-Control-Allow-Methods", "GET,POST,PUT,DELETE,OPTIONS")
-	// TODO Remove this
-	time.Sleep(time.Millisecond * 500)
+	serv.RB().ConnectionKeepAlive()
 }
 
 //Service Definition
@@ -45,12 +66,18 @@ type KeyValuePair struct {
 	Key, Value string
 }
 
+type Pairer interface {
+	key() string
+	value() string
+}
+
 // Needed to allow jQuery to do PUT/DELETE. (jQuery first sends OPTION)
 func (serv fileAPI) OptionsRoute(_ string) {
 	serv.setPerms()
 }
 
 // GET /storage (NOT IMPLEMENTED)
+// Just there to give error in case the key searched for was empty
 func (serv fileAPI) GetAll() string {
 	// 400 Bad request
 	serv.ResponseBuilder().SetResponseCode(400).Overide(true)
@@ -59,41 +86,91 @@ func (serv fileAPI) GetAll() string {
 
 // GET /storage/{key}
 func (serv fileAPI) GetPair(key string) string {
-	key, _ = url.QueryUnescape(key)
 	serv.setPerms()
+	log.Tracef("Handling GET requset for key %s", key)
 
-	responsibleNode, _ := theLocalNode.lookup(key)
-
-	// If I'm responsible
-	//if responsibleNode.id() == theLocalNode.id() {
+	// Validate request
 	if key == "" {
 		// 400 Bad request
 		serv.ResponseBuilder().SetResponseCode(400).Overide(true)
 		return ""
 	}
 
-	var value []byte
+	// Remvove things like %20 and stuff
+	ogKey := key
+	key, _ = url.QueryUnescape(key)
 
-	// Start view transaction, get value
-	primaryDB.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket(mainBucket)
-		value = b.Get([]byte(key))
-		return nil
-	})
+	//responsibleNode, _ := theLocalNode.lookup(key)
+	responsibleNode := newRemoteNode("03", "localhost", "5000", "5100", "5200")
 
-	if value != nil {
-		return string(value)
+	// If I'm responsible
+	if responsibleNode.id() == theLocalNode.id() {
+		log.Tracef("I am responsible, searching for %s", key)
+		// Get the the value from primary db
+		var value []byte
+		primaryDB.View(func(tx *bolt.Tx) error {
+			b := tx.Bucket(mainBucket)
+			value = b.Get([]byte(key))
+			return nil
+		})
+
+		// The primaryDB did not have the value
+		if value == nil {
+			log.Trace("Didn't find value in primary db")
+			// See if the replica has the value
+			replicaDB.View(func(tx *bolt.Tx) error {
+				b := tx.Bucket(mainBucket)
+				value = b.Get([]byte(key))
+				return nil
+			})
+
+			if value == nil {
+				// Replica didnt have the value either, 404 Not found
+				log.Errorf("Didn't find value in replica db")
+				serv.ResponseBuilder().SetResponseCode(404).Overide(true)
+				return ""
+
+			} else {
+				// Replica did have the value
+				log.Tracef("Found value \"%s\" in replica db", string(value))
+				return string(value)
+			}
+		} else {
+			log.Tracef("Found value \"%s\" in primary db", string(value))
+			return string(value)
+		}
+		//If someone else is responsible, sent request to that guy
 	} else {
-		// 404 Not found
-		serv.ResponseBuilder().SetResponseCode(404).Overide(true)
-		return ""
+		log.Tracef("%s is responsible for key %s, forwarding request", responsibleNode.address(), key)
+		restRequest, _ := gorest.NewRequestBuilder("http://" + responsibleNode.apiAddress() + "/api/storage/" + ogKey)
+		restRequest.Accept(gorest.Text_Plain)
+		restRequest.ConnectionKeepAlive()
+
+		iface := KeyValuePair{}
+		response, err := restRequest.Get(iface, 200)
+		defer response.Body.Close()
+
+		if err != nil {
+			log.Errorf("Forwarded request returned error: %s", err)
+			serv.ResponseBuilder().SetResponseCode(500).Overide(true)
+			return ""
+		} else {
+			// Parse bytes to string
+			responseBytes, err := ioutil.ReadAll(response.Body)
+			if err != nil {
+				log.Errorf("Error parsing response: %s", err)
+				serv.ResponseBuilder().SetResponseCode(500).Overide(true)
+				return ""
+			}
+			responseString := string(responseBytes)
+			log.Tracef("Got value \"%s\" from responsible node", responseString)
+			return responseString
+		}
 	}
 
-	// If someone else is responsible, sent request to that guy
-	//} else {
-	//restClient, _ := gorest.NewRequestBuilder("http://" + responsibleNode.address())
-	//}
-
+	// Everything fell through, didn't get any value
+	serv.ResponseBuilder().SetResponseCode(404).Overide(true)
+	log.Tracef("Nothing found in GET, exiting")
 	return ""
 }
 
