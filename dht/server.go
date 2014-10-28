@@ -1,12 +1,11 @@
 package dht
 
 import (
+	"code.google.com/p/gorest"
+	"github.com/boltdb/bolt"
 	"net/http"
 	"net/url"
 	"time"
-
-	"code.google.com/p/gorest"
-	"github.com/boltdb/bolt"
 )
 
 // For serving static files
