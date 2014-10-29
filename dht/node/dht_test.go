@@ -12,7 +12,7 @@ import (
 func TestJoinSplitRequest(t *testing.T) {
 
 	id := "04"
-	newLocalNode(&id, "localhost", "", "", "4444")
+	NewLocalNode(&id, "localhost", "", "", "4444")
 	n := theLocalNode
 	node2 := newRemoteNode("02", "localhost", "", "", "")
 
@@ -51,7 +51,7 @@ func TestJoinSplitRequest(t *testing.T) {
 // Run TestJoin2_all, TestJoin4_all and TestJoin7_akk in that order from three separate tabs in terminal. (Obj 3)
 func TestJoin2_all(t *testing.T) {
 	id := "02"
-	newLocalNode(&id, "localhost", "2000", "", "2222")
+	NewLocalNode(&id, "localhost", "2000", "", "2222")
 
 	theLocalNode.storeValue([]byte("2222"), []byte("8"))
 
@@ -65,7 +65,7 @@ func TestJoin2_all(t *testing.T) {
 
 func TestJoin4_all(t *testing.T) {
 	id := "04"
-	newLocalNode(&id, "localhost", "4000", "", "4001")
+	NewLocalNode(&id, "localhost", "4000", "", "4001")
 
 	theLocalNode.storeValue([]byte("4444"), []byte("16"))
 
@@ -81,7 +81,7 @@ func TestJoin4_all(t *testing.T) {
 
 func TestJoin7_all(t *testing.T) {
 	id := "07"
-	newLocalNode(&id, "localhost", "7000", "", "7001")
+	NewLocalNode(&id, "localhost", "7000", "", "7001")
 
 	theLocalNode.storeValue([]byte("7777"), []byte("28"))
 
@@ -100,7 +100,7 @@ func TestJoin7_all(t *testing.T) {
 
 func TestSplit(t *testing.T) {
 	id := "04"
-	newLocalNode(&id, "localhost", "", "", "")
+	NewLocalNode(&id, "localhost", "", "", "")
 	n := theLocalNode
 	node2 := newRemoteNode("02", "localhost", "", "", "")
 	n.pred = node2
@@ -125,7 +125,7 @@ func TestCopyFile(t *testing.T) {
 
 func TestReplica(t *testing.T) {
 	id := "04"
-	newLocalNode(&id, "localhost", "", "", "")
+	NewLocalNode(&id, "localhost", "", "", "")
 	n := theLocalNode
 
 	var err error
@@ -139,7 +139,7 @@ func TestReplica(t *testing.T) {
 
 func TestSplitReplica(t *testing.T) {
 	id := "04"
-	newLocalNode(&id, "localhost", "", "", "")
+	NewLocalNode(&id, "localhost", "", "", "")
 	n := theLocalNode
 	node2 := newRemoteNode("02", "localhost", "", "", "")
 	n.pred = node2
@@ -162,7 +162,7 @@ func TestSplitReplica(t *testing.T) {
 
 func TestReceive(t *testing.T) {
 	id := "05"
-	newLocalNode(&id, "localhost", "5000", "", "")
+	NewLocalNode(&id, "localhost", "5000", "", "")
 
 	node4 := newRemoteNode("04", "localhost", "4000", "", "")
 	theLocalNode.pred = node4
@@ -172,7 +172,7 @@ func TestReceive(t *testing.T) {
 }
 
 func TestPredecessorRequest(t *testing.T) {
-	newLocalNode(nil, "localhost", "2000", "", "")
+	NewLocalNode(nil, "localhost", "2000", "", "")
 	node5 := newRemoteNode("05", "localhost", "5000", "", "")
 
 	_ = node5.predecessor()
@@ -183,7 +183,7 @@ func TestPredecessorRequest(t *testing.T) {
 // Run TestJoin1, TestJoin4 and TestJoin7 in that order from three separate tabs in terminal. (Obj 3)
 func TestJoin2_db(t *testing.T) {
 	id := "02"
-	newLocalNode(&id, "localhost", "2000", "", "2001")
+	NewLocalNode(&id, "localhost", "2000", "", "2001")
 
 	theLocalNode.storeValue([]byte("2222"), []byte("8"))
 
@@ -202,7 +202,7 @@ func TestJoin2_db(t *testing.T) {
 
 func TestJoin4_db(t *testing.T) {
 	id := "04"
-	newLocalNode(&id, "localhost", "4000", "", "4001")
+	NewLocalNode(&id, "localhost", "4000", "", "4001")
 
 	theLocalNode.storeValue([]byte("4444"), []byte("16"))
 
@@ -236,7 +236,7 @@ func TestJoin4_db(t *testing.T) {
 
 func TestJoin7_db(t *testing.T) {
 	id := "07"
-	newLocalNode(&id, "localhost", "7000", "", "7001")
+	NewLocalNode(&id, "localhost", "7000", "", "7001")
 
 	theLocalNode.storeValue([]byte("7777"), []byte("28"))
 
@@ -265,7 +265,7 @@ func TestBuild(t *testing.T) {
 // 4. Reads the saved value from the backup db
 func TestDB(t *testing.T) {
 	id := "01"
-	newLocalNode(&id, "localhost", "6000", "", "")
+	NewLocalNode(&id, "localhost", "6000", "", "")
 
 	// Start a read-write transaction
 	err := primaryDB.Update(func(tx *bolt.Tx) error {
@@ -296,18 +296,10 @@ func TestDB(t *testing.T) {
 	}
 }
 
-func TestMain(t *testing.T) {
-	id := "01"
-	newLocalNode(&id, "localhost", "3000", "", "")
-	main()
-	block := make(chan bool)
-	<-block
-}
-
 // Run TestJoin3, TestJoin0 and TestJoin2 in that order from three separate tabs in terminal. (To test obj2).
 func TestJoin3(t *testing.T) {
 	id := "03"
-	newLocalNode(&id, "localhost", "3000", "", "")
+	NewLocalNode(&id, "localhost", "3000", "", "")
 
 	theLocalNode.join(nil)
 
@@ -317,7 +309,7 @@ func TestJoin3(t *testing.T) {
 
 func TestJoin0(t *testing.T) {
 	id := "00"
-	newLocalNode(&id, "localhost", "9000", "", "")
+	NewLocalNode(&id, "localhost", "9000", "", "")
 
 	node3 := newRemoteNode("03", "localhost", "3000", "", "")
 
@@ -328,7 +320,7 @@ func TestJoin0(t *testing.T) {
 
 func TestJoin2(t *testing.T) {
 	id := "02"
-	newLocalNode(&id, "localhost", "2000", "", "")
+	NewLocalNode(&id, "localhost", "2000", "", "")
 
 	node3 := newRemoteNode("03", "localhost", "3000", "", "")
 

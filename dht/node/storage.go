@@ -45,7 +45,7 @@ func (n *localNode) initPrimaryAndReplicaDB(id string) {
 	primaryDB.Update(func(tx *bolt.Tx) error {
 		_, err := tx.CreateBucket(mainBucket)
 		if err != nil {
-			return err // log.Errorf("%s: %s", n.id(), err)
+			return log.Errorf("%s: %s", n.id(), err)
 		}
 		return nil
 	})
@@ -213,21 +213,29 @@ func (n *localNode) splitReplicaDB() {
 
 		b := tx.Bucket(mainBucket)
 		c := b.Cursor()
-
+		var err error
 		for k, _ := c.First(); k != nil; k, _ = c.Next() {
 
+			err = c.Delete()
+			log.Trace(err)
+
 			// delete keys in interval (n.pred, n] - they belong in primaryDB
-			if between(
+			/*if between(
 				[]byte(nextId(n.predecessor().id())),
 				[]byte(nextId(n.id())),
 				k,
 			) {
-				b.Delete(k)
+				err = b.Delete(k)
 			} else {
 				// keep (k,v)
-			}
+			} */
 		}
-		return nil
+		errorChan := tx.Check()
+		err = <-errorChan
+		if err != nil {
+			log.Trace(err)
+		}
+		return err
 	})
 	if err != nil {
 		log.Error(err)
