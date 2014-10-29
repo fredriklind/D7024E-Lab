@@ -21,6 +21,11 @@ func NewLocalNode(idPointer *string, ip, port, apiPort, dbPort string) {
 	theLocalNode = &localNode{_id: id}
 	transport = newTransporter(ip, port, apiPort, dbPort)
 	theLocalNode.initPrimaryAndReplicaDB(theLocalNode.id())
+	go startWebServer()
+	go startAPI()
+
+	logPrefix := theLocalNode.ip() + ":" + theLocalNode.port()
+	setupLogging(logPrefix)
 }
 
 // ----------------------------------------------------------------------------------------
@@ -51,7 +56,12 @@ func (n *localNode) predecessor() node {
 }
 
 func (n *localNode) successor() node {
-	return n.fingerTable[1].node
+	if n.fingerTable[1].node != nil {
+		return n.fingerTable[1].node
+	} else {
+		log.Error("Trying to access successor that is not set")
+	}
+	return nil
 }
 
 func (n *localNode) address() string {
@@ -92,6 +102,7 @@ func (n *localNode) updateSuccessor(candidate node) {
 
 // Returns the node who is responsible for the data corresponding to id, traversing the ring using finger tables
 func (n *localNode) lookup(id string) (node, error) {
+	//id = sha1hash(id)
 	// n responsible for id
 	if between(
 		hexStringToByteArr(nextId(n.predecessor().id())),
@@ -170,6 +181,11 @@ func (newNode *localNode) join(n *remoteNode) {
 }
 
 func (newNode *localNode) initFingers(n *remoteNode) {
+
+	if n == nil {
+		log.Error("remoteNode is nil")
+	}
+
 	oneNodeRing := false
 
 	// Calculating first finger

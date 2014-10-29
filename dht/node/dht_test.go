@@ -307,7 +307,7 @@ func TestMain(t *testing.T) {
 // Run TestJoin3, TestJoin0 and TestJoin2 in that order from three separate tabs in terminal. (To test obj2).
 func TestJoin3(t *testing.T) {
 	id := "03"
-	newLocalNode(&id, "localhost", "3000", "", "")
+	newLocalNode(&id, "localhost", "5000", "5100", "5200")
 
 	theLocalNode.join(nil)
 
@@ -317,9 +317,9 @@ func TestJoin3(t *testing.T) {
 
 func TestJoin0(t *testing.T) {
 	id := "00"
-	newLocalNode(&id, "localhost", "9000", "", "")
+	newLocalNode(&id, "localhost", "9000", "9100", "9200")
 
-	node3 := newRemoteNode("03", "localhost", "3000", "", "")
+	node3 := newRemoteNode("03", "localhost", "5000", "5100", "5200")
 
 	theLocalNode.join(node3)
 	block := make(chan bool)
@@ -328,11 +328,27 @@ func TestJoin0(t *testing.T) {
 
 func TestJoin2(t *testing.T) {
 	id := "02"
-	newLocalNode(&id, "localhost", "2000", "", "")
+	newLocalNode(&id, "localhost", "2000", "2100", "2200")
 
-	node3 := newRemoteNode("03", "localhost", "3000", "", "")
+	node3 := newRemoteNode("03", "localhost", "5000", "5100", "5200")
 
 	theLocalNode.join(node3)
+
+	block := make(chan bool)
+	<-block
+}
+
+func TestForwardingReceiver(t *testing.T) {
+	id := "03"
+	newLocalNode(&id, "localhost", "5000", "5100", "5200")
+
+	block := make(chan bool)
+	<-block
+}
+
+func TestForwardingSender(t *testing.T) {
+	id := "01"
+	newLocalNode(&id, "localhost", "4000", "4100", "4200")
 
 	block := make(chan bool)
 	<-block
