@@ -192,7 +192,7 @@ func (n *localNode) splitPrimaryDB() {
 			) {
 				// keep (k,v), in other words - do nothing
 			} else {
-				b.Delete(k)
+				c.Delete()
 			}
 		}
 		return nil
@@ -216,22 +216,19 @@ func (n *localNode) splitReplicaDB() {
 		var err error
 		for k, _ := c.First(); k != nil; k, _ = c.Next() {
 
-			err = c.Delete()
-			log.Trace(err)
-
 			// delete keys in interval (n.pred, n] - they belong in primaryDB
-			/*if between(
+			if between(
 				[]byte(nextId(n.predecessor().id())),
 				[]byte(nextId(n.id())),
 				k,
 			) {
-				err = b.Delete(k)
+				err = c.Delete()
 			} else {
 				// keep (k,v)
-			} */
+			}
 		}
-		errorChan := tx.Check()
-		err = <-errorChan
+		_ := tx.Check()
+		//err = <-errorChan
 		if err != nil {
 			log.Trace(err)
 		}
