@@ -213,7 +213,7 @@ func (n *localNode) splitReplicaDB() {
 
 		b := tx.Bucket(mainBucket)
 		c := b.Cursor()
-		var err error
+		var fail error
 		for k, _ := c.First(); k != nil; k, _ = c.Next() {
 
 			// delete keys in interval (n.pred, n] - they belong in primaryDB
@@ -222,20 +222,27 @@ func (n *localNode) splitReplicaDB() {
 				[]byte(nextId(n.id())),
 				k,
 			) {
-				err = c.Delete()
+				c.Delete()
 			} else {
 				// keep (k,v)
 			}
 		}
-		_ := tx.Check()
-		//err = <-errorChan
-		if err != nil {
-			log.Trace(err)
+		//str, err2 := tx.Page(2)
+		//log.Tracef("pageinfo: %+v", str)
+		//if err2 != nil {
+		//	log.Error(err2)
+		//}
+		errorChan := tx.Check()
+		fail = <-errorChan
+		if fail != nil {
+			log.Trace(fail)
 		}
-		return err
+		return fail
 	})
 	if err != nil {
 		log.Error(err)
+		// doing this due to an error in bolt - page is freed twice and this causes panic
+		n.splitReplicaDB()
 	}
 }
 
