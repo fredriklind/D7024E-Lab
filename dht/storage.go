@@ -1,4 +1,4 @@
-package dht
+package main
 
 import (
 	"github.com/boltdb/bolt"

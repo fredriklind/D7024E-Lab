@@ -1,0 +1,9 @@
+#Ignore-rules for docker build of dht-package
+
+*.DS_Store
+*.db
+
+*.gitignore
+*.log
+errors.go
+dht_test.go

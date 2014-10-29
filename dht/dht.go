@@ -1,4 +1,8 @@
-package dht
+package main
+
+import (
+	"os"
+)
 
 const m = 3
 
@@ -45,6 +49,18 @@ type finger struct {
 }
 
 func main() {
+	id := os.Args[1]
+	ip := os.Args[2]
+	transportPort := os.Args[3]
+	nodeApiPort := os.Args[4]
+	nodeDbPort := os.Args[5]
+	newLocalNode(&id, ip, transportPort, nodeApiPort, nodeDbPort)
+	go startWebServer()
+	go startAPI()
+}
+
+/*
+func main() {
 	go startWebServer()
 	go startAPI()
 
@@ -57,5 +73,5 @@ func main() {
 			break
 		}
 	}
-	*/
 }
+*/
