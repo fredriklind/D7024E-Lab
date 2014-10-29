@@ -165,12 +165,12 @@ func (n *localNode) requestSplit(n2 node) {
 		}*/
 	resp, err2 := http.Get("http://" + n2.dbAddress() + "/split-dbs")
 	if err2 != nil {
-		log.Errorf("%s: %s", n.id(), err2)
+		log.Errorf("Error requesting split: %s", err2)
 	}
 	defer resp.Body.Close()
 	body, err3 := ioutil.ReadAll(resp.Body)
 	if err3 != nil {
-		log.Error(err3)
+		log.Errorf("Error reading split response: %s", err3)
 	}
 	log.Tracef("%s: %s", n.id(), body)
 }
