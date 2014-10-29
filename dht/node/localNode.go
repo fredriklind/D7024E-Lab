@@ -1,4 +1,4 @@
-package main
+package node
 
 import (
 	//	"fmt"
@@ -10,7 +10,7 @@ import (
 // ----------------------------------------------------------------------------------------
 //										Initializer
 // ----------------------------------------------------------------------------------------
-func newLocalNode(idPointer *string, ip, port, apiPort, dbPort string) {
+func NewLocalNode(idPointer *string, ip, port, apiPort, dbPort string) {
 	var id string
 
 	if idPointer == nil {

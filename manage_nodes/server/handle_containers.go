@@ -1,16 +1,9 @@
-package main
+package server
 
 import (
 	"fmt"
 	"os/exec"
 )
-
-func main() {
-	// start webserver and API
-
-	// testing executing shell commands
-	do()
-}
 
 // this file should contain the logic for the API-requests:
 // startNewNode, nodeLeavesRing?, updateData (should return all nodes current stored data)?
@@ -29,7 +22,7 @@ func startNewNode() {
 }
 
 // execute shell commands from go code
-func do() {
+func Do() {
 
 	//cmd := exec.Command("boot2docker", "start")
 	cmd := exec.Command("docker", "images")

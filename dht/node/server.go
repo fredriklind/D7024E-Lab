@@ -1,4 +1,4 @@
-package main
+package node
 
 import (
 	"code.google.com/p/gorest"
@@ -9,12 +9,12 @@ import (
 )
 
 // For serving static files
-func startWebServer() {
+func StartWebServer() {
 	fs := http.FileServer(http.Dir("./webserver"))
 	http.ListenAndServe(":8080", fs)
 }
 
-func startAPI() {
+func StartAPI() {
 	serv := new(fileAPI)
 	gorest.RegisterService(serv)
 	serv.RestService.ResponseBuilder()
@@ -61,7 +61,7 @@ func (serv fileAPI) GetPair(key string) string {
 	key, _ = url.QueryUnescape(key)
 	serv.setPerms()
 
-	responsibleNode, _ := theLocalNode.lookup(key)
+	//	responsibleNode, _ := theLocalNode.lookup(key)
 
 	// If I'm responsible
 	//if responsibleNode.id() == theLocalNode.id() {

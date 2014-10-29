@@ -5,5 +5,5 @@
 
 *.gitignore
 *.log
-errors.go
-dht_test.go
+*errors.go
+*dht_test.go
