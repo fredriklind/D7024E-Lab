@@ -1,4 +1,5 @@
 $(function() {
+
 	$('.section h2').click(function() {
 		showSection($(this).parent('.section'));
 	});
@@ -11,7 +12,7 @@ $(function() {
 		}
 	});
 
-	var apiURL = "http://localhost:8787/api/";
+	var apiURL = "http://localhost:"+ getAPIport() +"/api/";
 	$.support.cors = true
 
 	// Get section
@@ -154,4 +155,14 @@ function showStatus($section, status, text) {
 	setTimeout(function() {
 		statusElement.removeClass("show");
 	}, 1200);
+}
+
+function getAPIport() {
+	var port;
+	$.ajax({
+		url: "port.txt",
+		success: function(data) { port = data; },
+		async: false
+	});
+	return port;
 }
