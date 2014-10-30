@@ -90,7 +90,7 @@ func (serv fileAPI) GetAll() string {
 // GET /storage/{key}
 func (serv fileAPI) GetPair(key string) string {
 	serv.setPerms()
-	log.Tracef("Handling GET requset for key %s", key)
+	log.Tracef("Handling GET request for key %s", key)
 
 	// Validate request
 	if key == "" {
@@ -103,12 +103,12 @@ func (serv fileAPI) GetPair(key string) string {
 	ogKey := key
 	key, _ = url.QueryUnescape(key)
 
-	/*responsibleNode, err := theLocalNode.lookup(key)
+	responsibleNode, err := theLocalNode.lookup(key)
 	if err != nil {
 		log.Errorf("Lookup of responsible node failed: %s", err)
 		return ""
-	}*/
-	responsibleNode := newRemoteNode("03", "localhost", "5000", "5100", "5200")
+	}
+	//responsibleNode := newRemoteNode("03", "localhost", "5000", "5100", "5200")
 
 	// If I'm responsible
 	if responsibleNode.id() == theLocalNode.id() {
@@ -150,7 +150,6 @@ func (serv fileAPI) GetPair(key string) string {
 	} else {
 		log.Tracef("%s is responsible for key %s, forwarding request", responsibleNode.address(), key)
 		response, err := http.Get("http://" + responsibleNode.apiAddress() + "/api/storage/" + ogKey)
-		defer response.Body.Close()
 
 		if err != nil {
 			log.Errorf("Forwarded request returned error: %s", err)
@@ -158,6 +157,7 @@ func (serv fileAPI) GetPair(key string) string {
 			return ""
 		} else {
 			// Parse bytes to string
+			defer response.Body.Close()
 			responseBytes, err := ioutil.ReadAll(response.Body)
 			if err != nil {
 				log.Errorf("Error parsing response: %s", err)
@@ -193,12 +193,12 @@ func (serv fileAPI) SetPair(PostData KeyValuePair) {
 		return
 	}
 
-	/*responsibleNode, err := theLocalNode.lookup(PostData.Key)
+	responsibleNode, err := theLocalNode.lookup(PostData.Key)
 	if err != nil {
 		log.Errorf("Lookup of responsible node failed: %s", err)
 		return
-	}*/
-	responsibleNode := newRemoteNode("03", "localhost", "5000", "5100", "5200")
+	}
+	//responsibleNode := newRemoteNode("03", "localhost", "5000", "5100", "5200")
 
 	// If i'm responsible
 	if responsibleNode.id() == theLocalNode.id() {
@@ -261,12 +261,12 @@ func (serv fileAPI) UpdatePair(PostData string, key string) {
 		return
 	}
 
-	/*responsibleNode, err := theLocalNode.lookup(PostData.Key)
+	responsibleNode, err := theLocalNode.lookup(key)
 	if err != nil {
 		log.Errorf("Lookup of responsible node failed: %s", err)
 		return
-	}*/
-	responsibleNode := newRemoteNode("03", "localhost", "5000", "5100", "5200")
+	}
+	//responsibleNode := newRemoteNode("03", "localhost", "5000", "5100", "5200")
 
 	// If i'm responsible
 	if responsibleNode.id() == theLocalNode.id() {
@@ -315,12 +315,12 @@ func (serv fileAPI) UpdatePair(PostData string, key string) {
 func (serv fileAPI) DeletePair(key string) {
 	serv.setPerms()
 
-	/*responsibleNode, err := theLocalNode.lookup(PostData.Key)
+	responsibleNode, err := theLocalNode.lookup(key)
 	if err != nil {
 		log.Errorf("Lookup of responsible node failed: %s", err)
 		return
-	}*/
-	responsibleNode := newRemoteNode("03", "localhost", "5000", "5100", "5200")
+	}
+	//responsibleNode := newRemoteNode("03", "localhost", "5000", "5100", "5200")
 
 	// If i'm responsible
 	if responsibleNode.id() == theLocalNode.id() {

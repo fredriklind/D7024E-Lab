@@ -69,7 +69,8 @@ func (n *localNode) initPrimaryAndReplicaDB(id string) {
 
 func (n *localNode) serveDBs() {
 
-	http.HandleFunc("/db", getDbHandleFunc)
+	http.HandleFunc("/db/primary", getPrimaryDbHandleFunc)
+	http.HandleFunc("/db/replica", getReplicaDbHandleFunc)
 	http.HandleFunc("/split-dbs", splitDBHandleFunc)
 
 	// Set up http server to listen for requests
@@ -80,9 +81,23 @@ func (n *localNode) serveDBs() {
 }
 
 // handler for HTTP GET request for the primary db
-func getDbHandleFunc(w http.ResponseWriter, req *http.Request) {
+func getPrimaryDbHandleFunc(w http.ResponseWriter, req *http.Request) {
 
 	err := primaryDB.View(func(tx *bolt.Tx) error {
+		w.Header().Set("Content-Type", "application/octet-stream")
+		w.Header().Set("Content-Disposition", `attachment; filename="primary.db"`)
+		w.Header().Set("Content-Length", strconv.Itoa(int(tx.Size())))
+		return tx.Copy(w)
+	})
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+	}
+}
+
+// handler for HTTP GET request for the replica db
+func getReplicaDbHandleFunc(w http.ResponseWriter, req *http.Request) {
+
+	err := replicaDB.View(func(tx *bolt.Tx) error {
 		w.Header().Set("Content-Type", "application/octet-stream")
 		w.Header().Set("Content-Disposition", `attachment; filename="primary.db"`)
 		w.Header().Set("Content-Length", strconv.Itoa(int(tx.Size())))
@@ -114,10 +129,16 @@ func splitDBHandleFunc(w http.ResponseWriter, req *http.Request) {
 func (n *localNode) startReplication() {
 
 	// backup predecessors db
-	n.getDB(n.predecessor(), replica)
+	n.getDB(n.predecessor(), primary, replica)
+	log.Trace("In startReplication, after get primary db from pred save as replica")
+	n.printMainBucket(primaryDB)
+	n.printMainBucket(replicaDB)
 
 	// get successors db, set it as n´s own primary db
-	n.getDB(n.successor(), primary)
+	n.getDB(n.successor(), primary, primary)
+	log.Trace("In startReplication, after get primary db from successor save as primary")
+	n.printMainBucket(primaryDB)
+	n.printMainBucket(replicaDB)
 
 	// take over only a part of it, A, drop the rest
 	n.splitPrimaryDB()
@@ -125,18 +146,25 @@ func (n *localNode) startReplication() {
 }
 
 // get DB from remote node n2
-func (n *localNode) getDB(n2 node, setDbAs int) {
-
+func (n *localNode) getDB(n2 node, getDb, setDbAs int) error {
+	var url string
 	// Get db from remote node
-	resp, err := http.Get("http://" + n2.dbAddress() + "/db")
+	if getDb == primary {
+		url = "http://" + n2.dbAddress() + "/db/primary"
+	} else if getDb == replica {
+		url = "http://" + n2.dbAddress() + "/db/replica"
+	}
+	resp, err := http.Get(url)
 	if err != nil {
 		log.Errorf("%s: %s", n.id(), err)
+		return err
 	}
 
 	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Error(err)
+		return err
 	}
 
 	var saveFileTo string
@@ -149,11 +177,15 @@ func (n *localNode) getDB(n2 node, setDbAs int) {
 
 		// save file as replica primary.db
 		saveFileTo = "db/replicas/primary" + n.id() + ".db"
+	} else if setDbAs == 88 {
+		saveFileTo = "db/temp.db"
 	}
 	err = ioutil.WriteFile(saveFileTo, body, 0600)
 	if err != nil {
 		log.Error(err)
+		return err
 	}
+	return nil
 }
 
 func (n *localNode) requestSplit(n2 node) {
@@ -181,7 +213,7 @@ func (n *localNode) splitPrimaryDB() {
 
 		b := tx.Bucket(mainBucket)
 		c := b.Cursor()
-
+		var fail error
 		for k, _ := c.First(); k != nil; k, _ = c.Next() {
 
 			// keep keys in interval (n.pred, n], delete keys outside that interval
@@ -195,10 +227,17 @@ func (n *localNode) splitPrimaryDB() {
 				c.Delete()
 			}
 		}
-		return nil
+		errorChan := tx.Check()
+		fail = <-errorChan
+		if fail != nil {
+			log.Trace(fail)
+		}
+		return fail
 	})
 	if err != nil {
 		log.Error(err)
+		// doing this due to an error in bolt - page is freed twice and this causes panic
+		n.splitPrimaryDB()
 	}
 }
 
@@ -243,6 +282,18 @@ func (n *localNode) splitReplicaDB() {
 		log.Error(err)
 		// doing this due to an error in bolt - page is freed twice and this causes panic
 		n.splitReplicaDB()
+	}
+}
+
+func (n *localNode) periodicReplication() {
+	for {
+		time.Sleep(time.Second * 20)
+		// get predecessors db, if new data they will be backed up - otherwise the one got will be the same as the one had
+		err := n.getDB(n.predecessor(), primary, replica)
+		if err == nil {
+			//n.printMainBucket(primaryDB)
+			//n.printMainBucket(replicaDB)
+		}
 	}
 }
 
@@ -308,9 +359,9 @@ func (n *localNode) printDBsPeriodic() {
 func (n *localNode) printMainBucket(db *bolt.DB) error {
 
 	if db == primaryDB {
-		log.Tracef("%s: primaryDB:", n.id())
+		log.Tracef("PrimaryDB:")
 	} else if db == replicaDB {
-		log.Tracef("%s: replicaDB:", n.id())
+		log.Tracef("ReplicaDB:")
 	}
 	err := db.View(func(tx *bolt.Tx) error {
 
@@ -324,6 +375,22 @@ func (n *localNode) printMainBucket(db *bolt.DB) error {
 		return err
 	})
 	return err
+}
+
+func (n *localNode) printDBs(n2 *remoteNode) {
+	// Get remote nodes primary DB and print the contents
+	n.getDB(n2, primary, 88)
+	tempDB, err := bolt.Open("db/temp.db", 0600, nil)
+	if err != nil {
+		log.Errorf("Could not open db: %s", err)
+	}
+	log.Tracef("%s: PrimaryDB:", n2.id())
+	n.printMainBucket(tempDB)
+
+	// Get remote nodes replica DB and print the contents
+	n.getDB(n2, replica, 88)
+	log.Tracef("%s: ReplicaDB:", n2.id())
+	n.printMainBucket(tempDB)
 }
 
 // Close the db after a time, to prevent it getting stucked as locked?

@@ -12,8 +12,6 @@ func main() {
 	nodeApiPort := os.Args[4]
 	nodeDbPort := os.Args[5]
 	node.NewLocalNode(&id, ip, transportPort, nodeApiPort, nodeDbPort)
-	go node.StartWebServer()
-	go node.StartAPI()
 
 	for {
 		// do nothing

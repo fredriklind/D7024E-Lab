@@ -188,6 +188,10 @@ func (t *transporter) sendLookupRequest(destAddr, key string) (dictionary, error
 }
 
 func (t *transporter) handleLookupRequest(request msg) {
+	if !theLocalNode.ready {
+		log.Trace("Not ready to handle lookup yet, haven´t initialized own fingers yet.")
+		return
+	}
 	mg := msg{
 		Id:     request.Id,
 		Type:   "Response",
@@ -386,7 +390,7 @@ func (t *transporter) send(m msg) (msg, error) {
 		}
 	*/
 
-	time.Sleep(time.Second * 1)
+	time.Sleep(time.Millisecond * 100)
 
 	// Serialize and send the message (also wait to simulate network delay)
 	jsonmsg, err := json.Marshal(m)
