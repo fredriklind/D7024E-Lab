@@ -1,13 +1,14 @@
 package main
 
 import (
-	server "github.com/fredriklind/D7024E-Lab/manage_nodes/server"
+	//server "github.com/fredriklind/D7024E-Lab/manage_nodes/server"
+	"./server"
 )
 
 func main() {
-
-	// start webserver and API
-
-	// testing executing shell commands
-	server.Do()
+	go server.StartWebServer()
+	go server.StartAPI()
+	//server.Do()
+	block := make(chan bool)
+	<-block
 }

@@ -162,7 +162,10 @@ func setupLogging(prefix string) {
 	config := `
 		<seelog type="sync">
 			<outputs>
-				<file formatid="onlytime" path="logfile.log"/>
+				<splitter formatid="onlytime">
+					<file path="logfile.log"/>
+					<conn net="tcp" addr="localhost:8888" />
+				</splitter>
 			</outputs>
 			<formats>
 				<format id="onlytime" format="%Time [%LEVEL] ` + prefix + ` (%FuncShort:%Line) %Msg%n"/>
