@@ -314,7 +314,6 @@ func TestDB(t *testing.T) {
 // Run TestJoin3, TestJoin0 and TestJoin2 in that order from three separate tabs in terminal. (To test obj2).
 func TestJoin3(t *testing.T) {
 	id := "03"
-	NewLocalNode(&id, "localhost", "3000", "", "")
 	NewLocalNode(&id, "localhost", "5000", "5100", "5200")
 
 	theLocalNode.join(nil)
@@ -325,7 +324,6 @@ func TestJoin3(t *testing.T) {
 
 func TestJoin0(t *testing.T) {
 	id := "00"
-	NewLocalNode(&id, "localhost", "9000", "", "")
 	NewLocalNode(&id, "localhost", "9000", "9100", "9200")
 
 	node3 := newRemoteNode("03", "localhost", "5000", "5100", "5200")
@@ -337,7 +335,6 @@ func TestJoin0(t *testing.T) {
 
 func TestJoin2(t *testing.T) {
 	id := "02"
-	NewLocalNode(&id, "localhost", "2000", "", "")
 	NewLocalNode(&id, "localhost", "2000", "2100", "2200")
 
 	node3 := newRemoteNode("03", "localhost", "5000", "5100", "5200")

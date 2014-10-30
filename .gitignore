@@ -26,3 +26,4 @@ _testmain.go
 *.test
 
 *.db
+dht/node/webserver/port.txt
