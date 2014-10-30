@@ -24,7 +24,7 @@ func NewLocalNode(idPointer *string, ip, port, apiPort, dbPort string) {
 	go startWebServer()
 	go startAPI()
 
-	logPrefix := theLocalNode.ip() + ":" + theLocalNode.port()
+	logPrefix := theLocalNode.id()
 	setupLogging(logPrefix)
 }
 
@@ -122,17 +122,17 @@ func (n *localNode) lookup(id string) (node, error) {
 				return responsibleNode, nil
 			} else {
 				k = i - 1
-
 			}
 		}
 		// all fingers dead... what to do? fixfingers! and fix predAndsucc! don´t send ACK?
-		return nil, nil
+		return n, nil
 	}
 }
 
 func (n *localNode) forwardingLookup(id string, j int) (node, int) {
 	for i := j; i > 0; i-- {
 		// special case - when n´s finger points to itself
+		log.Tracef("forwardingLookup: finger: forward lookup to finger %d?", i)
 		if n.fingerTable[i].node.id() == n.id() {
 
 			// what to do? go to next finger...
@@ -177,7 +177,9 @@ func (newNode *localNode) join(n *remoteNode) {
 	} else {
 		newNode.initFingers(n)
 	}
+	newNode.ready = true
 	go newNode.startFixFingers()
+	go newNode.periodicReplication()
 }
 
 func (newNode *localNode) initFingers(n *remoteNode) {
@@ -246,7 +248,7 @@ func (newNode *localNode) initFingers(n *remoteNode) {
 func (n *localNode) startFixFingers() {
 	for {
 		select {
-		case <-time.After(time.Second * 10):
+		case <-time.After(time.Second * 20):
 			n.fixFingers()
 		case <-theLocalNode.fixFingersChan:
 			n.fixFingers()
@@ -266,6 +268,10 @@ func (n *localNode) fixFingers() {
 	//log.Tracef("%s: Running fixFingers", theLocalNode.address())
 
 	succ, _ := n.lookup(n.fingerTable[1].startId)
+	if succ == nil {
+		log.Trace("LOOKUP returns NIL")
+		return
+	}
 	if succ.id() != n.successor().id() {
 		n.updateSuccessor(succ)
 	}

@@ -169,6 +169,7 @@ func setupLogging(prefix string) {
 			</outputs>
 			<formats>
 				<format id="onlytime" format="%Time [%LEVEL] ` + prefix + ` (%FuncShort:%Line) %Msg%n"/>
+				<format id="nofunc" format="%Time [%LEVEL] ` + prefix + ` %Msg%n"/>
 			</formats>
 		</seelog>
 	`

@@ -48,16 +48,19 @@ func TestJoinSplitRequest(t *testing.T) {
 	n.printMainBucket(replicaDB)
 }
 
-// Run TestJoin2_all, TestJoin4_all and TestJoin7_akk in that order from three separate tabs in terminal. (Obj 3)
+// Run TestJoin2_all, TestJoin4_all and TestJoin7_all in that order from three separate tabs in terminal. (Obj 3)
 func TestJoin2_all(t *testing.T) {
 	id := "02"
-	NewLocalNode(&id, "localhost", "2000", "", "2222")
+	NewLocalNode(&id, "localhost", "2001", "2002", "2003")
+	n := theLocalNode
 
-	theLocalNode.storeValue([]byte("2222"), []byte("8"))
+	n.join(nil)
+	log.Tracef("NODE %s HAS JOINED THE RING!", n.id())
 
-	theLocalNode.join(nil)
+	n.storeValue([]byte("02"), []byte("02"))
 
-	//theLocalNode.printDBsPeriodic()
+	n.printMainBucket(primaryDB)
+	n.printMainBucket(replicaDB)
 
 	block := make(chan bool)
 	<-block
@@ -65,15 +68,20 @@ func TestJoin2_all(t *testing.T) {
 
 func TestJoin4_all(t *testing.T) {
 	id := "04"
-	NewLocalNode(&id, "localhost", "4000", "", "4001")
+	NewLocalNode(&id, "localhost", "4001", "4002", "4003")
+	n := theLocalNode
 
-	theLocalNode.storeValue([]byte("4444"), []byte("16"))
+	node2 := newRemoteNode("02", "localhost", "2001", "2002", "2003")
 
-	node2 := newRemoteNode("02", "localhost", "2000", "", "2222")
+	n.join(node2)
+	log.Tracef("NODE %s HAS JOINED THE RING!", n.id())
 
-	theLocalNode.join(node2)
+	n.storeValue([]byte("04"), []byte("04"))
 
-	//theLocalNode.printDBsPeriodic()
+	n.printMainBucket(primaryDB)
+	n.printMainBucket(replicaDB)
+
+	n.printDBs(node2)
 
 	block := make(chan bool)
 	<-block
@@ -81,15 +89,22 @@ func TestJoin4_all(t *testing.T) {
 
 func TestJoin7_all(t *testing.T) {
 	id := "07"
-	NewLocalNode(&id, "localhost", "7000", "", "7001")
+	NewLocalNode(&id, "localhost", "7001", "7002", "7003")
+	n := theLocalNode
 
-	theLocalNode.storeValue([]byte("7777"), []byte("28"))
+	node2 := newRemoteNode("02", "localhost", "2001", "2002", "2003")
+	node4 := newRemoteNode("04", "localhost", "4001", "4002", "4003")
 
-	node2 := newRemoteNode("02", "localhost", "2000", "", "2222")
+	n.join(node2)
+	log.Tracef("NODE %s HAS JOINED THE RING!", n.id())
 
-	theLocalNode.join(node2)
+	n.storeValue([]byte("07"), []byte("07"))
 
-	theLocalNode.printDBsPeriodic()
+	n.printMainBucket(primaryDB)
+	n.printMainBucket(replicaDB)
+
+	n.printDBs(node4)
+	n.printDBs(node2)
 
 	block := make(chan bool)
 	<-block
@@ -212,7 +227,7 @@ func TestJoin4_db(t *testing.T) {
 	log.Tracef("%s: primaryDB:", theLocalNode.id())
 	theLocalNode.printMainBucket(primaryDB)
 
-	theLocalNode.getDB(node2, primary)
+	theLocalNode.getDB(node2, primary, primary)
 
 	// check if node 2´s key,value pair is in replica, primary8.db....!
 	/*	newrepl, err := bolt.Open("db/primary04.db", 0600, nil)

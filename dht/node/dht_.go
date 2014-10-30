@@ -33,6 +33,7 @@ type localNode struct {
 	pred           node
 	fingerTable    [m + 1]finger
 	fixFingersChan chan bool
+	ready          bool
 }
 
 type remoteNode struct {
