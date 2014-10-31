@@ -6,6 +6,7 @@ package server
 import (
 	"net/http"
 	//"net/url"
+	"encoding/json"
 	"fmt"
 	"io/ioutil"
 
@@ -23,7 +24,7 @@ const (
 )
 
 type Node struct {
-	Id string
+	Id, Ip, Port string
 }
 
 // Serves static files, such as index.html
@@ -80,7 +81,25 @@ func (serv fileAPI) OptionsRoute(_ string) {
 func (serv fileAPI) GetAllNodes() []Node {
 	// 400 Bad request
 	//serv.ResponseBuilder().SetResponseCode(400).Overide(true)
-	return []Node{, Node{Id: "caioeoa8ehcl3iwc3boa"}}
+	var nodes []Node
+
+	nodeDB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket([]byte("main"))
+		b.ForEach(func(k, v []byte) error {
+			fmt.Println(string(v))
+			var n Node
+			err := json.Unmarshal(v, &n)
+			if err != nil {
+				fmt.Printf("Error unmarshaling: %s\n", err)
+				serv.ResponseBuilder().SetResponseCode(500).Overide(true)
+				return err
+			}
+			nodes = append(nodes, n)
+			return nil
+		})
+		return nil
+	})
+	return nodes
 }
 
 /*
@@ -157,7 +176,8 @@ func sendDeleteRequest(url string) (error, int) {
 }*/
 
 func initNodeDB() {
-	nodeDB, err := bolt.Open("nodes.db", 0600, nil)
+	var err error
+	nodeDB, err = bolt.Open("nodes.db", 0600, nil)
 	if err != nil {
 		fmt.Printf("Could not open db: %s", err)
 	}
@@ -173,7 +193,15 @@ func initNodeDB() {
 
 	nodeDB.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte("main"))
-		b.P
-		return nil 
+		node1 := Node{Id: "AaNNeDa8ehcB3iwc3boa"}
+		node2 := Node{Id: "CJHakuwhc8k28hKHkfhk"}
+		jsonBytes1, err := json.Marshal(node1)
+		jsonBytes2, err := json.Marshal(node2)
+		if err != nil {
+			fmt.Printf("Error parsing json: %s", err)
+		}
+		b.Put([]byte(node1.Id), jsonBytes1)
+		b.Put([]byte(node2.Id), jsonBytes2)
+		return nil
 	})
 }
