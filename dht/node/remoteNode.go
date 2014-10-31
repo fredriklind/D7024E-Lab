@@ -81,5 +81,8 @@ func (n *remoteNode) lookup(key string) (node, error) {
 }
 
 func (n *remoteNode) isAlive() bool {
-	return transport.ping(n.address())
+	if !transport.ping(n.address()) {
+		return transport.ping(n.address())
+	}
+	return true
 }

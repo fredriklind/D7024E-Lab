@@ -26,6 +26,8 @@ type node interface {
 	lookup(id string) (node, error)
 	updateSuccessor(node)
 	updatePredecessor(node)
+
+	isAlive() bool
 }
 
 type localNode struct {
@@ -34,6 +36,7 @@ type localNode struct {
 	fingerTable    [m + 1]finger
 	fixFingersChan chan bool
 	ready          bool
+	predpred       node
 }
 
 type remoteNode struct {

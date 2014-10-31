@@ -289,12 +289,41 @@ func (n *localNode) periodicReplication() {
 	for {
 		time.Sleep(time.Second * 20)
 		// get predecessors db, if new data they will be backed up - otherwise the one got will be the same as the one had
+		if !n.predecessor().isAlive() {
+
+			// kopiera datat från replica och extenda primary med den datan
+			n.recoverData()
+
+			n.pred = n.predpred
+			n.predpred = n.pred.predecessor()
+		}
 		err := n.getDB(n.predecessor(), primary, replica)
 		if err == nil {
-			//n.printMainBucket(primaryDB)
-			//n.printMainBucket(replicaDB)
+			n.printMainBucket(primaryDB)
+			n.printMainBucket(replicaDB)
 		}
 	}
+}
+
+func (n *localNode) recoverData() {
+	//func recoverData() {		// for TestRecover
+
+	// open replica and read data
+
+	replicaDB.View(func(tx *bolt.Tx) error {
+		b1 := tx.Bucket(mainBucket)
+
+		primaryDB.Update(func(tx2 *bolt.Tx) error {
+			b2 := tx2.Bucket(mainBucket)
+
+			b1.ForEach(func(k, v []byte) error {
+				b2.Put(k, v)
+				return nil
+			})
+			return nil
+		})
+		return nil
+	})
 }
 
 /*

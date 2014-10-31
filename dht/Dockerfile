@@ -1,10 +1,19 @@
-#Dockerfile for building images of dht-folder, including the node package and main
+#Dockerfile for building image of dht-folder, including the node package and main
 
-#FROM <base-image>:<tag>
+#Debian system with Go installed
 
-#Debian system with Go installed, copies the package source, fetches application dependencies, builds the program, and configures it to run on startup
+FROM golang
 
-FROM golang:onbuild
+RUN go get -d github.com/fredriklind/D7024E-Lab/dht
+WORKDIR $GOPATH/src/github.com/fredriklind/D7024E-Lab/dht
 
-#Tell the container to listen on ports
+RUN mkdir db
+RUN mkdir db/replicas
+
+RUN go build
+
+
+EXPOSE 3000
+EXPOSE 4000
+EXPOSE 5000
 EXPOSE 8080

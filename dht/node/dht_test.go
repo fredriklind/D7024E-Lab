@@ -7,6 +7,44 @@ import (
 	"testing"
 )
 
+// run TestJoinSplitRequest first then this test to see if all key-value-pairs are assembled again in primary
+func TestRecover(t *testing.T) {
+	id := "04"
+	var err error
+	primaryDB, err = bolt.Open("db/primary"+id+".db", 0600, nil)
+	if err != nil {
+		log.Errorf("Could not open db: %s", err)
+	}
+	replicaDB, err = bolt.Open("db/replicas/primary"+id+".db", 0600, nil)
+	if err != nil {
+		log.Errorf("Could not open db: %s", err)
+	}
+
+	//recoverData()								// <---------- uncomment this when running test! and change the func stub in storage.go
+
+	primaryDB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(mainBucket)
+
+		// Iterate over items in sorted key order
+		b.ForEach(func(k, v []byte) error {
+			log.Tracef("(%s, %s)", k, v)
+			return nil
+		})
+		return nil
+	})
+	log.Trace("replica")
+	replicaDB.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(mainBucket)
+
+		// Iterate over items in sorted key order
+		b.ForEach(func(k, v []byte) error {
+			log.Tracef("(%s, %s)", k, v)
+			return nil
+		})
+		return nil
+	})
+}
+
 // this test fails every other time, in splitReplica: -> panic: assertion failed: page 2 already freed [recovered]
 // something wrong in bolt, found some one that had related problem but that was said to be fixed?
 func TestJoinSplitRequest(t *testing.T) {

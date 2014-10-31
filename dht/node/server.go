@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	webServerRootPath = "./webserver"
+	webServerRootPath = "./node/webserver"
 	webServerPort     = "8080"
 )
 

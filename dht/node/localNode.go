@@ -125,6 +125,17 @@ func (n *localNode) lookup(id string) (node, error) {
 			}
 		}
 		// all fingers dead... what to do? fixfingers! and fix predAndsucc! don´t send ACK?
+		//return n, nil
+		// not optimized - just forward the lookup to a node that do respond!!!
+		for a := m; a > 0; a-- {
+			respNode, err := n.fingerTable[a].node.lookup(id)
+			if err == nil {
+				return respNode, nil
+			} else {
+				// try forward lookup to next node
+			}
+		}
+		// what to do?
 		return n, nil
 	}
 }
@@ -169,6 +180,7 @@ func (newNode *localNode) join(n *remoteNode) {
 	// If newNode is the only node in the network
 	if n == nil {
 		newNode.pred = newNode
+		newNode.predpred = newNode
 		for i := 1; i <= m; i++ {
 			newNode.fingerTable[i].startId, _ = calcFinger(hexStringToByteArr(newNode.id()), i, m)
 			newNode.fingerTable[i].node = newNode
@@ -200,6 +212,8 @@ func (newNode *localNode) initFingers(n *remoteNode) {
 	// Predecessor to newNode
 	newNode.pred = newNode.successor().predecessor()
 	log.Tracef("%s: Set predecessor to: %s", theLocalNode.id(), newNode.predecessor().id())
+
+	newNode.predpred = newNode.predecessor().predecessor()
 
 	if newNode.successor().id() == newNode.predecessor().id() { // n.predecessor().id() == n.id() {
 		oneNodeRing = true
@@ -292,6 +306,10 @@ func (n *localNode) fixFingers() {
 			}
 		}
 	}
+}
+
+func (n *localNode) isAlive() bool {
+	return true
 }
 
 /*

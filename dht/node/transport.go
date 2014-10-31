@@ -249,6 +249,7 @@ func (t *transporter) sendHelloRequest(destAddr string) {
 
 func (t *transporter) sendAck(request msg) {
 	m := msg{
+		Id:     request.Id,
 		Type:   "Response",
 		Method: "ACK",
 		Dst:    request.Src,
@@ -292,6 +293,9 @@ func (t *transporter) handleRequest(request msg) {
 
 	case "LOOKUP":
 		t.handleLookupRequest(request)
+
+	case "PING":
+		t.sendAck(request)
 	}
 }
 
@@ -332,7 +336,7 @@ func (t *transporter) waitForLookupResponse(ackMsg msg) (msg, error) {
 	}
 }
 
-func (t *transporter) waitForResponse(msgId string, waitSeconds time.Duration) (msg, error) {
+func (t *transporter) waitForResponse(msgId string, waitSeconds time.Duration, m msg) (msg, error) {
 
 	// Save the channel so that the receive() method can un-block
 	// this method when it receives a response with a matching id
@@ -350,7 +354,7 @@ func (t *transporter) waitForResponse(msgId string, waitSeconds time.Duration) (
 		}
 
 	case <-time.After(time.Second * waitSeconds):
-		log.Errorf("%s: request with id %s timed out", theLocalNode.address(), msgId)
+		log.Errorf("%s: request with id %s timed out: %s", theLocalNode.address(), msgId, m.Method)
 		return msg{}, errors.New("Timeout")
 	}
 }
@@ -402,7 +406,7 @@ func (t *transporter) send(m msg) (msg, error) {
 
 	// Blocks until something is received on the channel that is associated with m.Id
 	if m.isRequest() && m.Sync {
-		return t.waitForResponse(m.Id, 5)
+		return t.waitForResponse(m.Id, 5, m)
 	} else {
 		return msg{}, nil
 	}
